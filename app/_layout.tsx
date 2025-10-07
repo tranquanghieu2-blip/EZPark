@@ -1,8 +1,9 @@
 import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import _Layout from "@/app/(tabs)/_layout";
 import AuthLayout from "@/app/auth/_layout";
+import _Layout from "@/app/(tabs)/_layout";
+
 import "../global.css";
 
 const Stack = createNativeStackNavigator();

@@ -6,7 +6,7 @@ import { icons } from "@/constants/icons";
 import usePost from "@/hooks/usePost";
 import MessageModal from "@/modals/MessageModal";
 import { GGLogin, login } from "@/service/api";
-import { useRouter } from "expo-router";
+import { useNavigation } from "@react-navigation/native";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
@@ -20,7 +20,7 @@ import {
 } from "react-native";
 
 export default function Login() {
-  const router = useRouter();
+  const navigation = useNavigation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -39,7 +39,7 @@ export default function Login() {
     try {
       const res = await execute(email, password);
       console.log("Đăng nhập thành công:", res);
-      // router.replace("/(tabs)/profile");
+      
     } catch (err) {
       setShowFailModal(true);
     }
@@ -109,7 +109,7 @@ export default function Login() {
 
         {/* Đăng nhập bằng Google */}
         <Pressable className="bg-gray-200 py-3 rounded-lg mb-3 h-[50px] items-center justify-center flex-row gap-2"
-        onPress={() => {GGLogin()}}>
+          onPress={() => { GGLogin() }}>
           <Image source={icons.google} style={{ width: 24, height: 24 }} />
           <Text className="text-center text-black font-medium" >
             Đăng nhập bằng Google
@@ -117,7 +117,7 @@ export default function Login() {
         </Pressable>
 
         {/* Quên mật khẩu */}
-        <Pressable onPress={() => router.push("/auth/forgot-password")}>
+        <Pressable onPress={() => navigation.navigate("forgot-password" as never)}>
           <Text className="text-center text-gray-500 mb-4">
             Bạn quên mật khẩu?
           </Text>
@@ -133,7 +133,7 @@ export default function Login() {
         {/* Chưa có tài khoản */}
         <View className="flex-row justify-center">
           <Text className="text-gray-500">Bạn chưa có tài khoản? </Text>
-          <Pressable onPress={() => router.push("/auth/signup")}>
+          <Pressable onPress={() => navigation.navigate("signup" as never)}>
             <Text className="text-orange-500 font-semibold">Đăng ký</Text>
           </Pressable>
         </View>
