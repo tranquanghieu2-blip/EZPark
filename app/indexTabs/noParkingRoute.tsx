@@ -133,7 +133,7 @@ const NoParkingRoute = () => {
       />
 
       <MapView
-        
+        provider={null as any} // ⚠️ Rất quan trọng: tắt Google provider để chỉ dùng tile
         ref={mapRef}
         style={{ flex: 1 }}
         initialRegion={daNangRegion} // chỉ dùng initialRegion

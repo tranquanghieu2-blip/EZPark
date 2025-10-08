@@ -6,8 +6,8 @@ import { icons } from "@/constants/icons";
 import usePost from "@/hooks/usePost";
 import MessageModal from "@/modals/MessageModal";
 import { signUp } from "@/service/api";
-import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { Ionicons } from "@react-native-vector-icons/ionicons";
+import { useNavigation } from "@react-navigation/native";
 import React, { useState } from "react";
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import {
@@ -23,7 +23,7 @@ import {
 } from "react-native";
 
 export default function SignUp() {
-  const router = useRouter();
+  const navigation = useNavigation<any>();
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
@@ -51,10 +51,8 @@ export default function SignUp() {
     try {
       const res = await execute(email, password, name);
       console.log("Đăng ký thành công:", res);
-      router.push({
-        pathname: "/auth/verify-otp",
-        params: { email },
-      });
+      navigation.navigate("verify-otp" , { email });
+
     } catch (err) {
       setShowFailModal(true);
     }
@@ -191,7 +189,7 @@ export default function SignUp() {
       {/* Login redirect */}
       <View className="flex-row justify-center">
         <Text className="text-gray-500">Bạn đã có tài khoản? </Text>
-        <Pressable onPress={() => router.push("/auth/login")}>
+        <Pressable onPress={() => navigation.navigate("login" as never)}>
           <Text className="text-orange-500 font-semibold">Đăng nhập</Text>
         </Pressable>
       </View>

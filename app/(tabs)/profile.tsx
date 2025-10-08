@@ -1,9 +1,9 @@
 import React from "react";
 import { View, Text, Pressable } from "react-native";
-import { useRouter } from "expo-router";
+import { useNavigation } from "@react-navigation/native";
 
 export default function Profile() {
-  const router = useRouter();
+  const navigation = useNavigation<any>();
   const isLoggedIn = false; // TODO: thay bằng context/state thực tế
 
   return (
@@ -19,7 +19,7 @@ export default function Profile() {
             Vui lòng đăng nhập để sử dụng chức năng này
           </Text>
           <Pressable
-            onPress={() => router.push("/auth/login")}
+            onPress={() => navigation.navigate("login" as never)}
             className="px-4 py-2 bg-blue-500 rounded-lg"
           >
             <Text className="text-white font-semibold">Đăng nhập</Text>

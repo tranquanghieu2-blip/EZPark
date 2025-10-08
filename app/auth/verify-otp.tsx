@@ -10,21 +10,30 @@ import {
   ActivityIndicator,
   Modal,
 } from "react-native";
-import { useRouter } from "expo-router";
+
 import GradientButton from "@/components/GradientButton";
 import { images } from "@/constants/images";
-import { useLocalSearchParams } from "expo-router";
+import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import usePost from "@/hooks/usePost";
 import { verifyOtp } from "@/service/api";
 
+// ✅ định nghĩa kiểu param
+type RootStackParamList = {
+  "verify-otp": { email: string };
+  login: undefined;
+};
+
+type VerifyOtpRouteProp = RouteProp<RootStackParamList, "verify-otp">;
 
 export default function VerifyOTP() {
-  const { email } = useLocalSearchParams<{ email: string }>();
+  const route = useRoute<VerifyOtpRouteProp>();
+  const navigation = useNavigation();
+  const { email } = route.params;
+
   useEffect(() => {
     console.log("Email nhận từ SignUp:", email);
   }, []);
 
-  const router = useRouter();
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
   const [timer, setTimer] = useState(60);
@@ -92,7 +101,7 @@ export default function VerifyOTP() {
     try {
       const res = await execute(email, code);
       console.log("Đăng ký thành công:", res);
-      router.push("/auth/login");
+      navigation.navigate("login" as never); // ✅ quay về login
     } catch (err) {
       setShowFailModal(true);
     }

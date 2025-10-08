@@ -18,7 +18,7 @@ import Colors from "@/constants/colors";
 import { icons } from "@/constants/icons";
 import { daNangRegion } from "@/constants/mapBounds";
 // ================= Modals =================
-import ConfirmParkingModal from "@/modals/ConfirmParkingRoutes";
+// import ConfirmParkingModal from "@/modals/ConfirmParkingRoutes";
 import FloodReportModal from "@/modals/FloodReportModal";
 import { HelpModalParkingSpot } from "@/modals/HelpModal";
 import ParkingSpotDetailModal from "../../modals/ParkingSpotModal";
@@ -195,7 +195,7 @@ const ParkingSpot = () => {
       />
 
       <MapView
-
+        provider={null as any} // ⚠️ Rất quan trọng: tắt Google provider để chỉ dùng tile
         ref={mapRef}
         style={styles.map}
         region={region}
@@ -367,10 +367,10 @@ const ParkingSpot = () => {
         route={selectedRoute}
         onClose={() => setSelectedRoute(null)}
       /> */}
-      <ConfirmParkingModal
+      {/* <ConfirmParkingModal
         route={selectedRoute}
         onClose={() => setSelectedRoute(null)}
-      />
+      /> */}
     </View>
 
   );

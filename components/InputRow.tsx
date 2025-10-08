@@ -1,5 +1,5 @@
  import GradientWrapper from "@/components/GradientWrapper";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons } from "@react-native-vector-icons/ionicons";
 import React from "react";
 import {
     Pressable,

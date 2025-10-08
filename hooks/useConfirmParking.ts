@@ -1,5 +1,5 @@
 // useConfirmParking.ts
-import * as Notifications from "expo-notifications";
+// import * as Notifications from "expo-notifications";
 import { useEffect, useRef, useState } from "react";
 import { useLocation } from "./useLocation"; // hook vị trí
 
@@ -68,7 +68,7 @@ export const useConfirmedParking = (opts?: { moveThresholdMeters?: number }) => 
     if (!ids || ids.length === 0) return;
     try {
       for (const id of ids) {
-        await Notifications.cancelScheduledNotificationAsync(id);
+        // await Notifications.cancelScheduledNotificationAsync(id);
       }
     } catch (e) {
       console.warn("Failed cancel scheduled notifications", e);
