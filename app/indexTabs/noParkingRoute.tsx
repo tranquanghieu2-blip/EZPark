@@ -1,8 +1,7 @@
 // ================= Thông dụng =================
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Image, StyleSheet, Text, View } from "react-native";
-import MapView from "react-native-map-clustering";
-import { Marker, Polyline, Region, UrlTile } from "react-native-maps";
+import MapboxGL from "@rnmapbox/maps";
 // ================= Components =================
 import CircleButton from "@/components/CircleButton";
 import { IconCrosshairs, IconQuestion } from "@/components/Icons";
@@ -29,31 +28,26 @@ import { isDayRestricted, isWithinTimeRange } from "@/utils/validation";
 import { HelpModalNoParkingRoute } from "@/modals/HelpModal";
 import NoParkingRouteModal from "@/modals/NoParkingRouteModal";
 
+// ================= Component =================
 const NoParkingRoute = () => {
   console.log("Render No Parking Route");
 
-  // ================= Khai báo các hook =================
-  const [region, setRegion] = useState<Region>(daNangRegion);
-  const [zoomLevel, setZoomLevel] = useState(20);
-  const mapRef = useRef<MapView | null>(null);
-
+  const [region, setRegion] = useState(daNangRegion);
+  const mapRef = useRef<MapboxGL.MapView>(null);
   const [showHelp, setShowHelp] = useState(false);
   const [selectedRoute, setSelectedRoute] = useState<NoParkingRoute | null>(null);
 
   const { signals } = useTraffic();
 
-  // Fetch No Parking Route
   const {
     data: noParkingRoutes,
     loading: noParkingRoutesLoad,
     error: noParkingRoutesError,
   } = useFetch<NoParkingRoute[]>(fetchNoParkingRoutes);
 
-  // Dùng service routing để tính toán geometry
   const [routesWithGeometry, setRoutesWithGeometry] = useState<NoParkingRoute[] | null>(null);
   useEffect(() => {
     if (!noParkingRoutes) return;
-
     const enrichGeometry = async () => {
       try {
         const updatedRoutes = await Promise.all(
@@ -83,34 +77,31 @@ const NoParkingRoute = () => {
     enrichGeometry();
   }, [noParkingRoutes]);
 
-  // Trigger thời gian cấm
   const [, forceUpdate] = useState(0);
   const triggerUpdate = useCallback(() => forceUpdate((x) => x + 1), []);
   useScheduleTimeTriggers(noParkingRoutes, triggerUpdate, "forbidden");
 
-  // Hàm tính zoom level
-  const getZoomLevel = (r: Region) => {
-    const angle = r.longitudeDelta;
-    return Math.round(Math.log(360 / angle) / Math.LN2);
-  };
-
-  // Xử lý khi thay đổi region (nhưng không controlled map)
-  const handleRegionChange = (r: Region) => {
-    const minDelta = 0.001;
-    const clamped = {
-      ...r,
-      latitudeDelta: Math.max(r.latitudeDelta, minDelta),
-      longitudeDelta: Math.max(r.longitudeDelta, minDelta),
-    };
-    setRegion(clamped); // update để clustering re-render
-    setZoomLevel(getZoomLevel(clamped));
+  // Khi bản đồ thay đổi
+  const onRegionDidChange = async () => {
+    try {
+      const center = await mapRef.current?.getCenter();
+      if (center) {
+        setRegion({
+          ...region,
+          latitude: center[1],
+          longitude: center[0],
+        });
+      }
+    } catch (error) {
+      console.warn("Không thể lấy tâm bản đồ:", error);
+    }
   };
 
   return (
     <View style={styles.container}>
-      
       <SearchBar placeholder="Tìm bãi đỗ xe..." />
 
+      {/* Nút chức năng */}
       <View className="absolute right-4 bottom-10 z-20 flex-col space-y-4 gap-2">
         <CircleButton
           icon={<IconQuestion size={20} color={Colors.blue_button} />}
@@ -121,62 +112,35 @@ const NoParkingRoute = () => {
           icon={<IconCrosshairs size={20} color={Colors.blue_button} />}
           bgColor="#fff"
           onPress={() => {
-            // ví dụ: focus về Đà Nẵng
-            // mapRef.current?.animateToRegion(daNangRegion, 500);
+            // Focus về Đà Nẵng
           }}
         />
       </View>
 
+      {/* Modal hướng dẫn */}
       <HelpModalNoParkingRoute
         visible={showHelp}
         onClose={() => setShowHelp(false)}
       />
 
-      <MapView
-        provider={null as any} // ⚠️ Rất quan trọng: tắt Google provider để chỉ dùng tile
+      {/* Mapbox map */}
+      <MapboxGL.MapView
         ref={mapRef}
-        style={{ flex: 1 }}
-        initialRegion={daNangRegion} // chỉ dùng initialRegion
-        onRegionChangeComplete={handleRegionChange} // không loop render
-        
-        renderCluster={(cluster) => {
-          const { id, geometry, onPress, properties } = cluster;
-          const pointCount = properties.point_count;
-          return (
-            
-            <Marker
-              key={`cluster-${id}`}
-              coordinate={{
-                latitude: geometry.coordinates[1],
-                longitude: geometry.coordinates[0],
-              }}
-              onPress={onPress}
-              tracksViewChanges={false}
-            >
-              <View
-                style={{
-                  width: 25,
-                  height: 25,
-                  borderRadius: 15,
-                  backgroundColor: "#6a2121ff",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  borderWidth: 3,
-                  borderColor: "white",
-                }}
-              >
-                <Text style={{ color: "white", fontWeight: "medium" }}>
-                  {pointCount}
-                </Text>
-              </View>
-            </Marker>
-          );
-        }}
-        
+        style={styles.map}
+        styleURL={MapboxGL.StyleURL.Street}
+        compassEnabled
+        zoomEnabled
+        onRegionDidChange={onRegionDidChange}
       >
+        <MapboxGL.Camera
+          centerCoordinate={[region.longitude, region.latitude]}
+          zoomLevel={15}
+        />
 
-        {/* OSM tiles */}
-        <UrlTile urlTemplate="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" maximumZ={15} />
+        {/* GPS user location */}
+        <MapboxGL.UserLocation visible={true} />
+
+        {/* Hiển thị các tuyến đường cấm đỗ */}
         {clusterPolylines(
           routesWithGeometry || [],
           region,
@@ -189,44 +153,48 @@ const NoParkingRoute = () => {
           if (!isWithinTimeRange(now, route.time_range)) return null;
 
           const style = getPolylineStyleOfRoute(route);
-          const coordinates = route.route.coordinates.map(([lon, lat]) => ({
-            latitude: lat,
-            longitude: lon,
-          }));
+          const coords = route.route.coordinates.map(([lon, lat]) => [lon, lat]);
 
           return (
-            <Polyline
-              key={route.no_parking_route_id}
-              coordinates={coordinates}
-              strokeWidth={style.strokeWidth}
-              strokeColor={style.strokeColor}
-              tappable
-              onPress={() => {
-                console.log("Polyline được click:", route.no_parking_route_id);
-                setSelectedRoute(route);
+            <MapboxGL.ShapeSource
+              key={`route-${route.no_parking_route_id}`}
+              id={`route-${route.no_parking_route_id}`}
+              shape={{
+                type: "Feature",
+                geometry: { type: "LineString", coordinates: coords },
+                properties: {}, // ✅ Bắt buộc có, dù trống
               }}
-            />
+
+            >
+              <MapboxGL.LineLayer
+                id={`line-${route.no_parking_route_id}`}
+                style={{
+                  lineColor: style.strokeColor,
+                  lineWidth: style.strokeWidth,
+                }}
+
+              />
+            </MapboxGL.ShapeSource>
           );
         })}
+
+        {/* Marker đèn giao thông */}
         {signals?.map((s, i) => (
-          <Marker
+          <MapboxGL.PointAnnotation
             key={`signal-${s.id ?? i}`}
-            coordinate={{ latitude: s.lat, longitude: s.lon }}
-            title="Đèn giao thông"
+            id={`signal-${s.id ?? i}`}
+            coordinate={[s.lon, s.lat]}
           >
             <Image
               source={icons.trafficLights}
-              style={{
-                width: 30,
-                height: 30,
-              }}
+              style={{ width: 30, height: 30 }}
               resizeMode="contain"
             />
-          </Marker>
+          </MapboxGL.PointAnnotation>
         ))}
+      </MapboxGL.MapView>
 
-      </MapView>
-
+      {/* Loading + Error */}
       {noParkingRoutesLoad && (
         <ActivityIndicator
           size="large"
@@ -234,19 +202,17 @@ const NoParkingRoute = () => {
           className="absolute top-32 self-center z-20"
         />
       )}
-
-      {noParkingRoutesError ? (
+      {noParkingRoutesError && (
         <Text className="absolute bottom-10 self-center z-20 text-red-600 bg-white/90 px-3 py-1 rounded-lg font-medium">
           Không thể tải dữ liệu tuyến đường cấm đỗ xe
         </Text>
-      ) : null}
+      )}
 
       <NoParkingRouteModal
         route={selectedRoute}
         onClose={() => setSelectedRoute(null)}
       />
     </View>
-    
   );
 };
 

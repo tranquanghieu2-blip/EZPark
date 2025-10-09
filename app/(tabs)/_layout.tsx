@@ -43,6 +43,7 @@ const _Layout = () => {
     <Tab.Navigator
       screenOptions={
         {
+          headerShown: false, // 👈 thêm dòng này để ẩn chữ "index"
           tabBarShowLabel: false,
           animation: "shift",
           tabBarItemStyle: {
