@@ -149,7 +149,7 @@ const ParkingSpot = () => {
     <View style={styles.container}>
       {/* Thanh tìm kiếm */}
       <SearchBar
-        placeholder="Tìm bãi đỗ xe..1231231232asdasdsacheck 131."
+        placeholder="Tìm bãi đỗ xe..."
         onPress={() => {
           navigation.navigate("SearchParkingSpot");
         }}
