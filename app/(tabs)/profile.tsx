@@ -19,7 +19,7 @@ export default function Profile() {
             Vui lòng đăng nhập để sử dụng chức năng này
           </Text>
           <Pressable
-            onPress={() => navigation.navigate("login" as never)}
+            onPress={() => navigation.navigate("auth", { screen: "login" })}
             className="px-4 py-2 bg-blue-500 rounded-lg"
           >
             <Text className="text-white font-semibold">Đăng nhập</Text>

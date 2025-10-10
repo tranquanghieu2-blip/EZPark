@@ -8,8 +8,8 @@ import {
   View,
   PermissionsAndroid,
   Platform,
-} from 'react-native';
-import MapboxGL from '@rnmapbox/maps';
+} from "react-native";
+import MapboxGL, { UserLocation } from "@rnmapbox/maps";
 // ================= Components =================
 import CircleButton from '@/components/CircleButton';
 import { IconCrosshairs, IconQuestion, IconRain } from '@/components/Icons';
@@ -33,8 +33,10 @@ import {
   fetchParkingSpots,
 } from '../../service/api';
 // ================= Utils =================
-import { clusterPolylines } from '@/utils/clusterPolylines';
-import { isDayRestricted, isWithinTimeRange } from '@/utils/validation';
+import { clusterPolylines } from "@/utils/clusterPolylines";
+import { isDayRestricted, isWithinTimeRange } from "@/utils/validation";
+
+MapboxGL.setAccessToken("sk.eyJ1IjoiaGlldWRldiIsImEiOiJjbWdpdjdsenAwYzA3MmpyNGNuOWR6czM0In0.v4WG4w0POwNCmA1UjDNAOQ");
 
 // ================= Component =================
 const ParkingSpot = () => {
@@ -42,7 +44,7 @@ const ParkingSpot = () => {
 
   const mapRef = useRef<MapboxGL.MapView>(null);
   const cameraRef = useRef<MapboxGL.Camera>(null);
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
 
   const [region, setRegion] = useState(daNangRegion);
   // const [zoomLevel, setZoomLevel] = useState(15);
@@ -148,7 +150,10 @@ const ParkingSpot = () => {
       {/* Thanh tìm kiếm */}
       <SearchBar
         placeholder="Tìm bãi đỗ xe..."
-        onPress={() => navigation.navigate('SearchParkingSpot' as never)}
+        onPress={() => {
+          navigation.navigate("SearchParkingSpot");
+        }}
+
       />
 
       {/* Nút nổi */}
@@ -249,7 +254,6 @@ const ParkingSpot = () => {
         {/* No Parking Routes */}
         {clusterPolylines(
           noParkingRoutes || [],
-          region,
           region.longitudeDelta / 5,
         ).map(route => {
           const now = new Date();

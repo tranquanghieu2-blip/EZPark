@@ -52,6 +52,7 @@ function TabNavigator() {
             ),
           }}
         />
+      
       </TopTab.Navigator>
     </View>
   );

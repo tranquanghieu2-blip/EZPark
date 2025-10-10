@@ -13,14 +13,12 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import {
   ActivityIndicator,
   Image,
-  KeyboardAvoidingView,
-  Platform,
   Pressable,
-  ScrollView,
   Text,
   TextInput,
   View
 } from "react-native";
+import { InputRow } from "@/components/InputRow";
 
 export default function SignUp() {
   const navigation = useNavigation<any>();

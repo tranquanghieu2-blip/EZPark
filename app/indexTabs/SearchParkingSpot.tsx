@@ -1,11 +1,3 @@
-import { IconDistance, IconFilter, IconStar, IconParkingSpotType } from "@/components/Icons";
-import Colors from "@/constants/colors";
-import { images } from "@/constants/images";
-import { useDebounce } from "@/hooks/useDebounce";
-import { useSearchParking } from "@/hooks/useSearchParking";
-import FilterModal from "@/modals/FilterModal";
-import { DEFAULT_TAB_BAR_STYLE } from "@/utils/tabBarStyle";
-import { useNavigation } from "@react-navigation/native";
 import React, { useEffect, useLayoutEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -20,12 +12,33 @@ import {
   Keyboard,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useNavigation, useRoute } from "@react-navigation/native";
+
+import { IconDistance, IconFilter, IconStar, IconParkingSpotType } from "@/components/Icons";
 import GradientButton from "@/components/GradientButton";
+import FilterModal from "@/modals/FilterModal";
+import Colors from "@/constants/colors";
+import { images } from "@/constants/images";
+import { useDebounce } from "@/hooks/useDebounce";
+import { useSearchParking } from "@/hooks/useSearchParking";
+import { DEFAULT_TAB_BAR_STYLE } from "@/utils/tabBarStyle";
+import { usePeriodicMapboxLocation } from "@/hooks/usePeriodicMapboxLocation";
+
+type SearchParkingSpotRouteParams = {
+  center: {
+    latitude: number;
+    longitude: number;
+  };
+};
 
 const SearchParkingSpot = () => {
   const navigation = useNavigation();
+  const route = useRoute();
+  const location = usePeriodicMapboxLocation(5000); // ⏱ lấy tọa độ mỗi 5s
+
 
   useLayoutEffect(() => {
+    // Ẩn bottom tab khi vào màn search
     navigation.getParent()?.setOptions({
       tabBarStyle: { display: "none" },
     });
@@ -39,8 +52,9 @@ const SearchParkingSpot = () => {
   const [query, setQuery] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
-
   const debouncedQuery = useDebounce(query, 500);
+
+  // Dùng hook tìm kiếm (đã bỏ useLocation)
   const { spots, loading, fetchSpots, resetSearch, hasMore } = useSearchParking();
 
   const [loadingMore, setLoadingMore] = useState(false);
@@ -61,35 +75,45 @@ const SearchParkingSpot = () => {
     parkingType: undefined,
   });
 
-  // Search khi query hoặc filter thay đổi
+  // 🔍 Tự động tìm khi query hoặc filter thay đổi
   useEffect(() => {
+    if (!location) {
+      console.log("⚠️ Chưa có vị trí người dùng, chưa thể tìm kiếm...");
+      return;
+    }
+
     if (debouncedQuery.trim()) {
       fetchSpots(
         debouncedQuery,
         true,
-        filters.parkingType ? typeLabel2[filters.parkingType] : undefined
+        filters.parkingType ? typeLabel2[filters.parkingType] : undefined,
+        location // ✅ truyền vào đây
       );
     } else {
       resetSearch();
     }
-  }, [debouncedQuery, filters]);
+  }, [debouncedQuery, filters, location]);
 
   const handleLoadMore = async () => {
+    if (!location) return;
     setLoadingMore(true);
     await fetchSpots(
       debouncedQuery,
       false,
-      filters.parkingType ? typeLabel2[filters.parkingType] : undefined
+      filters.parkingType ? typeLabel2[filters.parkingType] : undefined,
+      location
     );
     setLoadingMore(false);
   };
 
   const handleReset = async () => {
+    if (!location) return;
     setLoadingReset(true);
     await fetchSpots(
       debouncedQuery,
       true,
-      filters.parkingType ? typeLabel2[filters.parkingType] : undefined
+      filters.parkingType ? typeLabel2[filters.parkingType] : undefined,
+      location
     );
     setLoadingReset(false);
   };
@@ -153,7 +177,6 @@ const SearchParkingSpot = () => {
 
                   {/* Distance + Rating + Type */}
                   <View className="flex-row items-center mt-1">
-                    {/* Distance */}
                     <View className="flex-row items-center">
                       <IconDistance size={20} color={Colors.blue_button} />
                       <Text className="ml-1 text-sm text-gray-500">
@@ -161,20 +184,16 @@ const SearchParkingSpot = () => {
                       </Text>
                     </View>
 
-                    {/* Divider */}
                     <View className="w-[2px] h-4 bg-gray-300 mx-4 rounded-full" />
 
-                    {/* Rating */}
                     <View className="flex-row items-center gap-1">
                       <Text className="text-sm font-medium text-gray-700">4.8</Text>
                       <IconStar size={18} color={Colors.star} />
                       <Text className="text-sm text-gray-500">(1024)</Text>
                     </View>
 
-                    {/* Divider */}
                     <View className="w-[2px] h-4 bg-gray-300 mx-4 rounded-full" />
 
-                    {/* Type */}
                     <View className="flex-row items-center">
                       <IconParkingSpotType size={20} color={Colors.blue_button} />
                       <Text className="ml-1 text-sm text-gray-500">{typeLabel[item.type]}</Text>
@@ -194,8 +213,6 @@ const SearchParkingSpot = () => {
                 </Text>
               </View>
             }
-
-
             ListHeaderComponent={
               spots.length > 0 ? (
                 <View className="flex-row justify-between mb-2">
@@ -211,12 +228,10 @@ const SearchParkingSpot = () => {
             ListFooterComponent={
               spots.length > 0 ? (
                 <View className="mt-4 pb-6 flex-shrink-0">
-                  {/* Nút rút gọn */}
-                  {spots.length > 5 && (
-                    loadingReset ? (
+                  {spots.length > 5 &&
+                    (loadingReset ? (
                       <ActivityIndicator />
                     ) : (
-                      // Khi không loading: show nút Rút gọn
                       <TouchableOpacity
                         className="mb-3 bg-gray-200 rounded-lg h-[45px] justify-center items-center"
                         onPress={handleReset}
@@ -224,11 +239,8 @@ const SearchParkingSpot = () => {
                       >
                         <Text className="text-black font-medium">Rút gọn</Text>
                       </TouchableOpacity>
-                    )
-                  )}
+                    ))}
 
-
-                  {/* Nút load thêm */}
                   {hasMore && (
                     <View className="h-[45px] justify-center">
                       {loadingMore ? (
@@ -247,7 +259,6 @@ const SearchParkingSpot = () => {
                 </View>
               ) : null
             }
-
           />
         )}
 
@@ -260,16 +271,19 @@ const SearchParkingSpot = () => {
               criteria: selectedFilters.criteria,
               parkingType: selectedFilters.parkingType || undefined,
             });
+            if (!location) return;
             fetchSpots(
               debouncedQuery,
               true,
-              selectedFilters.parkingType ? typeLabel2[selectedFilters.parkingType] : undefined
+              selectedFilters.parkingType
+                ? typeLabel2[selectedFilters.parkingType]
+                : undefined,
+              location
             );
           }}
         />
-      </SafeAreaView >
+      </SafeAreaView>
     </TouchableWithoutFeedback>
-
   );
 };
 
