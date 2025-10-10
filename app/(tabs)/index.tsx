@@ -4,7 +4,7 @@ import { createStackNavigator } from "@react-navigation/stack";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 import colors from "@/constants/colors";
 
-import ParkingSpot from "../indexTabs/parkingSpot";
+import ParkingSpot from "../indexTabs/parkingSpot1";
 import NoParkingRoute from "../indexTabs/noParkingRoute";
 import SearchParkingSpot from "../indexTabs/SearchParkingSpot";
 
@@ -36,6 +36,7 @@ function TabNavigator() {
           name="ParkingSpot"
           component={ParkingSpot}
           options={{
+            swipeEnabled: false,
             tabBarLabel: ({ focused }) => (
               <CustomTabLabel title="Điểm đỗ xe" focused={focused} />
             ),
@@ -45,6 +46,7 @@ function TabNavigator() {
           name="NoParkingRoute"
           component={NoParkingRoute}
           options={{
+            swipeEnabled: false,
             tabBarLabel: ({ focused }) => (
               <CustomTabLabel title="Cấm đỗ xe" focused={focused} />
             ),

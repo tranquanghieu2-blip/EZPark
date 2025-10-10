@@ -13,7 +13,6 @@ import { daNangRegion } from "@/constants/mapBounds";
 // ================= Custom hooks =================
 import useFetch from "@/hooks/useFetch";
 import { useScheduleTimeTriggers } from "@/hooks/useScheduleTimeTriggers";
-import { useTraffic } from "@/hooks/useTraffic";
 // ================= Services =================
 import {
   fetchNoParkingRoutes,
@@ -36,8 +35,6 @@ const NoParkingRoute = () => {
   const mapRef = useRef<MapboxGL.MapView>(null);
   const [showHelp, setShowHelp] = useState(false);
   const [selectedRoute, setSelectedRoute] = useState<NoParkingRoute | null>(null);
-
-  const { signals } = useTraffic();
 
   const {
     data: noParkingRoutes,
@@ -179,7 +176,7 @@ const NoParkingRoute = () => {
         })}
 
         {/* Marker đèn giao thông */}
-        {signals?.map((s, i) => (
+        {/* {signals?.map((s, i) => (
           <MapboxGL.PointAnnotation
             key={`signal-${s.id ?? i}`}
             id={`signal-${s.id ?? i}`}
@@ -191,7 +188,7 @@ const NoParkingRoute = () => {
               resizeMode="contain"
             />
           </MapboxGL.PointAnnotation>
-        ))}
+        ))} */}
       </MapboxGL.MapView>
 
       {/* Loading + Error */}

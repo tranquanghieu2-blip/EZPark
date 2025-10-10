@@ -22,6 +22,7 @@ import { daNangRegion } from '@/constants/mapBounds';
 import FloodReportModal from '@/modals/FloodReportModal';
 import { HelpModalParkingSpot } from '@/modals/HelpModal';
 import ParkingSpotDetailModal from '../../modals/ParkingSpotModal';
+
 // ================= Custom hooks =================
 import { useScheduleTimeTriggers } from '@/hooks/useScheduleTimeTriggers';
 import { useNavigation } from '@react-navigation/native';
@@ -40,12 +41,12 @@ import { isDayRestricted, isWithinTimeRange } from '@/utils/validation';
 const ParkingSpot = () => {
   console.log('Render Parking Spot');
 
-  const mapRef = useRef<MapboxGL.MapView>(null);
+  // Đầu file, thêm hoặc sửa khai báo ref
+  const shapeSourceRef = useRef<MapboxGL.ShapeSource>(null);
   const cameraRef = useRef<MapboxGL.Camera>(null);
   const navigation = useNavigation();
-
+  const mapRef = useRef<MapboxGL.MapView>(null);
   const [region, setRegion] = useState(daNangRegion);
-  // const [zoomLevel, setZoomLevel] = useState(15);
   const [userLocation, setUserLocation] = useState<{
     latitude: number;
     longitude: number;
@@ -105,11 +106,8 @@ const ParkingSpot = () => {
   ]);
 
   // === Fetch no-parking routes ===
-  const {
-    data: noParkingRoutes,
-    loading: noParkingRoutesLoad,
-    error: noParkingRoutesError,
-  } = useFetch<NoParkingRoute[]>(fetchNoParkingRoutes);
+  const { data: noParkingRoutes } =
+    useFetch<NoParkingRoute[]>(fetchNoParkingRoutes);
 
   // === Trigger time updates ===
   const [, forceUpdate] = useState(0);
@@ -141,6 +139,22 @@ const ParkingSpot = () => {
         longitude: coords.longitude,
       });
     }
+  };
+
+  // === Tạo dữ liệu GeoJSON cho clustering ===
+  const parkingGeoJSON = {
+    type: 'FeatureCollection',
+    features:
+      parkingSpots?.map(spot => ({
+        type: 'Feature',
+        geometry: {
+          type: 'Point',
+          coordinates: [spot.longitude, spot.latitude],
+        },
+        properties: {
+          id: spot.parking_spot_id,
+        },
+      })) || [],
   };
 
   return (
@@ -191,60 +205,153 @@ const ParkingSpot = () => {
         ref={mapRef}
         style={styles.map}
         styleURL={MapboxGL.StyleURL.Street}
+        onRegionDidChange={onRegionDidChange}
+        compassEnabled={true}
+        logoEnabled={false}
+        zoomEnabled={true}
+        scrollEnabled={true}
+        pitchEnabled={true}
       >
         <MapboxGL.Camera
           ref={cameraRef}
           defaultSettings={{
-            centerCoordinate: [daNangRegion.longitude, daNangRegion.latitude],
-            zoomLevel: 10,
+            bounds: {
+              ne: [108.35, 16.15],
+              sw: [107.95, 15.85],
+            },
           }}
+          zoomLevel={10}
         />
 
-        {/* Hiển thị vị trí người dùng */}
+        {/* Vị trí người dùng */}
         <MapboxGL.UserLocation
           visible={true}
           showsUserHeadingIndicator={true}
           onUpdate={handleUserLocationUpdate}
         />
 
-        {/* Đường đi từ modal (Polyline) */}
-        {routeCoords.length > 0 && (
+        {/* === Parking Spot Clustering === */}
+        {parkingSpots && (
           <MapboxGL.ShapeSource
-            id="route-line"
+            ref={shapeSourceRef}
+            id="parkingSpots"
             shape={{
-              type: 'Feature',
-              geometry: {
-                type: 'LineString',
-                coordinates: routeCoords.map(c => [c.longitude, c.latitude]),
-              },
-              properties: {},
+              type: 'FeatureCollection',
+              features: parkingSpots.map(spot => ({
+                type: 'Feature',
+                geometry: {
+                  type: 'Point',
+                  coordinates: [spot.longitude, spot.latitude],
+                },
+                properties: {
+                  id: spot.parking_spot_id,
+                  latitude: spot.latitude,
+                  longitude: spot.longitude,
+                },
+                ...spot,
+              })),
+            }}
+            cluster={true}
+            clusterRadius={40}
+            onPress={async e => {
+              const feature = e.features?.[0];
+              if (!feature || !feature.properties) return;
+
+              const isCluster = !!feature.properties.cluster_id;
+
+              if (isCluster) {
+                const clusterId = feature.properties.cluster_id;
+                console.log('Clicked cluster with ID:', clusterId);
+
+                if (!shapeSourceRef.current) {
+                  console.log('ShapeSource ref not available');
+                  return;
+                }
+
+                if (feature.geometry && 'coordinates' in feature.geometry) {
+                  const coordinates = feature.geometry.coordinates as [
+                    number,
+                    number,
+                  ];
+
+                  try {
+                    // Thử với một zoom level cố định trước
+                    const currentZoom = await mapRef.current?.getZoom();
+                    const newZoom = currentZoom ? currentZoom + 2 : 15; // Zoom in thêm 2 level
+
+                    if (cameraRef.current) {
+                      // await cameraRef.current.flyTo(coordinates, 500);
+                      // await cameraRef.current.zoomTo(newZoom, 500);
+                      cameraRef.current.setCamera({
+                        centerCoordinate: coordinates,
+                        zoomLevel: newZoom,
+                        animationDuration: 500,
+                      });
+                    }
+                  } catch (error) {
+                    console.error('Error during camera movement:', error);
+                    // Fallback: zoom to a fixed level
+                    // if (cameraRef.current) {
+                    //   cameraRef.current.flyTo(coordinates, 500);
+                    //   cameraRef.current.zoomTo(15, 500);
+                    // }
+                    if (cameraRef.current) {
+                      cameraRef.current.setCamera({
+                        centerCoordinate: coordinates,
+                        zoomLevel: 15,
+                        animationDuration: 500,
+                      });
+                    }
+                  }
+                }
+              } else {
+                const spotData = feature.properties;
+                setSelectedId(spotData.id);
+                setShowDetail(true);
+              }
             }}
           >
-            <MapboxGL.LineLayer
-              id="route-layer"
-              style={{ lineColor: '#1a4349ff', lineWidth: 6 }}
+            {/* ảnh icon */}
+            <MapboxGL.Images images={{ parkingIcon: icons.iconParkingSpot }} />
+
+            {/* Marker riêng lẻ */}
+            <MapboxGL.SymbolLayer
+              id="unclustered-point"
+              filter={['!', ['has', 'point_count']]}
+              style={{
+                iconImage: 'parkingIcon',
+                iconSize: 0.5,
+                iconAllowOverlap: true,
+              }}
+            />
+
+            {/* Cluster tròn */}
+            <MapboxGL.CircleLayer
+              id="clustered-points"
+              filter={['has', 'point_count']}
+              style={{
+                circleColor: '#1f80c0ff',
+                circleRadius: 12,
+                circleOpacity: 0.9,
+                circleStrokeColor: '#000000ff',
+                circleStrokeWidth: 1,
+                circleStrokeOpacity: 1,
+              }}
+            />
+
+            {/* Số lượng cluster */}
+            <MapboxGL.SymbolLayer
+              id="cluster-count"
+              filter={['has', 'point_count']}
+              style={{
+                textField: ['get', 'point_count'],
+                textSize: 12,
+                textColor: '#fff',
+                textFont: ['Open Sans Bold', 'Arial Unicode MS Bold'],
+              }}
             />
           </MapboxGL.ShapeSource>
         )}
-
-        {/* Parking Spots */}
-        {parkingSpots?.map(spot => (
-          <MapboxGL.PointAnnotation
-            key={`spot-${spot.parking_spot_id}`}
-            id={`spot-${spot.parking_spot_id}`}
-            coordinate={[spot.longitude, spot.latitude]}
-            onSelected={() => {
-              setSelectedId(spot.parking_spot_id);
-              setShowDetail(true);
-            }}
-          >
-            <Image
-              source={icons.iconParkingSpot}
-              style={{ width: 35, height: 35 }}
-              resizeMode="contain"
-            />
-          </MapboxGL.PointAnnotation>
-        ))}
 
         {/* No Parking Routes */}
         {clusterPolylines(
@@ -256,12 +363,10 @@ const ParkingSpot = () => {
           if (isDayRestricted(now, route.days_restricted)) {
             if (isWithinTimeRange(now, route.time_range)) return null;
           }
-
           const coords = route.route.coordinates.map(([lon, lat]) => [
             lon,
             lat,
           ]);
-
           return (
             <MapboxGL.ShapeSource
               key={`npr-${route.no_parking_route_id}`}
@@ -269,7 +374,18 @@ const ParkingSpot = () => {
               shape={{
                 type: 'Feature',
                 geometry: { type: 'LineString', coordinates: coords },
-                properties: {},
+                properties: {
+                  routeId: route.no_parking_route_id, 
+                },
+              }}
+              onPress={e => {
+                const feature = e.features?.[0];
+                const spotData = feature?.properties;
+
+                if (!spotData) return;
+
+                setSelectedRoute(spotData.id);
+                setShowDetail(true);
               }}
             >
               <MapboxGL.LineLayer
@@ -315,6 +431,10 @@ const ParkingSpot = () => {
           setShowReport(false);
         }}
       />
+      {/* <ConfirmParkingRoutes
+        route={selectedRoute}
+        onClose={() => setSelectedRoute(null)}
+      /> */}
     </View>
   );
 };
