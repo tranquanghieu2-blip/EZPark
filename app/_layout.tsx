@@ -5,7 +5,6 @@ import AuthLayout from "@/app/auth/_layout";
 import _Layout from "@/app/(tabs)/_layout";
 import "@/config/mapBoxConfig";
 
-
 import "../global.css";
 
 const Stack = createNativeStackNavigator();
@@ -13,10 +12,11 @@ const Stack = createNativeStackNavigator();
 export default function RootLayout() {
   return (
     <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        {/* Tabs (Main App) */}
+      <Stack.Navigator screenOptions={{ 
+        headerShown: false, 
+        gestureEnabled: false  // Cấu hình này đã có sẵn và sẽ tắt tính năng vuốt ngang
+      }}>
         <Stack.Screen name="(tabs)" component={_Layout} />
-        {/* Auth screens */}
         <Stack.Screen name="auth" component={AuthLayout} />
       </Stack.Navigator>
     </NavigationContainer>
