@@ -356,7 +356,6 @@ const ParkingSpot = () => {
         {/* No Parking Routes */}
         {clusterPolylines(
           noParkingRoutes || [],
-          region,
           region.longitudeDelta / 5,
         ).map(route => {
           const now = new Date();
