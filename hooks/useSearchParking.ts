@@ -1,10 +1,8 @@
 import { useState } from "react";
 import { searchParkingSpot } from "@/service/api";
 import { calculateDistance } from "@/utils/distance";
-import { useLocation } from "@/hooks/useLocation";
 
 export const useSearchParking = () => {
-  const { location } = useLocation();
   const [spots, setSpots] = useState<SearchParkingSpot[]>([]);
   const [loading, setLoading] = useState(false);
   const [offset, setOffset] = useState(0);
@@ -12,27 +10,39 @@ export const useSearchParking = () => {
 
   const limit = 5;
 
-  const fetchSpots = async (query: string, reset = false, typeParkingSpot ?: string) => {
-    if (!query.trim() || !location) return;
+  /**
+   * @param query Tên bãi đỗ xe muốn tìm
+   * @param reset Có reset danh sách không
+   * @param typeParkingSpot Loại bãi đỗ (nếu có)
+   * @param coords Vị trí hiện tại { latitude, longitude }
+   */
+  const fetchSpots = async (
+    query: string,
+    reset = false,
+    typeParkingSpot?: string,
+    coords?: { latitude: number; longitude: number }
+  ) => {
+    if (!query.trim() || !coords) return;
 
     try {
       setLoading(true);
+
       const data = await searchParkingSpot({
         nameParking: query,
-        latitude: location.latitude,
-        longitude: location.longitude,
-        page: 1, // page mặc định
+        latitude: coords.latitude,
+        longitude: coords.longitude,
+        page: 1,
         limit,
         offset: reset ? 0 : offset,
         type: typeParkingSpot,
       });
 
-      // enrich thêm distance
+      // 🔹 Tính khoảng cách đến từng bãi đỗ
       const enriched = data.map((item: SearchParkingSpot) => ({
         ...item,
         distance: calculateDistance(
-          location.latitude,
-          location.longitude,
+          coords.latitude,
+          coords.longitude,
           item.latitude,
           item.longitude
         ),
@@ -46,7 +56,6 @@ export const useSearchParking = () => {
         setOffset((prev) => prev + limit);
       }
 
-      // nếu ít hơn limit thì coi như hết dữ liệu
       setHasMore(data.length === limit);
     } catch (err) {
       console.error("Search error:", err);

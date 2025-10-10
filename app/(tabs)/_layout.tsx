@@ -22,11 +22,11 @@ const TabIcon = ({ focused, icon: Icon, title }: any) => {
       <ImageBackground
         source={images.bottomNavItem}
         className='flex flex-row w-full flex-1 min-w-[112px]
-                min-h-[50px] mt-10 gap-2 justify-center items-center rounded-full overflow-hidden'
+                min-h-[50px] mt-10 gap-2 px-1 justify-center items-center rounded-full overflow-hidden'
       >
 
-        <Icon size={20} color={color} className='ml-5' />
-        <Text className='text-secondary text-lg font-semibold mr-5'>{title}</Text>
+        <Icon size={20} color={color} className='' />
+        <Text className='text-secondary text-lg font-semibold'>{title}</Text>
       </ImageBackground>
     );
   }
