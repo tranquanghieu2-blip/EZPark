@@ -1,5 +1,5 @@
-// useConfirmParking.ts
-// import * as Notifications from "expo-notifications";
+// useConfirmParking.ts (đã sửa cho React Native CLI)
+import PushNotification from "react-native-push-notification";
 import { useEffect, useRef, useState } from "react";
 import { useLocation } from "./useLocation"; // hook vị trí
 
@@ -63,19 +63,19 @@ export const useConfirmedParking = (opts?: { moveThresholdMeters?: number }) => 
   const [confirmed, setConfirmed] = useState<ConfirmedState | null>(null);
   const endTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // helper: cancel scheduled notifications by id
-  const cancelScheduledNotifications = async (ids?: string[]) => {
-    if (!ids || ids.length === 0) return;
+  /** Huỷ thông báo đã lên lịch */
+  const cancelScheduledNotifications = (ids?: string[]) => {
+    if (!ids?.length) return;
     try {
-      for (const id of ids) {
-        // await Notifications.cancelScheduledNotificationAsync(id);
-      }
+      ids.forEach((id) => {
+        PushNotification.cancelLocalNotification(id);
+      });
     } catch (e) {
-      console.warn("Failed cancel scheduled notifications", e);
+      console.warn("Failed to cancel notifications", e);
     }
   };
 
-  // Confirm a route
+  /** Xác nhận bãi đỗ */
   const confirmRoute = async (params: {
     routeId: number;
     street?: string;
@@ -84,10 +84,12 @@ export const useConfirmedParking = (opts?: { moveThresholdMeters?: number }) => 
     endTime?: Date | null;
     scheduledNotificationIds?: string[];
   }) => {
+    // Nếu có thông báo cũ → huỷ
     if (confirmed?.scheduledNotificationIds?.length) {
-      await cancelScheduledNotifications(confirmed.scheduledNotificationIds);
+      cancelScheduledNotifications(confirmed.scheduledNotificationIds);
     }
 
+    // Cập nhật trạng thái xác nhận
     setConfirmed({
       routeId: params.routeId,
       street: params.street,
@@ -98,10 +100,8 @@ export const useConfirmedParking = (opts?: { moveThresholdMeters?: number }) => 
       scheduledNotificationIds: params.scheduledNotificationIds ?? [],
     });
 
-    if (endTimerRef.current) {
-      clearTimeout(endTimerRef.current);
-      endTimerRef.current = null;
-    }
+    // Hẹn giờ tự clear khi hết hạn
+    if (endTimerRef.current) clearTimeout(endTimerRef.current);
     if (params.endTime) {
       const ms = params.endTime.getTime() - Date.now();
       if (ms > 0) {
@@ -112,10 +112,10 @@ export const useConfirmedParking = (opts?: { moveThresholdMeters?: number }) => 
     }
   };
 
-  // Clear confirmed
+  /** Clear xác nhận */
   const clearConfirmed = async () => {
     if (!confirmed) return;
-    await cancelScheduledNotifications(confirmed.scheduledNotificationIds);
+    cancelScheduledNotifications(confirmed.scheduledNotificationIds);
     setConfirmed(null);
     if (endTimerRef.current) {
       clearTimeout(endTimerRef.current);
@@ -123,7 +123,7 @@ export const useConfirmedParking = (opts?: { moveThresholdMeters?: number }) => 
     }
   };
 
-  // Effect: watch for movement
+  /** Theo dõi di chuyển người dùng */
   useEffect(() => {
     if (!confirmed || !location) return;
 
@@ -135,13 +135,14 @@ export const useConfirmedParking = (opts?: { moveThresholdMeters?: number }) => 
         location.longitude
       );
       if (d >= moveThreshold) {
-        clearConfirmed().catch((e) => console.warn("clearConfirmed error", e));
+        clearConfirmed();
       }
     } catch (e) {
       console.warn("Distance check error", e);
     }
   }, [location, confirmed]);
 
+  /** Cleanup khi unmount */
   useEffect(() => {
     return () => {
       if (endTimerRef.current) clearTimeout(endTimerRef.current);

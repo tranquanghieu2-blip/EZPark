@@ -22,7 +22,7 @@ import { daNangRegion } from '@/constants/mapBounds';
 import FloodReportModal from '@/modals/FloodReportModal';
 import { HelpModalParkingSpot } from '@/modals/HelpModal';
 import ParkingSpotDetailModal from '../../modals/ParkingSpotModal';
-
+import ConfirmParkingRoutes from '../../modals/ConfirmParkingRoutes';
 // ================= Custom hooks =================
 import { useScheduleTimeTriggers } from '@/hooks/useScheduleTimeTriggers';
 import { useNavigation } from '@react-navigation/native';
@@ -141,22 +141,6 @@ const ParkingSpot = () => {
     }
   };
 
-  // === Tạo dữ liệu GeoJSON cho clustering ===
-  const parkingGeoJSON = {
-    type: 'FeatureCollection',
-    features:
-      parkingSpots?.map(spot => ({
-        type: 'Feature',
-        geometry: {
-          type: 'Point',
-          coordinates: [spot.longitude, spot.latitude],
-        },
-        properties: {
-          id: spot.parking_spot_id,
-        },
-      })) || [],
-  };
-
   return (
     <View style={styles.container}>
       {/* Thanh tìm kiếm */}
@@ -216,8 +200,8 @@ const ParkingSpot = () => {
           ref={cameraRef}
           defaultSettings={{
             bounds: {
-              ne: [108.35, 16.15],
-              sw: [107.95, 15.85],
+              ne: [108.35, 16.15], //DONG BAC
+              sw: [107.95, 15.85], // TAY NAM
             },
           }}
           zoomLevel={10}
@@ -227,6 +211,7 @@ const ParkingSpot = () => {
         <MapboxGL.UserLocation
           visible={true}
           showsUserHeadingIndicator={true}
+          minDisplacement={3} // chỉ cập nhật khi di chuyển ít nhất 3 mét
           onUpdate={handleUserLocationUpdate}
         />
 
@@ -354,46 +339,51 @@ const ParkingSpot = () => {
         )}
 
         {/* No Parking Routes */}
-        {clusterPolylines(
-          noParkingRoutes || [],
-          region.longitudeDelta / 5,
-        ).map(route => {
-          const now = new Date();
-          if (isDayRestricted(now, route.days_restricted)) {
-            if (isWithinTimeRange(now, route.time_range)) return null;
-          }
-          const coords = route.route.coordinates.map(([lon, lat]) => [
-            lon,
-            lat,
-          ]);
-          return (
-            <MapboxGL.ShapeSource
-              key={`npr-${route.no_parking_route_id}`}
-              id={`npr-${route.no_parking_route_id}`}
-              shape={{
-                type: 'Feature',
-                geometry: { type: 'LineString', coordinates: coords },
-                properties: {
-                  routeId: route.no_parking_route_id, 
-                },
-              }}
-              onPress={e => {
-                const feature = e.features?.[0];
-                const spotData = feature?.properties;
+        {clusterPolylines(noParkingRoutes || [], region.longitudeDelta / 5).map(
+          route => {
+            const now = new Date();
+            if (isDayRestricted(now, route.days_restricted)) {
+              if (isWithinTimeRange(now, route.time_range)) return null;
+            }
+            const coords = route.route.coordinates.map(([lon, lat]) => [
+              lon,
+              lat,
+            ]);
+            return (
+              <MapboxGL.ShapeSource
+                key={`npr-${route.no_parking_route_id}`}
+                id={`npr-${route.no_parking_route_id}`}
+                shape={{
+                  type: 'Feature',
+                  geometry: { type: 'LineString', coordinates: coords },
+                  properties: {
+                    routeId: route.no_parking_route_id,
+                    ...route,
+                  },
+                }}
+                onPress={e => {
+                  const feature = e.features?.[0];
+                  if (!feature || !feature.properties) return;
+                  const routeId = feature.properties.routeId;
+                  console.log('Clicked route ID:', routeId);
 
-                if (!spotData) return;
+                  const selectedRoute = noParkingRoutes?.find(
+                    r => r.no_parking_route_id === routeId,
+                  );
 
-                setSelectedRoute(spotData.id);
-                setShowDetail(true);
-              }}
-            >
-              <MapboxGL.LineLayer
-                id={`npr-layer-${route.no_parking_route_id}`}
-                style={{ lineColor: 'green', lineWidth: 4 }}
-              />
-            </MapboxGL.ShapeSource>
-          );
-        })}
+                  if (selectedRoute) 
+                  setSelectedRoute(routeId.id);
+                  setShowDetail(true);
+                }}
+              >
+                <MapboxGL.LineLayer
+                  id={`npr-layer-${route.no_parking_route_id}`}
+                  style={{ lineColor: 'green', lineWidth: 4 }}
+                />
+              </MapboxGL.ShapeSource>
+            );
+          },
+        )}
       </MapboxGL.MapView>
 
       {/* Loading */}
@@ -430,10 +420,10 @@ const ParkingSpot = () => {
           setShowReport(false);
         }}
       />
-      {/* <ConfirmParkingRoutes
+      <ConfirmParkingRoutes
         route={selectedRoute}
         onClose={() => setSelectedRoute(null)}
-      /> */}
+      />
     </View>
   );
 };

@@ -1,50 +1,63 @@
-// import PushNotification from 'react-native-push-notification';
+import notifee, { AndroidImportance, TimestampTrigger, TriggerType } from '@notifee/react-native';
 
-// // Khởi tạo notification
-// PushNotification.configure({
-//   onRegister: function(token) {
-//     console.log('TOKEN:', token);
-//   },
-//   onNotification: function(notification) {
-//     console.log('NOTIFICATION:', notification);
-//   },
-//   permissions: {
-//     alert: true,
-//     badge: true,
-//     sound: true,
-//   },
-//   popInitialNotification: true,
-//   requestPermissions: true,
-// });
+// Khởi tạo channel cho Android
+async function createChannel() {
+  await notifee.createChannel({
+    id: 'parking-notifications',
+    name: 'Parking Notifications',
+    description: 'Notifications for parking spots',
+    sound: 'default',
+    importance: AndroidImportance.HIGH,
+    vibration: true,
+  });
+}
 
-// export const scheduleNotificationAtDate = async (
-//   title: string,
-//   body: string,
-//   date: Date
-// ): Promise<string> => {
-//   const id = Math.floor(Math.random() * 1000000).toString();
-  
-//   PushNotification.localNotificationSchedule({
-//     id: id,
-//     title: title,
-//     message: body, 
-//     date: date,
-//     allowWhileIdle: true,
-//     channelId: 'parking-notifications',
-//   });
+// Gọi createChannel khi khởi tạo
+createChannel()
+  .then(() => console.log('Notification channel created'))
+  .catch(err => console.error('Failed to create notification channel:', err));
 
-//   return id;
-// };
+export const scheduleNotificationAtDate = async (
+  title: string,
+  body: string,
+  date: Date
+): Promise<string> => {
+  try {
+    // Tạo trigger với timestamp
+    const trigger: TimestampTrigger = {
+      type: TriggerType.TIMESTAMP,
+      timestamp: date.getTime(),
+    };
 
-// // Tạo channel cho Android
-// PushNotification.createChannel(
-//   {
-//     channelId: 'parking-notifications',
-//     channelName: 'Parking Notifications',
-//     channelDescription: 'Notifications for parking spots',
-//     soundName: 'default',
-//     importance: 4,
-//     vibrate: true,
-//   },
-//   (created) => console.log(`CreateChannel returned '${created}'`)
-// );
+    // Schedule notification với trigger
+    const id = await notifee.createTriggerNotification(
+      {
+        title,
+        body,
+        android: {
+          channelId: 'parking-notifications',
+          importance: AndroidImportance.HIGH,
+          sound: 'default',
+          pressAction: {
+            id: 'default',
+          },
+        },
+      },
+      trigger
+    );
+
+    return id;
+  } catch (error) {
+    console.error('Failed to schedule notification:', error);
+    return Math.floor(Math.random() * 1000000).toString(); // Fallback ID như logic cũ
+  }
+};
+
+// Hàm helper để huỷ notification nếu cần
+export const cancelNotification = async (id: string) => {
+  try {
+    await notifee.cancelNotification(id);
+  } catch (error) {
+    console.error('Failed to cancel notification:', error);
+  }
+};
