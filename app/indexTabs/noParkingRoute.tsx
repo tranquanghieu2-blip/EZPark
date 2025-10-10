@@ -8,7 +8,7 @@ import SearchBar from "@/components/SearchBar";
 // ================= Constants =================
 import Colors from "@/constants/colors";
 import { icons } from "@/constants/icons";
-import { DA_NANG_CENTER, DA_NANG_BBOX } from "@/constants/danangMap";
+import { DA_NANG_CENTER, DA_NANG_VIEWPORT } from "@/constants/danangMap";
 // ================= Custom hooks =================
 import useFetch from "@/hooks/useFetch";
 import { useScheduleTimeTriggers } from "@/hooks/useScheduleTimeTriggers";
@@ -35,8 +35,8 @@ const NoParkingRoute = () => {
 
   // ================== STATE ==================
   const [center, setCenter] = useState<{ latitude: number; longitude: number }>(DA_NANG_CENTER);
-
-  const [zoom, setZoom] = useState(12);
+  const [region, setRegion] = useState<{ latitude: number; longitude: number; latitudeDelta: number; longitudeDelta: number }>(DA_NANG_VIEWPORT);
+  const [zoomLevel, setZoomLevel] = useState(12);
   const [selectedRoute, setSelectedRoute] = useState<NoParkingRoute | null>(null);
   const [showHelp, setShowHelp] = useState(false);
   const [routesWithGeometry, setRoutesWithGeometry] = useState<NoParkingRoute[] | null>(null);
@@ -93,22 +93,71 @@ const NoParkingRoute = () => {
   useScheduleTimeTriggers(noParkingRoutes, triggerUpdate, "forbidden");
 
   // ================== MAP EVENTS ==================
+  // const onRegionDidChange = async () => {
+  //   try {
+  //     const centerPoint = await mapRef.current?.getCenter();
+  //     const zoomLevel = await mapRef.current?.getZoom();
+
+  //     if (centerPoint) {
+  //       setCenter({
+  //         longitude: centerPoint[0],
+  //         latitude: centerPoint[1],
+  //       });
+  //     }
+  //     if (zoomLevel !== undefined) setZoom(zoomLevel);
+  //   } catch (err) {
+  //     console.warn("Không thể lấy tâm hoặc zoom bản đồ:", err);
+  //   }
+  // };
+
+  // const handleRegionChange = (feature) => {
+  //   const minDelta = 0.001;
+  //   const clamped = {
+  //     feature.properties.center[1],
+
+  //   };
+  //   setRegion(clamped); // update để clustering re-render
+  //   setZoomLevel(feature.properties.zoomLevel);
+
+  // };
+
   const onRegionDidChange = async () => {
     try {
       const centerPoint = await mapRef.current?.getCenter();
       const zoomLevel = await mapRef.current?.getZoom();
-
-      if (centerPoint) {
-        setCenter({
-          longitude: centerPoint[0],
+      const bounds = await mapRef.current?.getVisibleBounds();
+      if (centerPoint && bounds) {
+        const ne = bounds[0];
+        const sw = bounds[1];
+        const latitudeDelta = Math.abs(ne[1] - sw[1]);
+        const longitudeDelta = Math.abs(ne[0] - sw[0]);
+        setRegion({
           latitude: centerPoint[1],
+          longitude: centerPoint[0],
+          latitudeDelta: Math.max(latitudeDelta, 0.001),
+          longitudeDelta: Math.max(longitudeDelta, 0.001),
         });
       }
-      if (zoomLevel !== undefined) setZoom(zoomLevel);
+      if (zoomLevel !== undefined) setZoomLevel(zoomLevel);
     } catch (err) {
-      console.warn("Không thể lấy tâm hoặc zoom bản đồ:", err);
+      console.warn("Không thể lấy tâm, zoom hoặc bounds bản đồ:", err);
     }
   };
+
+
+
+  const handleRegionChange = (feature: any) => {
+    const minDelta = 0.001;
+    const clamped = {
+      latitude: feature.properties.center[1],
+      longitude: feature.properties.center[0],
+      latitudeDelta: Math.max(feature.properties.bounds.ne[1] - feature.properties.bounds.sw[1], minDelta),
+      longitudeDelta: Math.max(feature.properties.bounds.ne[0] - feature.properties.bounds.sw[0], minDelta),
+    };
+    setRegion(clamped);
+    setZoomLevel(feature.properties.zoom);
+  };
+
 
   // ================== CLUSTERED ROUTES ==================
 
@@ -130,12 +179,7 @@ const NoParkingRoute = () => {
           icon={<IconCrosshairs size={20} color={Colors.blue_button} />}
           bgColor="#fff"
           onPress={() => {
-            cameraRef.current?.fitBounds(
-              DA_NANG_BBOX[0],
-              DA_NANG_BBOX[1],
-              [40, 40, 40, 40],
-              800
-            );
+
           }}
         />
       </View>
@@ -149,8 +193,10 @@ const NoParkingRoute = () => {
         style={styles.map}
         styleURL={MapboxGL.StyleURL.Street}
         onMapIdle={(feature) => {
-          console.log("Map idle:", feature);
+          console.log("Map is idle", feature);
+          handleRegionChange(feature);
         }}
+        // onRegionDidChange={onRegionDidChange}
         zoomEnabled
         scrollEnabled
         pitchEnabled
@@ -160,21 +206,24 @@ const NoParkingRoute = () => {
         {/* Camera */}
         <MapboxGL.Camera
           ref={cameraRef}
-          zoomLevel={12}
-          centerCoordinate={[DA_NANG_CENTER.longitude, DA_NANG_CENTER.latitude]}
-          bounds={{
-            ne: DA_NANG_BBOX[1],
-            sw: DA_NANG_BBOX[0],
+          defaultSettings={{
+            bounds: {
+              ne: [108.35, 16.15],
+              sw: [107.95, 15.85],
+            },
           }}
+          zoomLevel={10}
         />
 
         {/* Vị trí người dùng */}
         <MapboxGL.UserLocation visible={true} showsUserHeadingIndicator={true} />
 
         {/* ================= ROUTES (clustered) ================= */}
-        {clusterPolylines(
-          routesWithGeometry || [],
-          zoom).map((route) => {
+        {
+          clusterPolylines(
+            routesWithGeometry || [],
+            region.longitudeDelta / 5
+          ).map((route) => {
             if (!route.route) return null;
 
             const now = new Date();
