@@ -7,7 +7,7 @@ import colors from "@/constants/colors";
 import ParkingSpot from "../indexTabs/parkingSpot1";
 import NoParkingRoute from "../indexTabs/noParkingRoute";
 import SearchParkingSpot from "../indexTabs/SearchParkingSpot";
-import ParkingSpotDetail from "../indexTabs/parkingSpotDetail";
+import ParkingSpotDetail from "../indexTabs/ParkingSpotDetail";
 
 const Stack = createStackNavigator();
 const TopTab = createMaterialTopTabNavigator();
