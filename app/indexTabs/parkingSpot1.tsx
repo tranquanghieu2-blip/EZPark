@@ -291,75 +291,57 @@ const ParkingSpot = () => {
             cluster={true}
             clusterRadius={40}
             onPress={async e => {
-              const feature = e.features?.[0];
-              if (!feature || !feature.properties) return;
+  const feature = e.features?.[0];
+  if (!feature || !feature.properties) return;
 
-              const props = feature.properties;
-              const coords = (feature.geometry as Point).coordinates;
-              const isCluster = !!props.point_count || props.cluster === true;
+  const isCluster = !!feature.properties.cluster_id;
 
-              if (isCluster) {
-                const clusterId =
-                  props.cluster_id ?? props.clusterId ?? props.id;
+  if (isCluster) {
+    const clusterId = feature.properties.cluster_id;
+    console.log('Clicked cluster with ID:', clusterId);
 
-                // dùng API của ShapeSource / supercluster
-                try {
-                  if (shapeSourceRef.current?.getClusterExpansionZoom) {
-                    // Một số impl yêu cầu truyền clusterId, một số yêu cầu feature — nên thử cả hai nếu cần
-                    let expansionZoom = null;
-                    try {
-                      expansionZoom =
-                        await shapeSourceRef.current.getClusterExpansionZoom(
-                          clusterId,
-                        );
-                    } catch (err) {
-                      // nếu hàm không chấp nhận clusterId trực tiếp, thử truyền feature
-                      expansionZoom =
-                        await shapeSourceRef.current.getClusterExpansionZoom(
-                          feature,
-                        );
-                    }
-                    if (expansionZoom != null) {
-                      cameraRef.current?.setCamera({
-                        centerCoordinate: coords,
-                        zoomLevel: expansionZoom,
-                        animationDuration: 500,
-                      });
-                      return;
-                    }
-                  }
-                } catch (err) {
-                  console.warn(
-                    'getClusterExpansionZoom failed, fallback to manual zoom',
-                    err,
-                  );
-                }
+    if (!shapeSourceRef.current) {
+      console.log('ShapeSource ref not available');
+      return;
+    }
 
-                // Fallback: zoom vào 2 level
-                try {
-                  const currentZoom = await mapRef.current?.getZoom();
-                  const newZoom =
-                    typeof currentZoom === 'number' ? currentZoom + 2 : 15;
-                  cameraRef.current?.setCamera({
-                    centerCoordinate: coords,
-                    zoomLevel: newZoom,
-                    animationDuration: 500,
-                  });
-                } catch (err) {
-                  // last-resort: hardcode zoom
-                  cameraRef.current?.setCamera({
-                    centerCoordinate: coords,
-                    zoomLevel: 15,
-                    animationDuration: 500,
-                  });
-                }
-              } else {
-                // unclustered point clicked
-                const spotData = props;
-                setSelectedId(spotData.id);
-                setShowDetail(true);
-              }
-            }}
+    // Kiểm tra có tọa độ hợp lệ
+    if (feature.geometry && 'coordinates' in feature.geometry) {
+      const coordinates = feature.geometry.coordinates as [number, number];
+
+      try {
+        // Lấy zoom hiện tại và tăng thêm 2 level
+        const currentZoom = await mapRef.current?.getZoom();
+        const newZoom = currentZoom ? currentZoom + 2 : 15;
+
+        if (cameraRef.current) {
+          cameraRef.current.setCamera({
+            centerCoordinate: coordinates,
+            zoomLevel: newZoom,
+            animationDuration: 500,
+          });
+        }
+      } catch (error) {
+        console.error('Error during camera movement:', error);
+
+        // fallback khi lỗi
+        if (cameraRef.current) {
+          cameraRef.current.setCamera({
+            centerCoordinate: coordinates,
+            zoomLevel: 15,
+            animationDuration: 500,
+          });
+        }
+      }
+    }
+  } else {
+    // Nếu click vào marker (không phải cluster)
+    const spotData = feature.properties;
+    setSelectedId(spotData.id);
+    setShowDetail(true);
+  }
+}}
+
           >
             {/* ảnh icon */}
             <MapboxGL.Images images={{ parkingIcon: icons.iconParkingSpot }} />
@@ -398,7 +380,6 @@ const ParkingSpot = () => {
                   50,
                   24,
                   100,
-                  30,
                 ],
                 circleOpacity: 1,
                 circleStrokeColor: '#000',

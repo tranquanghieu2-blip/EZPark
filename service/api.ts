@@ -196,7 +196,7 @@ export async function login(email: string, password: string) {
 export async function GGLogin() {
   try {
     const res = await fetch(`${API_CONFIG.BASE_URL}/auth/google`, {
-      method: "POST",
+      method: "GET",
       headers: {
         "Content-Type": "application/json",
       },

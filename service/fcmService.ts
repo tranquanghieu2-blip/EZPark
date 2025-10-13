@@ -10,7 +10,6 @@ export async function sendParkingNotification({
   warning5: Date;
 }) {
   try {
-    // Sau này bạn sẽ thay URL này = API backend thật
     const response = await fetch("https://api.ezpark.vn/api/send-fcm", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
