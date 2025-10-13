@@ -10,8 +10,6 @@ interface MessageModalProps {
     type?: "success" | "error" | "info";
 }
 
-
-
 const MessageModal: React.FC<MessageModalProps> = ({
     visible,
     onClose,
@@ -25,7 +23,7 @@ const MessageModal: React.FC<MessageModalProps> = ({
             case "success":
                 return <Image source={icons.iconSuccess} style={{ width: 40, height: 40 }} />; // xanh lá
             case "error":
-                return <Image source={icons.iconError} style={{ width: 50, height: 50 }} />; // đỏ
+                return <Image source={icons.iconError} style={{ width: 40, height: 40 }} />; // đỏ
             case "info":
             default:
                 return <Image />; // cam
@@ -48,7 +46,7 @@ const MessageModal: React.FC<MessageModalProps> = ({
                     <Text className="text-center mb-5">{message}</Text>
                     <Pressable
                         onPress={onClose}
-                        className="bg-gray-200 px-6 py-2 rounded-lg w-4/5 items-center"
+                        className="bg-gray-200 px-6 py-2 rounded-lg w-full items-center h-[40px] justify-center"
                     >
                         <Text className="text-black font-semibold">Đóng</Text>
                     </Pressable>
