@@ -24,17 +24,10 @@ import { useSearchParking } from "@/hooks/useSearchParking";
 import { DEFAULT_TAB_BAR_STYLE } from "@/utils/tabBarStyle";
 import { usePeriodicMapboxLocation } from "@/hooks/usePeriodicMapboxLocation";
 
-type SearchParkingSpotRouteParams = {
-  center: {
-    latitude: number;
-    longitude: number;
-  };
-};
-
 const SearchParkingSpot = () => {
   const navigation = useNavigation();
   const route = useRoute();
-  const location = usePeriodicMapboxLocation(5000); // ⏱ lấy tọa độ mỗi 5s
+  const location = usePeriodicMapboxLocation(5000); // lấy tọa độ mỗi 5s
 
 
   useLayoutEffect(() => {

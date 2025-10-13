@@ -7,6 +7,7 @@ import colors from "@/constants/colors";
 import ParkingSpot from "../indexTabs/parkingSpot1";
 import NoParkingRoute from "../indexTabs/noParkingRoute";
 import SearchParkingSpot from "../indexTabs/SearchParkingSpot";
+import ParkingSpotDetail from "../indexTabs/parkingSpotDetail";
 
 const Stack = createStackNavigator();
 const TopTab = createMaterialTopTabNavigator();
@@ -73,7 +74,15 @@ export default function Index() {
         component={SearchParkingSpot}
         options={{
           title: "Tìm kiếm bãi đỗ xe",
-          headerTitleAlign: "center", // 👈 Căn giữa title cho cả iOS và Android
+          headerTitleAlign: "center",
+        }}
+      />
+      <Stack.Screen
+        name="ParkingSpotDetail"
+        component={ParkingSpotDetail}
+        options={{
+          title: "Chi tiết bãi đỗ xe",
+          headerTitleAlign: "center",
         }}
       />
     </Stack.Navigator>
