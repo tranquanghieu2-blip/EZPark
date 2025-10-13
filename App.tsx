@@ -43,3 +43,15 @@
 // });
 
 // export default App;
+// import { AppRegistry } from 'react-native';
+// import App from './App';
+// import {
+//   requestNotificationPermission,
+//   registerBackgroundHandler,
+//   registerForegroundHandler,
+// } from './src/service/firebaseSetup';
+// requestNotificationPermission();
+// registerBackgroundHandler();
+// registerForegroundHandler();
+
+// AppRegistry.registerComponent('EZPark', () => App);

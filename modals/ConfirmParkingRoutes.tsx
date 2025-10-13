@@ -12,12 +12,13 @@ import Colors from "@/constants/colors";
 import { isUserOnRoute, useConfirmedParking } from "@/hooks/useConfirmParking";
 import { useLocation } from "@/hooks/useLocation";
 import { getAllowedTimeRanges } from "@/utils/time";
-// import { sendParkingNotification } from "@/service/fcmService"; // service backend gửi FCM
+import { sendParkingNotification } from "@/service/fcmService"; // service backend gửi FCM
 
 interface Props {
   onClose: () => void;
   route: NoParkingRoute | null;
 }
+
 
 const ConfirmParkingModal: React.FC<Props> = ({ route, onClose }) => {
   const { location } = useLocation();
@@ -37,6 +38,7 @@ const ConfirmParkingModal: React.FC<Props> = ({ route, onClose }) => {
     );
   }
 
+  
   const isAlreadyConfirmedOther =
     confirmed && confirmed.routeId !== route?.no_parking_route_id;
 
@@ -83,12 +85,14 @@ const ConfirmParkingModal: React.FC<Props> = ({ route, onClose }) => {
     const warning5 = new Date(nearestEnd.getTime() - 5 * 60 * 1000);
 
     // --- Gửi thông báo qua Backend -> Firebase FCM ---
-    // await sendParkingNotification({
-    //   street: route.street,
-    //   routeId: route.no_parking_route_id,
-    //   warning15,
-    //   warning5,
-    // });
+    await sendParkingNotification({
+      street: route.street,
+      routeId: route.no_parking_route_id,
+      warning15,
+      warning5,
+    });
+
+
 
     // Lưu thông tin xác nhận
     await confirmRoute({
