@@ -8,6 +8,7 @@ import ParkingSpot from "../indexTabs/parkingSpot1";
 import NoParkingRoute from "../indexTabs/noParkingRoute";
 import SearchParkingSpot from "../indexTabs/SearchParkingSpot";
 import ParkingSpotDetail from "../indexTabs/ParkingSpotDetail";
+import Rating from "../indexTabs/Rating";
 
 const Stack = createStackNavigator();
 const TopTab = createMaterialTopTabNavigator();
@@ -82,6 +83,14 @@ export default function Index() {
         component={ParkingSpotDetail}
         options={{
           title: "Chi tiết bãi đỗ xe",
+          headerTitleAlign: "center",
+        }}
+      />
+      <Stack.Screen
+        name="Rating"
+        component={Rating}
+        options={{
+          title: "Đánh giá của bạn",
           headerTitleAlign: "center",
         }}
       />

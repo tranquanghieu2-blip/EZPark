@@ -22,12 +22,12 @@ import { images } from "@/constants/images";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useSearchParking } from "@/hooks/useSearchParking";
 import { DEFAULT_TAB_BAR_STYLE } from "@/utils/tabBarStyle";
-import { usePeriodicMapboxLocation } from "@/hooks/usePeriodicMapboxLocation";
+import { useSmartMapboxLocation } from "@/hooks/usePeriodicMapboxLocation";
 
 const SearchParkingSpot = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const route = useRoute();
-  const location = usePeriodicMapboxLocation(5000); // lấy tọa độ mỗi 5s
+  const location = useSmartMapboxLocation(); // lấy tọa độ mỗi 5s
 
 
   useLayoutEffect(() => {
@@ -117,7 +117,7 @@ const SearchParkingSpot = () => {
         {/* Search + Filter */}
         <View className="flex-row w-full items-center space-x-2 gap-2">
           <View
-            className={`flex-1 rounded-lg h-[50px] ${isFocused ? "border-2 border-red-500" : "border border-gray-300"
+            className={`flex-1 rounded-lg h-[45px] ${isFocused ? "border-2 border-red-500" : "border border-gray-300"
               }`}
           >
             <TextInput
@@ -132,7 +132,7 @@ const SearchParkingSpot = () => {
 
           <TouchableOpacity
             onPress={() => setShowModal(true)}
-            className="w-[50px] h-[50px] rounded-xl overflow-hidden"
+            className="w-[45px] h-[45px] rounded-xl overflow-hidden"
           >
             <ImageBackground
               source={images.bottomNavItem}
@@ -158,7 +158,7 @@ const SearchParkingSpot = () => {
                 className="py-4 border-b border-gray-200"
                 onPress={() => {
                   console.log("Chọn bãi:", item.name);
-                  navigation.goBack();
+                  navigation.navigate("ParkingSpotDetail", { spot: item });
                 }}
               >
                 <View className="flex">
