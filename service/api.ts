@@ -150,7 +150,7 @@ export async function signUp(
 
   if (!res.ok) {
     console.error("Lỗi đăng ký:", json);
-    throw new Error(json?.msg || "Failed to sign up");
+    throw new Error(json?.message || "Đăng ký thất bại");
   }
   return json;
 }
