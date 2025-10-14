@@ -47,3 +47,10 @@ interface SearchParkingSpot {
   distance?: number;
   type: "parking hub" | "on street parking";
 }
+
+interface User {
+  driver_id: number;
+  username: string;
+  name: string;
+  avatar?: string | null;
+}

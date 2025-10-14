@@ -4,6 +4,7 @@ import { IconEmail, IconPassword } from "@/components/Icons";
 import { InputRow } from "@/components/InputRow";
 import { icons } from "@/constants/icons";
 import usePost from "@/hooks/usePost";
+import { useAuth } from "@/app/context/AuthContext";
 import MessageModal from "@/modals/MessageModal";
 import { GGLogin, login } from "@/service/api";
 import { useNavigation } from "@react-navigation/native";
@@ -20,7 +21,9 @@ import {
 } from "react-native";
 
 export default function Login() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
+  const { login: saveAuth } = useAuth(); // ✅ Hàm login từ AuthContext
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -39,6 +42,14 @@ export default function Login() {
     try {
       const res = await execute(email, password);
       console.log("Đăng nhập thành công:", res);
+
+      if (res?.user && res?.accessToken) {
+        await saveAuth(res.user, res.accessToken, res.refreshToken);
+        // ✅ Điều hướng sang màn hình chính
+        navigation.navigate("(tabs)", { screen: "favourite" })
+      } else {
+        throw new Error("Dữ liệu đăng nhập không hợp lệ");
+      }
       
     } catch (err) {
       setShowFailModal(true);

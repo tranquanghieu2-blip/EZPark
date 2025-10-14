@@ -101,7 +101,34 @@ export const IconEdit = (props: any) => (
   <MaterialIcons name="edit" iconStyle="solid" {...props} />
 );
 
+export const IconEditAccount = (props: any) => (
+  <MaterialDesignIcons name="account-edit" iconStyle="solid" {...props} />
+);
+
 export const IconDelete = (props: any) => (
   <MaterialIcons name="delete" iconStyle="solid" {...props} />
 );
 
+export const IconNotify = (props: any) => (
+  <MaterialDesignIcons name="bell" iconStyle="solid" {...props} />
+);
+
+export const IconLanguage = (props: any) => (
+  <FontAwesome name="language" iconStyle="solid" {...props} />
+);
+
+export const IconHelp = (props: any) => (
+  <MaterialDesignIcons name="help-box" iconStyle="solid" {...props} />
+);
+
+export const IconContact = (props: any) => (
+  <MaterialDesignIcons name="contacts" iconStyle="solid" {...props} />
+);
+
+export const IconArchiveLock = (props: any) => (
+  <MaterialDesignIcons name="archive-lock" iconStyle="solid" {...props} />
+);
+
+export const IconLogout = (props: any) => (
+  <MaterialDesignIcons name="logout" iconStyle="solid" {...props} />
+);
