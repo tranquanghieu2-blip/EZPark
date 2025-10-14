@@ -1,3 +1,5 @@
+
+
 export const API_CONFIG = {
   BASE_URL: "https://ezpark-9gnn.onrender.com/api",
   headers: {
@@ -164,7 +166,7 @@ export async function verifyOtp(
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ email, otp}),
+    body: JSON.stringify({ email, otp }),
   });
 
   const json = await res.json();
@@ -215,3 +217,30 @@ export async function GGLogin() {
     console.error("Google login error:", error);
   }
 }
+
+export const createFeedback = async (feedbackData: any, accessToken: string) => {
+  try {
+    const response = await fetch(`${API_CONFIG.BASE_URL}/feedbacks/create`, {
+      method: "POST",
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(feedbackData),
+    });
+
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.message || "Something went wrong");
+    }
+
+    return result;
+  } catch (error) {
+    console.error("Error creating feedback:", error);
+    throw error;
+
+  }
+};
+
+
+

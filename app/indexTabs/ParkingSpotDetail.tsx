@@ -9,8 +9,6 @@ import {
 } from "react-native";
 import { useRoute, RouteProp, useNavigation } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-
-
 import {
   IconStar,
   IconStarHalf,
@@ -122,9 +120,6 @@ const ParkingSpotDetail = () => {
     console.log("Update clicked");
     
   };
-
-  console.log("Rendering ParkingSpotDetail for:");
-
   return (
 
     <View className="flex-1 bg-white">
@@ -166,7 +161,7 @@ const ParkingSpotDetail = () => {
           </View>
 
           {/* Nút chỉ đường */}
-          <Pressable className="bg-blue-500 active:bg-blue-600 px-4 py-3 rounded-xl items-center justify-center mt-2">
+          <Pressable className="bg-blue-500 active:bg-blue-600 px-4 py-3 rounded-xl items-center justify-center mt-4">
             <Text className="text-white font-semibold text-base">Chỉ đường</Text>
           </Pressable>
 
@@ -235,7 +230,7 @@ const ParkingSpotDetail = () => {
               {[1, 2, 3, 4, 5].map((star) => (
                 <TouchableOpacity
                   key={star}
-                  onPress={() => navigation.navigate("Rating", { spotItem: spot })}
+                  onPress={() => navigation.navigate("Rating", { spot: spot })}
                   activeOpacity={0.7}
                 >
                   <IconStarNo size={40} color="#d1d5db" style={{ marginHorizontal: 4 }} />

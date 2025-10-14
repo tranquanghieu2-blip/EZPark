@@ -51,7 +51,7 @@ export default function Profile() {
 
   // ✅ Nếu đã đăng nhập
   return (
-    <View className="flex-1 bg-white">
+    <View className="flex-1 bg-gray-50">
       {/* Header tràn lên status bar */}
       <HeaderProfile />
 
@@ -145,7 +145,7 @@ export default function Profile() {
         {/* Đăng xuất */}
         <Pressable
           onPress={logout}
-          className="flex-row items-center justify-center mx-4 mt-5 mb-8 py-3 bg-gray-100 rounded-xl active:bg-gray-200"
+          className="flex-row items-center justify-center mx-4 mt-5 mb-8 py-3 bg-gray-200 rounded-xl active:bg-gray-200"
         >
           <IconLogout size={18} color="#000" />
           <Text className="ml-2 font-semibold text-black text-[15px]">

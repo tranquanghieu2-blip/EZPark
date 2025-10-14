@@ -45,8 +45,6 @@ export default function Login() {
 
       if (res?.user && res?.accessToken) {
         await saveAuth(res.user, res.accessToken, res.refreshToken);
-        // ✅ Điều hướng sang màn hình chính
-        navigation.navigate("(tabs)", { screen: "favourite" })
       } else {
         throw new Error("Dữ liệu đăng nhập không hợp lệ");
       }

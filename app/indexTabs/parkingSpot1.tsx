@@ -380,6 +380,7 @@ const ParkingSpot = () => {
                   50,
                   24,
                   100,
+                  30
                 ],
                 circleOpacity: 1,
                 circleStrokeColor: '#000',

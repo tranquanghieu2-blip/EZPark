@@ -13,68 +13,95 @@ import { IconStar, IconStarNo } from "@/components/Icons";
 import { images } from "@/constants/images";
 import GradientButton from "@/components/GradientButton";
 import { ConfirmFeedbackModal } from "@/modals/ConfirmFeedbackModal";
+import { createFeedback } from "@/service/api";
+import { useRoute, RouteProp, useNavigation } from "@react-navigation/native";
+import { useAuth } from "@/app/context/AuthContext";
 
+
+// ========================== TYPES ==========================
+type RootStackParamList = {
+  Rating: { spot: ParkingSpotDetail };
+};
 
 type RatingItem = {
-  id: string;
+  id: keyof RatingValues;
   label: string;
 };
 
+type RatingValues = {
+  convenience: number;
+  space: number;
+  security: number;
+};
+
+// ========================== CONSTANTS ==========================
 const ratingItems: RatingItem[] = [
   { id: "convenience", label: "Mức độ thuận tiện" },
   { id: "space", label: "Không gian đỗ xe" },
   { id: "security", label: "An ninh - an toàn" },
 ];
 
+const MAX_CHAR = 200;
+
 const Rating = () => {
-  const [ratings, setRatings] = useState<Record<string, number>>({
+  const route = useRoute<RouteProp<RootStackParamList, "Rating">>();
+  const { spot } = route.params;
+  const { accessToken } = useAuth();
+  console.log("Access:", accessToken);
+
+  const [ratings, setRatings] = useState<RatingValues>({
     convenience: 0,
     space: 0,
     security: 0,
   });
-  const [comment, setComment] = useState("");
-  const MAX_CHAR = 200;
 
+  const [comment, setComment] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  // ===== Helper text feedback =====
+
+  // ========================== FUNCTIONS ==========================
+
   const getFeedbackText = (value: number) => {
-    switch (value) {
-      case 5:
-        return "Tuyệt vời";
-      case 4:
-        return "Hài lòng";
-      case 3:
-        return "Bình thường";
-      case 2:
-        return "Chưa tốt lắm";
-      case 1:
-        return "Tệ";
-      default:
-        return "Chạm để đánh giá";
-    }
+    const map: Record<number, string> = {
+      5: "Tuyệt vời",
+      4: "Hài lòng",
+      3: "Bình thường",
+      2: "Chưa tốt lắm",
+      1: "Tệ",
+    };
+    return map[value] || "Chạm để đánh giá";
   };
 
-  // ===== Handle star click =====
-  const handleRating = (id: string, value: number) => {
+  const handleRating = (id: keyof RatingValues, value: number) => {
     setRatings((prev) => ({ ...prev, [id]: value }));
   };
 
-  // ===== Handle submit =====
-  const handleSubmit = () => {
-    // const result: Record<string, number> = {};
-    // ratingItems.forEach((item) => {
-    //   result[item.label] = ratings[item.id];
-    // });
+  const handleSubmit = async () => {
+    if (!accessToken) {
+      Alert.alert("Lỗi", "Bạn cần đăng nhập để gửi đánh giá.");
+      return;
+    }
 
-    // const feedback = {
-    //   ...result,
-    //   "Đánh giá": comment.trim(),
-    // };
+    try {
+      const feedback = {
+        parking_spot_id: spot.parking_spot_id,
+        friendliness_rating: ratings.convenience,
+        space_rating: ratings.space,
+        security_rating: ratings.security,
+        comment: comment.trim(),
+      };
 
-    // console.log("✅ Dữ liệu gửi đi:", feedback);
-    setShowConfirm(true);
+      console.log("🌐 Gửi feedback:", feedback);
+
+      const res = await createFeedback(feedback, accessToken);
+      console.log("✅ Feedback sent:", res);
+      Alert.alert("Thành công", "Cảm ơn bạn đã đánh giá!");
+    } catch (err) {
+      console.error("❌ Gửi feedback thất bại:", err);
+      Alert.alert("Lỗi", "Không thể gửi đánh giá, vui lòng thử lại.");
+    }
   };
+
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
@@ -164,7 +191,7 @@ const Rating = () => {
         {/* Submit button */}
         <GradientButton
           className="mt-4 py-3 bg-blue-500 rounded-xl items-center justify-center h-[45px]"
-          onPress={handleSubmit}
+          onPress={() => setShowConfirm(true)}
         >
           <Text className="text-white font-semibold text-base">Gửi đánh giá</Text>
         </GradientButton>
@@ -172,7 +199,7 @@ const Rating = () => {
         <ConfirmFeedbackModal
           visible={showConfirm}
           onClose={() => setShowConfirm(false)}
-          onConfirm={() => console.log("✅ Đã xác nhận đánh giá")}
+          onConfirm={() => handleSubmit()}
         />
 
       </View>
