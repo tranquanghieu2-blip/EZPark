@@ -9,6 +9,7 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
   Pressable,
+  ActivityIndicator,
 } from "react-native";
 import { IconStar, IconStarNo } from "@/components/Icons";
 import { images } from "@/constants/images";
@@ -22,14 +23,17 @@ import { createFeedback, updateFeedback, deleteFeedback } from "@/service/api";
 import useFetch from "@/hooks/useFetch";
 import { useNavigation } from "@react-navigation/native";
 import Colors from "@/constants/colors";
+import ToastManager, { Toast } from 'toastify-react-native'
+import ToastCustom from "@/utils/CustomToast";
 
 // ========================== TYPES ==========================
 type RootStackParamList = {
-  Rating: { 
-    spot: ParkingSpotDetail, 
-    myFeedback?: Feedback | null, 
+  Rating: {
+    spot: ParkingSpotDetail,
+    myFeedback?: Feedback | null,
     user?: User | null,
-    onGoBack?: () => void };
+    onGoBack?: () => void
+  };
 };
 
 type RatingItem = {
@@ -52,6 +56,16 @@ const ratingItems: RatingItem[] = [
 
 const MAX_CHAR = 200;
 
+const toastConfig = {
+  success: (props: any) => (
+    <View style={{ backgroundColor: '#4CAF50', padding: 16, borderRadius: 10 }}>
+      <Text style={{ color: 'white', fontWeight: 'bold' }}>{props.text1}</Text>
+      {props.text2 && <Text style={{ color: 'white' }}>{props.text2}</Text>}
+    </View>
+  ),
+  // Override other toast types as needed
+}
+
 
 
 // ========================== COMPONENT ==========================
@@ -59,7 +73,7 @@ const Rating = () => {
   const route = useRoute<RouteProp<RootStackParamList, "Rating">>();
   const { spot } = route.params;
   const { myFeedback } = route.params || {};
-  const {user} = route.params || {};
+  const { user } = route.params || {};
   const navigation = useNavigation<any>();
   const { onGoBack } = route.params ?? {};
 
@@ -79,6 +93,9 @@ const Rating = () => {
   const [showConfirmUpdate, setShowConfirmUpdate] = useState(false);
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [loadingDelete, setLoadingDelete] = useState(false);
+  // const [loadingUpdate, setLoadingUpdate] = useState(false);
+  // const [loadingCreate, setLoadingCreate] = useState(false);
 
   // ========================== API CALL ==========================
   // 🔧 Dựng payload chung
@@ -110,7 +127,7 @@ const Rating = () => {
     return true;
   }, [accessToken, spot, ratings]);
 
-  // 🧠 Submit Feedback — tự động chọn Create hoặc Update
+  // Submit Feedback — tự động chọn Create hoặc Update
   const handleFeedbackSubmit = async () => {
     if (!validateBeforeSubmit()) return;
 
@@ -121,42 +138,43 @@ const Rating = () => {
       let res;
       if (myFeedback) {
         res = await updateFeedback(myFeedback.feedback_id, data);
+        ToastCustom.success("Thành công", "Feedback đã được sửa!")
+
       } else {
         res = await createFeedback(data);
+        ToastCustom.success("Thành công", "Feedback đã được lưu!")
       }
 
-      Alert.alert("Thành công", "Đánh giá đã được lưu.", [
-        {
-          text: "OK",
-          onPress: () => {
-            if (onGoBack) onGoBack(); // gọi callback của parent
-            navigation.goBack(); // quay lại màn trước
-          },
-        },
-      ]);
+      if (onGoBack) onGoBack(); // gọi callback của parent
+      navigation.goBack(); // quay lại
+
       console.log("✅ Feedback response:", res);
     } catch (err: any) {
       Alert.alert("Lỗi", err.message || "Không thể gửi đánh giá.");
+      // ToastCustom.error("Lỗi", err.message || "Không thể gửi đánh giá.")
     } finally {
       setLoading(false);
     }
   };
 
-  // ❌ Delete Feedback
+  // Delete Feedback
   const handleDeleteFeedback = async () => {
     if (!myFeedback) return Alert.alert("Lỗi", "Không có feedback để xoá.");
     try {
-      setLoading(true);
+      setLoadingDelete(true);
       await deleteFeedback(myFeedback.feedback_id);
-      Alert.alert("Thành công", "Đánh giá đã được xoá.", [
-        {
-          text: "OK",
-          onPress: () => {
-            if (onGoBack) onGoBack(); // gọi callback của parent
-            navigation.goBack(); // quay lại màn trước
-          },
-        },
-      ]);
+      // Alert.alert("Thành công", "Đánh giá đã được xoá.", [
+      //   {
+      //     text: "OK",
+      //     onPress: () => {
+      //       if (onGoBack) onGoBack(); // gọi callback của parent
+      //       navigation.goBack(); // quay lại màn trước
+      //     },
+      //   },
+      // ]);
+      ToastCustom.success("Thành công", "Feedback đã được xoá!")
+      if (onGoBack) onGoBack(); // gọi callback của parent
+      navigation.goBack(); // quay lại
     } catch (err: any) {
       Alert.alert("Lỗi", err.message || "Không thể xoá đánh giá.");
     } finally {
@@ -296,10 +314,14 @@ const Rating = () => {
             <Pressable
               className="mt-4 py-3 bg-red-600 rounded-xl items-center justify-center h-[45px] flex-1"
               onPress={() => setShowConfirmDelete(true)}
-              disabled={loading}
+              disabled={loadingDelete}
             >
               <Text className="text-white font-semibold text-base">
-                {loading ? "Đang gửi..." : "Xoá"}
+                {loadingDelete ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  "Xoá"
+                )}
               </Text>
             </Pressable>
             <Pressable
@@ -309,7 +331,11 @@ const Rating = () => {
               disabled={loading}
             >
               <Text className="text-white font-semibold text-base">
-                {loading ? "Đang gửi..." : "Chỉnh sửa"}
+                {loading ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  "Chỉnh sửa"
+                )}
               </Text>
             </Pressable>
           </View>
@@ -320,7 +346,11 @@ const Rating = () => {
           disabled={loading}
         >
           <Text className="text-white font-semibold text-base">
-            {loading ? "Đang gửi..." : "Gửi đánh giá"}
+            {loading ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  "Gửi đánh giá"
+                )}
           </Text>
         </GradientButton>
         }
@@ -343,7 +373,10 @@ const Rating = () => {
           onClose={() => setShowConfirmDelete(false)}
           onConfirm={handleDeleteFeedback}
         />
+
+
       </View>
+
     </TouchableWithoutFeedback>
   );
 };

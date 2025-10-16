@@ -65,5 +65,6 @@ interface Feedback {
   space_rating: number;
   comment: string;
   created_at: string; // ISO date string
+  updated_at: string;
   Driver: User; // thông tin user
 }

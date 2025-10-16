@@ -8,14 +8,13 @@ import "@/config/mapBoxConfig";
 import { AuthProvider, useAuth } from "@/app/context/AuthContext";
 import { setAccessTokenUpdater } from "@/service/apiClient";
 import { View, ActivityIndicator } from "react-native";
+import  ToastManager  from "toastify-react-native";
+import { toastConfig } from "@/utils/CustomToast";
 
 import "../global.css";
 
 const Stack = createNativeStackNavigator();
 
-// ============================
-// Màn hình điều hướng chính
-// ============================
 function AppNavigator() {
   const { user, loading, updateAccessToken } = useAuth();
 
@@ -51,15 +50,19 @@ function AppNavigator() {
   );
 }
 
-// ============================
-// Root App Wrapper
-// ============================
+
 export default function RootLayout() {
   return (
     <AuthProvider>
       <NavigationContainer>
         <AppNavigator />
       </NavigationContainer>
+
+      {/* ToastManager toàn cục */}
+      <ToastManager
+        
+      />
     </AuthProvider>
+    
   );
 }

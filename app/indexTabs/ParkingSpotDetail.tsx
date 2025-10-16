@@ -313,7 +313,7 @@ const ParkingSpotDetail = () => {
                   )}
                   <Text className="text-gray-500 text-xs mt-1">
                     Cập nhật lần cuối:{" "}
-                    {new Date(myFeedback.created_at).toLocaleString("vi-VN")}
+                    {new Date(myFeedback.updated_at).toLocaleString("vi-VN")}
                   </Text>
                 </View>
               ) : (

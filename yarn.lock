@@ -7108,7 +7108,7 @@ react-native-tab-view@^4.1.3:
   dependencies:
     use-latest-callback "^0.2.4"
 
-react-native-vector-icons@^10.3.0:
+react-native-vector-icons@*, react-native-vector-icons@^10.3.0:
   version "10.3.0"
   resolved "https://registry.npmjs.org/react-native-vector-icons/-/react-native-vector-icons-10.3.0.tgz"
   integrity sha512-IFQ0RE57819hOUdFvgK4FowM5aMXg7C7XKsuGLevqXkkIJatc3QopN0wYrb2IrzUgmdpfP+QVIbI3S6h7M0btw==
@@ -7982,6 +7982,13 @@ to-regex-range@^5.0.1:
   integrity sha512-65P7iz6X5yEr1cwcgvQxbbIw7Uk3gOy5dIdtZ4rDveLqhrdJP+Li/Hx6tyK0NEb+2GCyneCMJiGqrADCSNk8sQ==
   dependencies:
     is-number "^7.0.0"
+
+toastify-react-native@^7.2.3:
+  version "7.2.3"
+  resolved "https://registry.npmjs.org/toastify-react-native/-/toastify-react-native-7.2.3.tgz"
+  integrity sha512-ngmpTKlTo0IRddwSsNWK+YKbB2veqotHy7Zpil4eksoLAlq0RPSgdVOk5QDEDUONJQ4r7ljGYeRW68KBztirsg==
+  dependencies:
+    react-native-vector-icons "*"
 
 toidentifier@1.0.1:
   version "1.0.1"
