@@ -16,7 +16,7 @@ interface ConfirmModalProps {
   onConfirm?: () => void;
 }
 
-export function ConfirmFeedbackModal({
+export function ConfirmUpdateFeedback({
   visible,
   onClose,
   onConfirm,
@@ -41,7 +41,7 @@ export function ConfirmFeedbackModal({
               <IconLine size={36} color="#E53935" />
             </View>
             <Text className="text-xl font-bold text-center text-black">
-              Xác nhận đánh giá
+              Xác nhận chỉnh sửa
             </Text>
           </View>
 

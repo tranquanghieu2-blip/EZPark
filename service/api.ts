@@ -1,4 +1,4 @@
-
+import api from "@/service/apiClient";
 
 export const API_CONFIG = {
   BASE_URL: "https://ezpark-9gnn.onrender.com/api",
@@ -218,29 +218,89 @@ export async function GGLogin() {
   }
 }
 
-export const createFeedback = async (feedbackData: any, accessToken: string) => {
-  try {
-    const response = await fetch(`${API_CONFIG.BASE_URL}/feedbacks/create`, {
-      method: "POST",
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(feedbackData),
-    });
 
-    const result = await response.json();
-    if (!response.ok) {
-      throw new Error(result.message || "Something went wrong");
-    }
 
-    return result;
-  } catch (error) {
-    console.error("Error creating feedback:", error);
-    throw error;
+const buildFeedbackPayload = (data: {
+  parking_spot_id: number;
+  friendliness_rating: number;
+  space_rating: number;
+  security_rating: number;
+  comment: string;
+}) => ({
+  parking_spot_id: data.parking_spot_id,
+  friendliness_rating: data.friendliness_rating,
+  space_rating: data.space_rating,
+  security_rating: data.security_rating,
+  comment: data.comment.trim(),
+});
 
+
+const handleApiError = (action: string, error: any) => {
+  console.error(`❌ Error ${action} feedback:`, error);
+  if (error.response) {
+    throw new Error(
+      error.response.data?.message || `Server error when ${action} feedback`
+    );
+  } else {
+    throw new Error(`Network error when ${action} feedback`);
   }
 };
 
+
+export const createFeedback = async (feedback: {
+  parking_spot_id: number;
+  friendliness_rating: number;
+  space_rating: number;
+  security_rating: number;
+  comment: string;
+}) => {
+  try {
+    const payload = buildFeedbackPayload(feedback);
+    const res = await api.post("/feedbacks/create", payload);
+    return res.data.data;
+  } catch (error) {
+    handleApiError("creating", error);
+  }
+};
+
+
+export const updateFeedback = async (
+  feedback_id: number,
+  feedback: {
+    parking_spot_id: number;
+    friendliness_rating: number;
+    space_rating: number;
+    security_rating: number;
+    comment: string;
+  }
+) => {
+  try {
+    const payload = buildFeedbackPayload(feedback);
+    const res = await api.put(`/feedbacks/update/${feedback_id}`, payload);
+    return res.data.data;
+  } catch (error) {
+    handleApiError("updating", error);
+  }
+};
+
+
+export const deleteFeedback = async (feedback_id: number) => {
+  try {
+    const res = await api.delete(`/feedbacks/delete/${feedback_id}`);
+    return res.data.data;
+  } catch (error) {
+    handleApiError("deleting", error);
+  }
+};
+
+
+export const getMyFeedback = async (parking_spot_id: number) => {
+  try {
+    const res = await api.get(`/feedbacks/my-feedback/${parking_spot_id}`);
+    return res.data.data;
+  } catch (error) {
+    handleApiError("fetching my", error);
+  }
+};
 
 
