@@ -7,7 +7,8 @@ import {
   Animated,
   Easing,
 } from "react-native";
-import { IconLine } from "@/components/Icons";
+import { IconExclaimation } from "@/components/Icons";
+import Colors from "@/constants/colors";
 import GradientButton from "@/components/GradientButton";
 
 interface ConfirmModalProps {
@@ -37,8 +38,8 @@ export function ConfirmUpdateFeedback({
         >
           {/* Header icon + title */}
           <View className="items-center mb-4">
-            <View className="bg-red-100 p-3 rounded-full mb-3">
-              <IconLine size={36} color="#E53935" />
+            <View className="bg-blue-100 p-3 rounded-full mb-3">
+              <IconExclaimation size={36} color={Colors.blue_button} />
             </View>
             <Text className="text-xl font-bold text-center text-black">
               Xác nhận chỉnh sửa

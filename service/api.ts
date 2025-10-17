@@ -288,3 +288,45 @@ export const getMyFeedback = async (parking_spot_id: number) => {
 };
 
 
+// 🟦 Lấy danh sách feedback (có phân trang)
+export const getListFeedback = async (
+  parkingSpotId: number,
+  limit = 5,
+  offset = 0
+): Promise<Feedback[]> => {
+  try {
+    const response = await api.get(`/feedbacks/all/${parkingSpotId}`, {
+      params: { limit, offset },
+    });
+    return response.data.data;
+  } catch (error) {
+    handleApiError("fetching feedback list", error);
+    throw error;
+  }
+};
+
+export const getFeedbackStatistic = async (parkingSpotId: number): Promise<FeedbackStatistics> => {
+  try {
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}/feedbacks/statistics/${parkingSpotId}`,
+      {
+        method: "GET",
+        headers: API_CONFIG.headers,
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Error get feedback statistics: ${response.statusText}`);
+    }
+
+    const res = await response.json();
+    return res.data;
+  } catch (error) {
+    console.error("Fetch error:", error);
+    throw error;
+  }
+};
+
+
+
+

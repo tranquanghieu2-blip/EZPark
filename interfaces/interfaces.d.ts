@@ -68,3 +68,22 @@ interface Feedback {
   updated_at: string;
   Driver: User; // thông tin user
 }
+
+interface FeedbackStatistics {
+  totalReviews: number;
+  avgRating: number;
+  avgFriendlinessRating: number;
+  avgSecurityRating: number;
+  avgSpaceRating: number;
+  ratingDistribution: {
+    fiveStar: number;
+    fourStar: number;
+    threeStar: number;
+    twoStar: number;
+    oneStar: number;
+  }
+}
+
+type SearchParkingSpotWithStats = SearchParkingSpot & {
+  statistics: FeedbackStatistic;
+};

@@ -22,7 +22,7 @@ import { images } from "@/constants/images";
 import CustomMenu from "@/components/CustomMenu";
 import { useAuth } from "@/app/context/AuthContext";
 import useFetch from "@/hooks/useFetch";
-import { getMyFeedback } from "@/service/api";
+import { getFeedbackStatistic, getListFeedback, getMyFeedback } from "@/service/api";
 
 // ================= Type định nghĩa =================
 type RootStackParamList = {
@@ -35,17 +35,10 @@ type Props = NativeStackScreenProps<RootStackParamList, "ParkingSpotDetail">;
 type RatingsMap = { 1: number; 2: number; 3: number; 4: number; 5: number };
 
 // ================= Data mẫu đánh giá =================
-const MOCK_RATINGS: RatingsMap = {
-  5: 181,
-  4: 410,
-  3: 195,
-  2: 94,
-  1: 92,
-};
 
 // ================= Helper Components =================
 
-// ⭐ Hiển thị hàng sao
+// Hiển thị hàng sao
 const RatingStars = ({ value, size = 16 }: { value: number; size?: number }) => {
   const stars = [];
   const fullStars = Math.floor(value);
@@ -115,6 +108,7 @@ const ParkingSpotDetail = () => {
     return getMyFeedback(spot.parking_spot_id);
   }, [spot?.parking_spot_id]);
 
+
   const {
     data: myFeedback,
     loading: myFeedbackLoading,
@@ -126,6 +120,48 @@ const ParkingSpotDetail = () => {
     [spot?.parking_spot_id]
   );
 
+  // ==== Danh sách feedback ====
+  const {
+    data: listFeedback,
+    loading: listFeedbackLoading,
+    error: listFeedbackError,
+    refetch: refetchListFeedback,
+  } = useFetch<Feedback[]>(
+    accessToken
+      ? () => getListFeedback(
+        spot?.parking_spot_id,
+        myFeedback ? 4 : 5, // nếu đã có feedback thì bớt 1 phần tử
+        0
+      )
+      : null,
+    true,
+    [spot?.parking_spot_id, myFeedback, accessToken]
+  );
+
+
+  // ==== Thống kê feedback ====
+  const {
+    data: statistics,
+    loading: statisticsLoading,
+    error: statisticsError,
+    refetch: refetchStatistics,
+  } = useFetch<FeedbackStatistics>(
+    spot?.parking_spot_id
+      ? () => getFeedbackStatistic(spot.parking_spot_id)
+      : null,
+    true,
+    [spot?.parking_spot_id]
+  );
+
+
+  const MOCK_RATINGS: RatingsMap = {
+    5: statistics?.ratingDistribution?.fiveStar ?? 0,
+    4: statistics?.ratingDistribution?.fourStar ?? 0,
+    3: statistics?.ratingDistribution?.threeStar ?? 0,
+    2: statistics?.ratingDistribution?.twoStar ?? 0,
+    1: statistics?.ratingDistribution?.oneStar ?? 0,
+  };
+
   const hasFeedback = !!myFeedback;
   const rating = myFeedback?.average_rating ?? 0;
 
@@ -136,6 +172,8 @@ const ParkingSpotDetail = () => {
     0
   );
   const avg = totalReviews > 0 ? Math.round((weightedSum / totalReviews) * 10) / 10 : 0;
+
+  const roundedRating = Math.round(rating); // làm tròn theo quy tắc 0.5 trở lên → +1
 
   const handleDelete = () => console.log("Delete clicked");
   const handleUpdate = () => console.log("Update clicked");
@@ -161,8 +199,8 @@ const ParkingSpotDetail = () => {
 
             {/* Đánh giá sao */}
             <View className="flex-row items-center gap-1">
-              <Text className="text-sm font-medium text-gray-700">{avg.toFixed(1)}</Text>
-              <RatingStars value={avg} size={16} />
+              <Text className="text-sm font-medium text-gray-700">{Number((statistics?.avgRating ?? 0).toFixed(1))}</Text>
+              <RatingStars value={Number((statistics?.avgRating ?? 0).toFixed(1))} size={16} />
               <Text className="text-sm text-gray-500">
                 ({totalReviews.toLocaleString()})
               </Text>
@@ -194,9 +232,9 @@ const ParkingSpotDetail = () => {
           <View className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
             <View className="flex-row">
               <View className="w-1/3 items-center justify-center pr-2">
-                <Text className="text-3xl font-extrabold text-gray-900">{avg}</Text>
+                <Text className="text-3xl font-extrabold text-gray-900">{Number((statistics?.avgRating ?? 0).toFixed(1))}</Text>
                 <View className="mt-2">
-                  <RatingStars value={avg} size={16} />
+                  <RatingStars value={Number((statistics?.avgRating ?? 0).toFixed(1))} size={16} />
                 </View>
                 <Text className="mt-2 text-sm text-gray-500">
                   {totalReviews.toLocaleString()} đánh giá
@@ -275,26 +313,35 @@ const ParkingSpotDetail = () => {
                   )}
                 </View>
 
-                {/* Rating stars */}
                 <View className="flex-row ml-4">
                   {[1, 2, 3, 4, 5].map((star) => {
-                    const filled = star <= rating;
+                    const diff = rating - star;
+
+                    // ⭐ logic xác định loại sao
+                    const isFull = diff >= 0;             
+                    const isHalf = diff > -1 && diff < 0;  
+                    const isEmpty = diff <= -1;
+
                     return (
                       <TouchableOpacity
                         key={star}
-                        onPress={() => navigation.navigate("Rating", {
-                          spot,
-                          myFeedback,
-                          user,
-                          onGoBack: () => {
-                            // callback được gọi khi quay lại
-                            refetchFeedback(); // refresh lại data
-                          },
-                        })}
+                        onPress={() =>
+                          navigation.navigate("Rating", {
+                            spot,
+                            myFeedback,
+                            user,
+                            onGoBack: () => {
+                              refetchFeedback();
+                              refetchStatistics();
+                            },
+                          })
+                        }
                         activeOpacity={0.7}
                       >
-                        {filled ? (
+                        {isFull ? (
                           <IconStar size={40} color={Colors.star} style={{ marginHorizontal: 4 }} />
+                        ) : isHalf ? (
+                          <IconStarHalf size={40} color={Colors.star} style={{ marginHorizontal: 4 }} />
                         ) : (
                           <IconStarNo size={40} color={Colors.star_no} style={{ marginHorizontal: 4 }} />
                         )}
@@ -302,6 +349,8 @@ const ParkingSpotDetail = () => {
                     );
                   })}
                 </View>
+
+
               </View>
 
               {hasFeedback ? (

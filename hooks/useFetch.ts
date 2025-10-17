@@ -9,7 +9,6 @@ const useFetch = <T,>(
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  // fetchData memoized theo fetchFunction
   const fetchData = useCallback(async () => {
     if (!fetchFunction) return;
     try {
@@ -30,20 +29,15 @@ const useFetch = <T,>(
     setLoading(false);
   }, []);
 
-  // Khi autoFetch=true thì chạy fetchData khi fetchData hoặc deps thay đổi
+  // ✅ chỉ chạy lại khi deps thay đổi
   useEffect(() => {
     if (autoFetch && fetchFunction) {
       fetchData();
     }
-  }, [autoFetch, fetchFunction, fetchData, ...deps]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, deps);
 
-  return {
-    data,
-    loading,
-    error,
-    refetch: fetchData,
-    reset,
-  };
+  return { data, loading, error, refetch: fetchData, reset };
 };
 
 export default useFetch;
