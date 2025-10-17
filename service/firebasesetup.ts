@@ -35,7 +35,7 @@ export async function requestNotificationPermission() {
 export async function getFcmToken() {
   try {
     const token = await messaging().getToken();
-    console.log('FCM Token:', token);
+    // console.log('FCM Token:', token);
     return token;
   } catch (e) {
     console.error('Get FCM token failed', e);
