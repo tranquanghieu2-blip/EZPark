@@ -10,7 +10,7 @@ import {
   subscribeToRoute,
   unsubscribeFromRoute,
 } from '@/service/fcm/fcmService';
-import {usePeriodicMapboxLocation}  from '@/hooks/usePeriodicMapboxLocation';
+import {useSmartMapboxLocation}  from '@/hooks/usePeriodicMapboxLocation';
 
 interface Props {
   onClose: () => void;
@@ -19,7 +19,7 @@ interface Props {
 }
 
 const ConfirmParkingRoutesModal: React.FC<Props> = ({ route, onClose }) => {
-  const location = usePeriodicMapboxLocation(5000);
+  const location = useSmartMapboxLocation();
   const { confirmed, confirmRoute } = useConfirmedParking();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const [selectedConfirm, setselectedConfirm] = useState<number | null>(null);

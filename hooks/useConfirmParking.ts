@@ -1,6 +1,6 @@
 import notifee from "@notifee/react-native";
 import { useEffect, useRef, useState } from "react";
-import  {usePeriodicMapboxLocation}  from '@/hooks/usePeriodicMapboxLocation';
+import  {useSmartMapboxLocation}  from '@/hooks/usePeriodicMapboxLocation';
 import { subscribeToRoute, unsubscribeFromRoute } from '@/service/fcm/fcmService';
 import { isUserOnRoute, getPointDistanceMeters } from "@/hooks/Helper/UseConfirmParkringHelper";
 
@@ -18,7 +18,7 @@ type ConfirmedState = {
 };
 
 export const useConfirmedParking = (opts?: { moveThresholdMeters?: number }) => {
- const location = usePeriodicMapboxLocation(5000);
+ const location = useSmartMapboxLocation();
   const moveThreshold = opts?.moveThresholdMeters ?? DEFAULT_MOVE_THRESHOLD_METERS;
 
   const [confirmed, setConfirmed] = useState<ConfirmedState | null>(null);

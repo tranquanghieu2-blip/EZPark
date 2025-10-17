@@ -30,7 +30,7 @@ import ConfirmTest from '../../modals/confirmTest';
 import { useScheduleTimeTriggers } from '@/hooks/useScheduleTimeTriggers';
 import { useNavigation } from '@react-navigation/native';
 import useFetch from '../../hooks/useFetch';
-import  {usePeriodicMapboxLocation}  from '@/hooks/usePeriodicMapboxLocation';
+import  {useSmartMapboxLocation}  from '@/hooks/usePeriodicMapboxLocation';
 
 // ================= Services =================
 import {
@@ -52,7 +52,7 @@ import DeviceInfo from 'react-native-device-info';
 const ParkingSpot = () => {
 
 
-  const location = usePeriodicMapboxLocation(5000);
+  const location = useSmartMapboxLocation();
   console.log("Location: ", location)
 
   const fcmToken = messaging().getToken();
