@@ -1,0 +1,99 @@
+// src/context/AuthContext.tsx
+import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+
+interface AuthContextType {
+  user: User | null;
+  accessToken: string | null;
+  refreshToken: string | null;
+  loading: boolean;
+  login: (userData: User, token: string, refreshToken: string) => Promise<void>;
+  logout: () => Promise<void>;
+  updateAccessToken: (token: string) => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextType>({
+  user: null,
+  accessToken: null,
+  refreshToken: null,
+  loading: true,
+  login: async () => {},
+  logout: async () => {},
+  updateAccessToken: async () => {},
+});
+
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [refreshToken, setRefreshToken] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // 🔹 Load dữ liệu khi app khởi động
+  useEffect(() => {
+    const loadAuth = async () => {
+      try {
+        const storedUser = await AsyncStorage.getItem("user");
+        const storedAccessToken = await AsyncStorage.getItem("accessToken");
+        const storedRefreshToken = await AsyncStorage.getItem("refreshToken");
+
+        if (storedUser) setUser(JSON.parse(storedUser));
+        if (storedAccessToken) setAccessToken(storedAccessToken);
+        if (storedRefreshToken) setRefreshToken(storedRefreshToken);
+      } catch (e) {
+        console.error("Error loading user", e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadAuth();
+  }, []);
+
+  // 🔹 Login: Lưu thông tin người dùng + token
+  const login = async (userData: User, token: string, refresh: string) => {
+    try {
+      await AsyncStorage.multiSet([
+        ["user", JSON.stringify(userData)],
+        ["accessToken", token],
+        ["refreshToken", refresh],
+      ]);
+      setUser(userData);
+      setAccessToken(token);
+      setRefreshToken(refresh);
+    } catch (e) {
+      console.error("Error saving user:", e);
+    }
+  };
+
+  // 🔹 Logout: Xóa toàn bộ dữ liệu
+  const logout = async () => {
+    try {
+      await AsyncStorage.multiRemove(["user", "accessToken", "refreshToken"]);
+      setUser(null);
+      setAccessToken(null);
+      setRefreshToken(null);
+    } catch (e) {
+      console.error("Error clearing storage:", e);
+    }
+  };
+
+  // 🔹 Khi refresh token thành công → cập nhật lại accessToken
+  const updateAccessToken = async (token: string) => {
+    try {
+      await AsyncStorage.setItem("accessToken", token);
+      setAccessToken(token);
+    } catch (e) {
+      console.error("Error updating access token:", e);
+    }
+  };
+
+  return (
+    <AuthContext.Provider
+      value={{ user, accessToken, refreshToken, loading, login, logout, updateAccessToken }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = () => useContext(AuthContext);

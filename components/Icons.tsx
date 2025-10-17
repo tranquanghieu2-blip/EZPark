@@ -77,6 +77,14 @@ export const IconStar = (props: any) => (
   <FontAwesome name="star" iconStyle="solid" {...props} />
 );
 
+export const IconStarNo = (props: any) => (
+  <FontAwesome name="star-o" iconStyle="solid" {...props} />
+);
+
+export const IconStarHalf = (props: any) => (
+  <FontAwesome name="star-half-empty" iconStyle="solid" {...props} />
+);
+
 export const IconEmail = (props: any) => (
   <FontAwesome name="envelope" iconStyle="solid" {...props} />
 );
@@ -85,4 +93,42 @@ export const IconPassword = (props: any) => (
   <FontAwesome name="lock" iconStyle="solid" {...props} />
 );
 
+export const IconDotHorizontal = (props: any) => (
+  <MaterialDesignIcons name="dots-horizontal" iconStyle="solid"  {...props} />
+);
 
+export const IconEdit = (props: any) => (
+  <MaterialIcons name="edit" iconStyle="solid" {...props} />
+);
+
+export const IconEditAccount = (props: any) => (
+  <MaterialDesignIcons name="account-edit" iconStyle="solid" {...props} />
+);
+
+export const IconDelete = (props: any) => (
+  <MaterialIcons name="delete" iconStyle="solid" {...props} />
+);
+
+export const IconNotify = (props: any) => (
+  <MaterialDesignIcons name="bell" iconStyle="solid" {...props} />
+);
+
+export const IconLanguage = (props: any) => (
+  <FontAwesome name="language" iconStyle="solid" {...props} />
+);
+
+export const IconHelp = (props: any) => (
+  <MaterialDesignIcons name="help-box" iconStyle="solid" {...props} />
+);
+
+export const IconContact = (props: any) => (
+  <MaterialDesignIcons name="contacts" iconStyle="solid" {...props} />
+);
+
+export const IconArchiveLock = (props: any) => (
+  <MaterialDesignIcons name="archive-lock" iconStyle="solid" {...props} />
+);
+
+export const IconLogout = (props: any) => (
+  <MaterialDesignIcons name="logout" iconStyle="solid" {...props} />
+);

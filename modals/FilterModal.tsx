@@ -122,7 +122,8 @@ const FilterModal: React.FC<FilterModalProps> = ({ visible, onClose, onConfirm }
                     onConfirm({ criteria, parkingType });
                     onClose();
                   }}
-                  className="py-3 px-5 rounded-lg items-center justify-center"
+                  className="py-3 px-5 rounded-lg items-center justify-center flex-1"
+                  className2="flex-1"
                 >
                   <Text className="text-center text-white font-semibold text-lg">
                     Xác nhận

@@ -1,11 +1,13 @@
-import { View, Text } from 'react-native'
-import React from 'react'
+import React from "react";
+import { View, Text, Image, Pressable, ScrollView } from "react-native";
+import { useAuth } from "@/app/context/AuthContext";
 
 const Favourite = () => {
+  
   return (
-    <View>
+    <ScrollView className="flex-1 bg-gray-200">
       <Text>Favaourite</Text>
-    </View>
+    </ScrollView>
   )
 }
 

@@ -4,6 +4,7 @@ import rankingGradient from "@/assets/images/rankingGradient.png";
 import bottomNavItem from "@/assets/images/bottomNavItem.png";
 import mail from "@/assets/images/image_mail.png";
 import noData from "@/assets/images/no_data.png";
+import avatar from "@/assets/images/avatar.png";
 
 export const images = {
   bg,
@@ -12,4 +13,5 @@ export const images = {
   bottomNavItem,
   mail,
   noData,
+  avatar,
 };

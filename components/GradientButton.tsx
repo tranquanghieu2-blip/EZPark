@@ -9,11 +9,12 @@ type GradientButtonProps = {
   className?: string;
   style?: ViewStyle;
   disabled ?: boolean;
+  className2?: string;
 };
 
-const GradientButton = ({ children, onPress, className, style, disabled }: GradientButtonProps) => {
+const GradientButton = ({ children, onPress, className, style, disabled, className2 }: GradientButtonProps) => {
   return (
-    <TouchableOpacity onPress={onPress} activeOpacity={0.8} className="flex-1" disabled={disabled}>
+    <TouchableOpacity onPress={onPress} activeOpacity={0.8} className={` ${className2 ?? ""}`} disabled={disabled}>
       <LinearGradient
         colors={["#f87171", "#fb923c"]}
         start={{ x: 0, y:  0}}

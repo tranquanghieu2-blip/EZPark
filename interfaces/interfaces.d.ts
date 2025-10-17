@@ -47,3 +47,24 @@ interface SearchParkingSpot {
   distance?: number;
   type: "parking hub" | "on street parking";
 }
+
+interface User {
+  driver_id: number;
+  username: string;
+  name: string;
+  avatar?: string | null;
+}
+
+interface Feedback {
+  feedback_id: number;
+  parking_spot_id: number;
+  driver_id: number;
+  average_rating: number; 
+  friendliness_rating: number;
+  security_rating: number;
+  space_rating: number;
+  comment: string;
+  created_at: string; // ISO date string
+  updated_at: string;
+  Driver: User; // thông tin user
+}
