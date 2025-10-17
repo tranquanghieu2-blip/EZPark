@@ -132,3 +132,7 @@ export const IconArchiveLock = (props: any) => (
 export const IconLogout = (props: any) => (
   <MaterialDesignIcons name="logout" iconStyle="solid" {...props} />
 );
+
+export const IconExclaimation = (props: any) => (
+  <FontAwesome5 name="exclamation-circle" iconStyle="solid" {...props} />
+);

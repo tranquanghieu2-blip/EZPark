@@ -12,9 +12,16 @@ import {
   Keyboard,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useNavigation, useRoute } from "@react-navigation/native";
-
-import { IconDistance, IconFilter, IconStar, IconParkingSpotType } from "@/components/Icons";
+import { useNavigation } from "@react-navigation/native";
+import useFetch from "@/hooks/useFetch";
+import {
+  IconDistance,
+  IconFilter,
+  IconStar,
+  IconParkingSpotType,
+  IconStarNo,
+  IconStarHalf,
+} from "@/components/Icons";
 import GradientButton from "@/components/GradientButton";
 import FilterModal from "@/modals/FilterModal";
 import Colors from "@/constants/colors";
@@ -23,22 +30,36 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { useSearchParking } from "@/hooks/useSearchParking";
 import { DEFAULT_TAB_BAR_STYLE } from "@/utils/tabBarStyle";
 import { useSmartMapboxLocation } from "@/hooks/usePeriodicMapboxLocation";
+import { getFeedbackStatistic } from "@/service/api";
+
+// ⭐ Hiển thị hàng sao
+const RatingStars = ({ value, size = 16 }: { value: number; size?: number }) => {
+  const stars = [];
+  const fullStars = Math.floor(value);
+  const hasHalfStar = value % 1 >= 0.25 && value % 1 < 0.95;
+  const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+
+  for (let i = 0; i < fullStars; i++) {
+    stars.push(<IconStar key={`full-${i}`} size={size} color={Colors.star} />);
+  }
+  if (hasHalfStar) {
+    stars.push(<IconStarHalf key="half" size={size} color={Colors.star} />);
+  }
+  for (let i = 0; i < emptyStars; i++) {
+    stars.push(<IconStarNo key={`empty-${i}`} size={size} color={Colors.star_no} />);
+  }
+
+  return <View className="flex-row items-center">{stars}</View>;
+};
 
 const SearchParkingSpot = () => {
   const navigation = useNavigation<any>();
-  const route = useRoute();
   const location = useSmartMapboxLocation(); // lấy tọa độ mỗi 5s
 
-
   useLayoutEffect(() => {
-    // Ẩn bottom tab khi vào màn search
-    navigation.getParent()?.setOptions({
-      tabBarStyle: { display: "none" },
-    });
+    navigation.getParent()?.setOptions({ tabBarStyle: { display: "none" } });
     return () => {
-      navigation.getParent()?.setOptions({
-        tabBarStyle: DEFAULT_TAB_BAR_STYLE,
-      });
+      navigation.getParent()?.setOptions({ tabBarStyle: DEFAULT_TAB_BAR_STYLE });
     };
   }, [navigation]);
 
@@ -47,7 +68,6 @@ const SearchParkingSpot = () => {
   const [isFocused, setIsFocused] = useState(false);
   const debouncedQuery = useDebounce(query, 500);
 
-  // Dùng hook tìm kiếm (đã bỏ useLocation)
   const { spots, loading, fetchSpots, resetSearch, hasMore } = useSearchParking();
 
   const [loadingMore, setLoadingMore] = useState(false);
@@ -80,12 +100,14 @@ const SearchParkingSpot = () => {
         debouncedQuery,
         true,
         filters.parkingType ? typeLabel2[filters.parkingType] : undefined,
-        location // ✅ truyền vào đây
+        location
       );
     } else {
       resetSearch();
     }
   }, [debouncedQuery, filters, location]);
+
+
 
   const handleLoadMore = async () => {
     if (!location) return;
@@ -110,6 +132,7 @@ const SearchParkingSpot = () => {
     );
     setLoadingReset(false);
   };
+
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
@@ -145,7 +168,9 @@ const SearchParkingSpot = () => {
 
         {/* Danh sách */}
         {loading && spots.length === 0 ? (
-          <ActivityIndicator className="mt-10" />
+          <View className="flex-1 justify-center items-center mt-10">
+            <ActivityIndicator size="large" />
+          </View>
         ) : (
           <FlatList
             className="mt-4"
@@ -157,18 +182,15 @@ const SearchParkingSpot = () => {
               <TouchableOpacity
                 className="py-4 border-b border-gray-200"
                 onPress={() => {
-                  console.log("Chọn bãi:", item.name);
                   navigation.navigate("ParkingSpotDetail", { spot: item });
                 }}
               >
                 <View className="flex">
-                  {/* Tên + Địa chỉ */}
                   <View className="mb-1">
                     <Text className="text-lg font-bold text-gray-900">{item.name}</Text>
                     <Text className="text-sm text-gray-600">{item.address}</Text>
                   </View>
 
-                  {/* Distance + Rating + Type */}
                   <View className="flex-row items-center mt-1">
                     <View className="flex-row items-center">
                       <IconDistance size={20} color={Colors.blue_button} />
@@ -180,23 +202,36 @@ const SearchParkingSpot = () => {
                     <View className="w-[2px] h-4 bg-gray-300 mx-4 rounded-full" />
 
                     <View className="flex-row items-center gap-1">
-                      <Text className="text-sm font-medium text-gray-700">4.8</Text>
-                      <IconStar size={18} color={Colors.star} />
-                      <Text className="text-sm text-gray-500">(1024)</Text>
+                      {item.statistics ? (
+                        <>
+                          <Text className="text-sm font-medium text-gray-700">
+                            {item.statistics.avgRating.toFixed(1)}
+                          </Text>
+                          <RatingStars value={item.statistics.avgRating} size={16} />
+                          <Text className="text-sm text-gray-500">
+                            ({item.statistics.totalReviews})
+                          </Text>
+                        </>
+                      ) : (
+                        <ActivityIndicator size="small" />
+                      )}
                     </View>
 
                     <View className="w-[2px] h-4 bg-gray-300 mx-4 rounded-full" />
 
                     <View className="flex-row items-center">
                       <IconParkingSpotType size={20} color={Colors.blue_button} />
-                      <Text className="ml-1 text-sm text-gray-500">{typeLabel[item.type]}</Text>
+                      <Text className="ml-1 text-sm text-gray-500">
+                        {typeLabel[item.type as keyof typeof typeLabel] ?? "Không xác định"}
+                      </Text>
                     </View>
                   </View>
                 </View>
               </TouchableOpacity>
             )}
             ListEmptyComponent={
-              <View className="flex-1 justify-center items-center">
+
+              <View className="flex-1 justify-center items-center mt-20">
                 <Image
                   source={images.noData}
                   style={{ width: 150, height: 150, resizeMode: "contain" }}
@@ -205,6 +240,7 @@ const SearchParkingSpot = () => {
                   Không có dữ liệu
                 </Text>
               </View>
+
             }
             ListHeaderComponent={
               spots.length > 0 ? (

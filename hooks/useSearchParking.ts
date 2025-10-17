@@ -1,20 +1,20 @@
 import { useState } from "react";
-import { searchParkingSpot } from "@/service/api";
+import { searchParkingSpot, getFeedbackStatistic } from "@/service/api";
 import { calculateDistance } from "@/utils/distance";
 
 export const useSearchParking = () => {
-  const [spots, setSpots] = useState<SearchParkingSpot[]>([]);
+  const [spots, setSpots] = useState<SearchParkingSpotWithStats[]>([]);
   const [loading, setLoading] = useState(false);
   const [offset, setOffset] = useState(0);
-  const [hasMore, setHasMore] = useState(true); // kiểm soát load thêm
+  const [hasMore, setHasMore] = useState(true);
 
   const limit = 5;
 
   /**
-   * @param query Tên bãi đỗ xe muốn tìm
-   * @param reset Có reset danh sách không
-   * @param typeParkingSpot Loại bãi đỗ (nếu có)
-   * @param coords Vị trí hiện tại { latitude, longitude }
+   * @param query - Tên bãi đỗ xe muốn tìm
+   * @param reset - Có reset danh sách không
+   * @param typeParkingSpot - Loại bãi đỗ (nếu có)
+   * @param coords - Vị trí hiện tại { latitude, longitude }
    */
   const fetchSpots = async (
     query: string,
@@ -27,6 +27,7 @@ export const useSearchParking = () => {
     try {
       setLoading(true);
 
+      // 1️⃣ Gọi API tìm kiếm
       const data = await searchParkingSpot({
         nameParking: query,
         latitude: coords.latitude,
@@ -37,7 +38,7 @@ export const useSearchParking = () => {
         type: typeParkingSpot,
       });
 
-      // 🔹 Tính khoảng cách đến từng bãi đỗ
+      // 2️⃣ Tính khoảng cách
       const enriched = data.map((item: SearchParkingSpot) => ({
         ...item,
         distance: calculateDistance(
@@ -48,11 +49,24 @@ export const useSearchParking = () => {
         ),
       }));
 
+      // 3️⃣ Gọi thống kê feedback song song
+      const enrichedWithStats = await Promise.all(
+        enriched.map(async (spot) => {
+          try {
+            const stat = await getFeedbackStatistic(spot.parking_spot_id);
+            return { ...spot, statistics: stat };
+          } catch {
+            return { ...spot, statistics: { avgRating: 0, totalReviews: 0 } };
+          }
+        })
+      );
+
+      // 4️⃣ Cập nhật state
       if (reset) {
-        setSpots(enriched);
+        setSpots(enrichedWithStats);
         setOffset(limit);
       } else {
-        setSpots((prev) => [...prev, ...enriched]);
+        setSpots((prev) => [...prev, ...enrichedWithStats]);
         setOffset((prev) => prev + limit);
       }
 
