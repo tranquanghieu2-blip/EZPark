@@ -14,6 +14,7 @@ import Profile from "./profile";
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
+
 // Component cho từng icon trong tab
 const TabIcon = ({ focused, icon: Icon, title }: any) => {
   const color = focused ? "#FFFFFF" : "#A8B5DB";

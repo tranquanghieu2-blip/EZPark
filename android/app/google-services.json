@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "618727601195",
+    "project_id": "ezpark-94e9b",
+    "storage_bucket": "ezpark-94e9b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:618727601195:android:6e4e9731b10ae2926c266e",
+        "android_client_info": {
+          "package_name": "com.ezpark"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBIvQsaPqqm7tWuZt5MgYu-6BmaZWd7ft8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

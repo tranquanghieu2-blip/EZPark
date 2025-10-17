@@ -5,7 +5,7 @@ import MapboxGL from "@rnmapbox/maps";
  * 🔁 Lấy vị trí người dùng định kỳ bằng Mapbox
  * @param intervalMs thời gian cập nhật (ms)
  */
-export const usePeriodicMapboxLocation = (intervalMs = 5000) => {
+export const usePeriodicMapboxLocation = (intervalMs = 10000) => {
   const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
 
   useEffect(() => {

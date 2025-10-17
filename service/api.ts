@@ -1,3 +1,4 @@
+import { Linking } from "react-native";
 export const API_CONFIG = {
   BASE_URL: "https://ezpark-9gnn.onrender.com/api",
   headers: {
@@ -194,24 +195,25 @@ export async function login(email: string, password: string) {
   return json;
 }
 export async function GGLogin() {
-  try {
-    const res = await fetch(`${API_CONFIG.BASE_URL}/auth/google`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
+  Linking.openURL(`${API_CONFIG.BASE_URL}/api/auth/google`);
+  // try {
+  //   const res = await fetch(`${API_CONFIG.BASE_URL}/auth/google`, {
+  //     method: "GET",
+  //     headers: {
+  //       "Content-Type": "application/json",
+  //     },
+  //   });
 
-    if (!res.ok) throw new Error("Login failed");
-    const data = await res.json();
+  //   if (!res.ok) throw new Error("Login failed");
+  //   const data = await res.json();
 
-    // Backend trả URL redirect đến Google
-    if (data.url) {
-      window.location.href = data.url;
-    } else {
-      console.error("Missing redirect URL from backend");
-    }
-  } catch (error) {
-    console.error("Google login error:", error);
-  }
+  //   // Backend trả URL redirect đến Google
+  //   if (data.url) {
+  //     window.location.href = data.url;
+  //   } else {
+  //     console.error("Missing redirect URL from backend");
+  //   }
+  // } catch (error) {
+  //   console.error("Google login error:", error);
+  // }
 }
