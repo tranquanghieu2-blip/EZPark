@@ -2,15 +2,15 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Alert, Animated, Modal, Pressable, Text, View } from 'react-native';
 import { IconClock } from '@/components/Icons';
 import Colors from '@/constants/colors';
-import {  useConfirmedParking } from '@/hooks/useConfirmParking';
-import {isUserOnRoute} from '@/hooks/Helper/UseConfirmParkringHelper';
+import { useConfirmedParking } from '@/hooks/useConfirmParking';
+import { isUserOnRoute } from '@/hooks/Helper/UseConfirmParkringHelper';
 import { getAllowedTimeRanges } from '@/utils/time';
 import notifee, { AndroidImportance, TriggerType } from '@notifee/react-native';
 import {
   subscribeToRoute,
   unsubscribeFromRoute,
 } from '@/service/fcm/fcmService';
-import {useSmartMapboxLocation}  from '@/hooks/usePeriodicMapboxLocation';
+import { useSmartMapboxLocation } from '@/hooks/usePeriodicMapboxLocation';
 
 interface Props {
   onClose: () => void;
@@ -24,18 +24,21 @@ const ConfirmParkingRoutesModal: React.FC<Props> = ({ route, onClose }) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const [selectedConfirm, setselectedConfirm] = useState<number | null>(null);
 
-  const canConfirmOnRoute = route && location && isUserOnRoute(
-    location.latitude,
-    location.longitude,
-    route.route?.coordinates || [],
-    10
-  );
+  const canConfirmOnRoute =
+    route &&
+    location &&
+    isUserOnRoute(
+      location.latitude,
+      location.longitude,
+      route.route?.coordinates || [],
+      10,
+    );
 
   const isAlreadyConfirmedOther =
     confirmed && confirmed.routeId !== route?.no_parking_route_id;
 
   // const disableConfirm = isAlreadyConfirmedOther || !canConfirmOnRoute;
-  const disableConfirm =  !canConfirmOnRoute;
+  const disableConfirm = !canConfirmOnRoute;
 
   // --- Hiệu ứng mờ khi hiển thị modal ---
   useEffect(() => {
@@ -55,7 +58,7 @@ const ConfirmParkingRoutesModal: React.FC<Props> = ({ route, onClose }) => {
     //   );
     //   return;
     // }
-     if (!route) return;
+    if (!route) return;
 
     // Nếu không thể xác nhận vì quá xa
     // if (!canConfirmOnRoute) {
@@ -89,48 +92,68 @@ const ConfirmParkingRoutesModal: React.FC<Props> = ({ route, onClose }) => {
       await subscribeToRoute(route.no_parking_route_id);
 
       // 2. Lên lịch thông báo cảnh báo trước 15 phút
-      const warning15 = new Date(nearestEnd.getTime() - 15 * 60 * 1000);
-      const notifId15 = await notifee.createTriggerNotification(
-        {
-          title: 'Sắp hết giờ đỗ xe',
-          body: `Còn 15 phút nữa là hết giờ đỗ xe tại ${route.street}`,
-          android: {
-            channelId: 'parking-notifications',
-            importance: AndroidImportance.HIGH,
-          },
-        },
-        {
-          type: TriggerType.TIMESTAMP,
-          timestamp: warning15.getTime(),
-        },
-      );
+      // const warning15 = new Date(nearestEnd.getTime() - 15 * 60 * 1000);
+      // const warning5 = new Date(nearestEnd.getTime() - 5 * 60 * 1000);
 
-      // 3. Lên lịch thông báo cảnh báo trước 5 phút
-      const warning5 = new Date(nearestEnd.getTime() - 5 * 60 * 1000);
-      const notifId5 = await notifee.createTriggerNotification(
-        {
-          title: 'Sắp hết giờ đỗ xe',
-          body: `Còn 5 phút nữa là hết giờ đỗ xe tại ${route.street}`,
-          android: {
-            channelId: 'parking-notifications',
-            importance: AndroidImportance.HIGH,
-          },
-        },
-        {
-          type: TriggerType.TIMESTAMP,
-          timestamp: warning5.getTime(),
-        },
-      );
+      // // Kiểm tra thời gian có hợp lệ không
+      // const nowTime = Date.now();
 
-      // // 4. Lưu thông tin xác nhận với các ID thông báo
-      await confirmRoute({
-        routeId: route.no_parking_route_id,
-        street: route.street,
-        confirmedLat: location?.latitude ?? 0,
-        confirmedLon: location?.longitude ?? 0,
-        endTime: nearestEnd,
-        scheduledNotificationIds: [notifId15, notifId5],
-      });
+      // const triggers: string[] = [];
+
+      // const maybeAddTrigger = async (
+      //   title: string,
+      //   body: string,
+      //   timestamp: number,
+      // ) => {
+      //   if (timestamp <= nowTime) {
+      //     console.log(
+      //       `Bỏ qua notification vì thời gian ${new Date(
+      //         timestamp,
+      //       ).toISOString()} < hiện tại`,
+      //     );
+      //     return;
+      //   }
+      //   const id = await notifee.createTriggerNotification(
+      //     {
+      //       title,
+      //       body,
+      //       android: {
+      //         channelId: 'parking-notifications',
+      //         importance: AndroidImportance.DEFAULT,
+      //       },
+      //     },
+      //     { type: TriggerType.TIMESTAMP, timestamp },
+      //   );
+      //   triggers.push(id);
+      // };
+
+      // // 15 phút trước
+      // await maybeAddTrigger(
+      //   'Sắp hết giờ đỗ xe',
+      //   `Còn 15 phút nữa là hết giờ đỗ xe tại ${route.street}`,
+      //   nearestEnd.getTime() - 15 * 60 * 1000,
+      // );
+
+      // // 5 phút trước
+      // await maybeAddTrigger(
+      //   'Sắp hết giờ đỗ xe',
+      //   `Còn 5 phút nữa là hết giờ đỗ xe tại ${route.street}`,
+      //   nearestEnd.getTime() - 5 * 60 * 1000,
+      // );
+
+      // await confirmRoute({
+      //   routeId: route.no_parking_route_id,
+      //   street: route.street,
+      //   confirmedLat: location?.latitude ?? 0,
+      //   confirmedLon: location?.longitude ?? 0,
+      //   endTime: nearestEnd,
+      //   scheduledNotificationIds: triggers,
+      // });
+
+      // console.log('Now:', new Date().toISOString());
+      // console.log('End:', nearestEnd.toISOString());
+      // console.log('Warning15:', warning15.toISOString());
+      // console.log('Warning5:', warning5.toISOString());
 
       Alert.alert(
         'Đã xác nhận đỗ xe',
@@ -197,7 +220,7 @@ const ConfirmParkingRoutesModal: React.FC<Props> = ({ route, onClose }) => {
                 </Pressable>
 
                 <Pressable
-                  disabled={disableConfirm}
+                  // disabled={disableConfirm}
                   onPress={handleConfirm}
                   className={`flex-1 h-[40px] rounded-xl justify-center items-center ${
                     disableConfirm
@@ -207,8 +230,8 @@ const ConfirmParkingRoutesModal: React.FC<Props> = ({ route, onClose }) => {
                 >
                   <Text className="text-white font-semibold">
                     {confirmed?.routeId === route.no_parking_route_id
-                      ? "Đã xác nhận"
-                      : "Xác Nhận Đỗ"}
+                      ? 'Đã xác nhận'
+                      : 'Xác Nhận Đỗ'}
                   </Text>
                 </Pressable>
               </View>
