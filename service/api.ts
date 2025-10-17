@@ -293,7 +293,7 @@ export const getListFeedback = async (
   parkingSpotId: number,
   limit = 5,
   offset = 0
-): Promise<Feedback[]> => {
+): Promise<ListFeedback> => {
   try {
     const response = await api.get(`/feedbacks/all/${parkingSpotId}`, {
       params: { limit, offset },

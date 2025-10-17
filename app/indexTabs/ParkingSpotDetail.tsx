@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import {
   View,
   Text,
@@ -23,6 +23,10 @@ import CustomMenu from "@/components/CustomMenu";
 import { useAuth } from "@/app/context/AuthContext";
 import useFetch from "@/hooks/useFetch";
 import { getFeedbackStatistic, getListFeedback, getMyFeedback } from "@/service/api";
+import { useGetListFeedback } from "@/hooks/useGetListFeedback";
+import { FlatList } from "react-native-gesture-handler";
+import GradientButton from "@/components/GradientButton";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 // ================= Type định nghĩa =================
 type RootStackParamList = {
@@ -99,6 +103,8 @@ const ParkingSpotDetail = () => {
   const route = useRoute<RouteProp<RootStackParamList, "ParkingSpotDetail">>();
   const { spot } = route.params;
   const { user, accessToken } = useAuth();
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [loadingReset, setLoadingReset] = useState(false);
 
   // === Gọi API đánh giá của người dùng ===
   const fetchMyFeedback = useCallback(() => {
@@ -122,21 +128,43 @@ const ParkingSpotDetail = () => {
 
   // ==== Danh sách feedback ====
   const {
-    data: listFeedback,
+    feedbacks,
     loading: listFeedbackLoading,
-    error: listFeedbackError,
-    refetch: refetchListFeedback,
-  } = useFetch<Feedback[]>(
-    accessToken
-      ? () => getListFeedback(
-        spot?.parking_spot_id,
-        myFeedback ? 4 : 5, // nếu đã có feedback thì bớt 1 phần tử
-        0
-      )
-      : null,
-    true,
-    [spot?.parking_spot_id, myFeedback, accessToken]
-  );
+    fetchFeedbacks,
+    resetFeedbacks,
+    hasMore,
+  } = useGetListFeedback();
+
+  console.log(feedbacks)
+
+  useEffect(() => {
+    console.log(spot.parking_spot_id);
+    if (!spot?.parking_spot_id) return;
+
+    const limit = myFeedback ? 4 : 5;
+
+    resetFeedbacks();
+    fetchFeedbacks(spot.parking_spot_id, true, limit);
+  }, [spot?.parking_spot_id, myFeedback?.feedback_id]);
+
+  const handleLoadMore = async () => {
+    setLoadingMore(true);
+    await fetchFeedbacks(
+      spot.parking_spot_id,
+      false
+    );
+    setLoadingMore(false);
+  };
+
+  const handleReset = async () => {
+    setLoadingReset(true);
+    await fetchFeedbacks(
+      spot.parking_spot_id,
+      true
+    );
+    setLoadingReset(false);
+  };
+
 
 
   // ==== Thống kê feedback ====
@@ -180,9 +208,9 @@ const ParkingSpotDetail = () => {
 
   return (
     <View className="flex-1 bg-white">
-      <ScrollView className="flex-1 mx-4">
+      <ScrollView className="flex-1 bg-white mx-4" showsVerticalScrollIndicator={false}>
         {/* ==== Thông tin bãi đỗ ==== */}
-        <View className="flex gap-1 mt-3">
+        <View className="flex gap-1 mt-3 ">
           <Text className="text-xl font-bold text-black">{spot.name}</Text>
           <Text className="text-base text-gray-600">{spot.address}</Text>
 
@@ -229,7 +257,15 @@ const ParkingSpotDetail = () => {
         <View className="mt-5">
           <Text className="text-lg font-semibold text-black mb-4">Đánh giá tổng quan</Text>
 
-          <View className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+          <View
+            className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100"
+            style={{
+              shadowColor: "#000",
+              shadowOpacity: 0.05,
+              shadowRadius: 4,
+              elevation: 2,
+            }}
+          >
             <View className="flex-row">
               <View className="w-1/3 items-center justify-center pr-2">
                 <Text className="text-3xl font-extrabold text-gray-900">{Number((statistics?.avgRating ?? 0).toFixed(1))}</Text>
@@ -264,7 +300,7 @@ const ParkingSpotDetail = () => {
             {/* {hasFeedback && <CustomMenu onUpdate={handleUpdate} onDelete={handleDelete} />} */}
           </View>
 
-          {/* 🌀 Loading state */}
+
           {myFeedbackLoading && (
             <View className="flex-row items-center justify-center mt-4">
               <ActivityIndicator size="small" color={Colors.blue_button} />
@@ -272,7 +308,7 @@ const ParkingSpotDetail = () => {
             </View>
           )}
 
-          {/* ⚠️ Error state */}
+
           {myFeedbackError && !myFeedbackLoading && (
             <View className="mt-3 p-3 bg-red-50 rounded-xl">
               <Text className="text-red-600 font-medium mb-2">
@@ -284,7 +320,7 @@ const ParkingSpotDetail = () => {
             </View>
           )}
 
-          {/* ⭐ Đánh giá hiển thị khi có dữ liệu */}
+
           {!myFeedbackLoading && !myFeedbackError && (
             <>
               <View className="flex-row items-center mt-4">
@@ -318,8 +354,8 @@ const ParkingSpotDetail = () => {
                     const diff = rating - star;
 
                     // ⭐ logic xác định loại sao
-                    const isFull = diff >= 0;             
-                    const isHalf = diff > -1 && diff < 0;  
+                    const isFull = diff >= 0;
+                    const isHalf = diff > -1 && diff < 0;
                     const isEmpty = diff <= -1;
 
                     return (
@@ -377,7 +413,160 @@ const ParkingSpotDetail = () => {
 
           <View className="h-[1px] bg-gray-300 w-full mt-4" />
         </View>
+
+        {/* ==== Danh sách các đánh giá khác ==== */}
+        {listFeedbackLoading && feedbacks.length === 0 ? (
+          <View className="flex-1 justify-center items-center mt-10">
+            <ActivityIndicator size="small" color={Colors.blue_button} />
+          </View>
+        ) : (
+          <FlatList
+            className="mt-5"
+            data={feedbacks || []}
+            keyExtractor={(item) => item.feedback_id.toString()}
+            contentContainerStyle={{ flexGrow: 1 }}
+            keyboardShouldPersistTaps="handled"
+            scrollEnabled={false}
+            renderItem={({ item }) => (
+
+              <View className="flex mb-4">
+                <View className="flex-row items-center gap-2">
+                  <View className="w-10 h-10 rounded-full overflow-hidden border border-gray-300">
+                    {item.Driver?.avatar ? (
+                      <Image
+                        source={{ uri: item.Driver?.avatar }}
+                        className="w-full h-full"
+                        resizeMode="cover"
+                      />
+                    ) : (
+                      <View className="w-10 h-10 rounded-full bg-gray-300 items-center justify-center">
+                        {item.Driver?.name ? (
+                          <Text className="text-lg font-bold text-white text-center">
+                            {item.Driver?.name[0].toUpperCase()}
+                          </Text>
+                        ) : (
+                          <Image
+                            source={images.avatar}
+                            className="w-full h-full"
+                            resizeMode="cover"
+                          />
+                        )}
+                      </View>
+                    )}
+                  </View>
+
+                  <View className="ml-3 flex-1">
+                    <Text className="text-base font-semibold text-gray-900">
+                      {item.Driver.name}
+                    </Text>
+                    <Text className="text-sm text-gray-500">
+                      Đã chia sẻ từ{" "}
+                      {new Date(item?.updated_at ?? item?.created_at).toLocaleDateString("vi-VN")}
+                    </Text>
+                  </View>
+                </View>
+
+
+                <View className="flex-row mt-3">
+                  {[1, 2, 3, 4, 5].map((star) => {
+                    const diff = item.average_rating - star;
+
+                    // ⭐ logic xác định loại sao
+                    const isFull = diff >= 0;
+                    const isHalf = diff > -1 && diff < 0;
+                    const isEmpty = diff <= -1;
+
+                    return (
+                      <TouchableOpacity
+                        key={star}
+
+                        activeOpacity={0.7}
+                      >
+                        {isFull ? (
+                          <IconStar size={20} color={Colors.star} style={{ marginHorizontal: 2 }} />
+                        ) : isHalf ? (
+                          <IconStarHalf size={20} color={Colors.star} style={{ marginHorizontal: 2 }} />
+                        ) : (
+                          <IconStarNo size={20} color={Colors.star_no} style={{ marginHorizontal: 2 }} />
+                        )}
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+
+                {item.comment ? (
+                  <Text className="text-black text-base">{item.comment}</Text>
+                ) : (
+                  <Text className="text-gray-500 italic text-base">Chưa thêm bình luận.</Text>
+                )}
+              </View>
+
+            )}
+            ListEmptyComponent={
+              <View className="flex-1 justify-center items-center mt-5">
+                <Image
+                  source={images.noData}
+                  style={{ width: 100, height: 100, resizeMode: "contain" }}
+                />
+                <Text className="mt-3 text-base text-gray-500 text-center">
+                  Không có đánh giá nào khác
+                </Text>
+              </View>
+
+            }
+            ListHeaderComponent={
+              feedbacks.length > 0 ? (
+                <View className="flex-row justify-between mb-2">
+                  <Text className="font-semibold text-lg text-black">
+                    Danh sách đánh giá
+                  </Text>
+                  <Text className="text-sm text-gray-500 mt-1">
+                    Có {feedbacks.length} đánh giá khác
+                  </Text>
+                </View>
+              ) : null
+            }
+            ListFooterComponent={
+              feedbacks.length > 0 ? (
+                <View className="pb-6 flex-shrink-0">
+                  {feedbacks.length > 5 &&
+                    (loadingReset ? (
+                      <ActivityIndicator />
+                    ) : (
+                      <TouchableOpacity
+                        className="mb-3 bg-gray-200 rounded-lg h-[45px] justify-center items-center"
+                        onPress={handleReset}
+                        disabled={loadingReset}
+                      >
+                        <Text className="text-black font-medium">Rút gọn</Text>
+                      </TouchableOpacity>
+                    ))}
+
+                  {hasMore && (
+                    <View className="h-[45px] justify-center">
+                      {loadingMore ? (
+                        <ActivityIndicator />
+                      ) : (
+                        <GradientButton
+                          className="py-3 bg-blue-500 rounded-lg h-full items-center justify-center"
+                          onPress={handleLoadMore}
+                          disabled={loadingMore}
+                        >
+                          <Text className="text-white font-semibold">Hiện thêm</Text>
+                        </GradientButton>
+                      )}
+                    </View>
+                  )}
+                </View>
+              ) : null
+            }
+          />
+        )}
       </ScrollView>
+
+
+
+
     </View>
   );
 };

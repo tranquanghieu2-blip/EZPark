@@ -87,3 +87,11 @@ interface FeedbackStatistics {
 type SearchParkingSpotWithStats = SearchParkingSpot & {
   statistics: FeedbackStatistic;
 };
+
+interface ListFeedback {
+  feedbacks: Feedback[];
+  hasMore?: boolean;
+  limit?: number;
+  offset?: number;
+  total?: number
+}
