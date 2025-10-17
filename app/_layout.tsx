@@ -1,18 +1,19 @@
-import React, { useEffect } from "react";
-import { NavigationContainer } from "@react-navigation/native";
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import AuthLayout from "@/app/auth/_layout";
-import _Layout from "@/app/(tabs)/_layout";
-import "@/config/mapBoxConfig";
-import { AuthProvider, useAuth } from "@/app/context/AuthContext";
-import { setAccessTokenUpdater } from "@/service/apiClient";
-import { View, ActivityIndicator } from "react-native";
-import  ToastManager  from "toastify-react-native";
-import { toastConfig } from "@/utils/CustomToast";
+import React, { useEffect } from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import AuthLayout from '@/app/auth/_layout';
+import _Layout from '@/app/(tabs)/_layout';
+import '@/config/mapBoxConfig';
+import { AuthProvider, useAuth } from '@/app/context/AuthContext';
+import { setAccessTokenUpdater } from '@/service/apiClient';
+import { View, ActivityIndicator } from 'react-native';
+import ToastManager from 'toastify-react-native';
+import { toastConfig } from '@/utils/CustomToast';
 import { registerDevice } from '@/service/fcm/fcmService';
-import { setupNotificationListener } from '@/service/fcm/notifications';
-
-import "../global.css";
+import { createNotificationChannel } from '@/service/fcm/notifications';
+import notifee, { AndroidImportance } from '@notifee/react-native';
+import messaging from '@react-native-firebase/messaging';
+import '../global.css';
 
 const Stack = createNativeStackNavigator();
 
@@ -25,13 +26,12 @@ function AppNavigator() {
   }, [updateAccessToken]);
 
   if (loading) {
-  return (
-    <View className="flex-1 items-center justify-center bg-white">
-      <ActivityIndicator size="large" color="#FF6F00" />
-    </View>
-  );
-}
-
+    return (
+      <View className="flex-1 items-center justify-center bg-white">
+        <ActivityIndicator size="large" color="#FF6F00" />
+      </View>
+    );
+  }
 
   return (
     <Stack.Navigator
@@ -51,22 +51,30 @@ function AppNavigator() {
   );
 }
 
-
 export default function RootLayout() {
-   console.log('RootLayout rendered');
+  console.log('RootLayout rendered');
   // Khởi tạo notifications khi app start
-  useEffect(() => {
-    const initNotifications = async () => {
-      try {
-        await registerDevice();
-        setupNotificationListener();
-        console.log('Notifications initialized successfully');
-      } catch (error) {
-        console.error('Failed to initialize notifications:', error);
-      }
-    };
+  registerDevice();
 
-    initNotifications();
+  useEffect(() => {
+    // 🔹 Tạo channel khi app khởi động
+    createNotificationChannel();
+
+    // 🔹 Lắng nghe thông báo khi app đang mở (foreground)
+    const unsubscribe = messaging().onMessage(async remoteMessage => {
+      await notifee.displayNotification({
+        title: remoteMessage.notification?.title,
+        body: remoteMessage.notification?.body,
+        android: {
+          channelId: 'ezpark_notifications',
+          showTimestamp: true,
+          timestamp: new Date().getTime(),
+          pressAction: { id: 'default' },
+        },
+      });
+    });
+
+    return unsubscribe;
   }, []);
   return (
     <AuthProvider>
@@ -75,10 +83,7 @@ export default function RootLayout() {
       </NavigationContainer>
 
       {/* ToastManager toàn cục */}
-      <ToastManager
-        
-      />
+      <ToastManager />
     </AuthProvider>
-    
   );
 }
