@@ -1,5 +1,6 @@
 import api from "@/service/apiClient";
 
+
 import { Linking } from "react-native";
 export const API_CONFIG = {
   BASE_URL: "https://ezpark-9gnn.onrender.com/api",
@@ -198,26 +199,7 @@ export async function login(email: string, password: string) {
 }
 export async function GGLogin() {
   Linking.openURL(`${API_CONFIG.BASE_URL}/api/auth/google`);
-  // try {
-  //   const res = await fetch(`${API_CONFIG.BASE_URL}/auth/google`, {
-  //     method: "GET",
-  //     headers: {
-  //       "Content-Type": "application/json",
-  //     },
-  //   });
 
-  //   if (!res.ok) throw new Error("Login failed");
-  //   const data = await res.json();
-
-    // Backend trả URL redirect đến Google
-    if (data.url) {
-      window.location.href = data.url;
-    } else {
-      console.error("Missing redirect URL from backend");
-    }
-  } catch (error) {
-    console.error("Google login error:", error);
-  }
 }
 
 
@@ -238,7 +220,7 @@ const buildFeedbackPayload = (data: {
 
 
 const handleApiError = (action: string, error: any) => {
-  console.error(`❌ Error ${action} feedback:`, error);
+  console.error(` Error ${action} feedback:`, error);
   if (error.response) {
     throw new Error(
       error.response.data?.message || `Server error when ${action} feedback`
