@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useState } from "react";
+import React, { useCallback, useEffect, useLayoutEffect, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -12,7 +12,7 @@ import {
   Keyboard,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import useFetch from "@/hooks/useFetch";
 import {
   IconDistance,
@@ -30,7 +30,6 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { useSearchParking } from "@/hooks/useSearchParking";
 import { DEFAULT_TAB_BAR_STYLE } from "@/utils/tabBarStyle";
 import { useSmartMapboxLocation } from "@/hooks/usePeriodicMapboxLocation";
-import { getFeedbackStatistic } from "@/service/api";
 
 // ⭐ Hiển thị hàng sao
 const RatingStars = ({ value, size = 16 }: { value: number; size?: number }) => {
@@ -132,6 +131,19 @@ const SearchParkingSpot = () => {
     );
     setLoadingReset(false);
   };
+
+  // chạy mỗi khi màn hình focus lại
+  useFocusEffect(
+    useCallback(() => {
+      if (!location) return;
+      fetchSpots(
+        debouncedQuery,
+        true, // true = reset lại danh sách
+        filters.parkingType ? typeLabel2[filters.parkingType] : undefined,
+        location
+      );
+    }, [location]) // 👈 chỉ phụ thuộc vào location, đừng thêm fetchSpots
+  );
 
 
   return (

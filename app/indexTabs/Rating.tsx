@@ -20,10 +20,8 @@ import { ConfirmDeleteFeedback } from "@/modals/feedback/ConfirmDeleteFeeback";
 import { useRoute, RouteProp } from "@react-navigation/native";
 import { useAuth } from "@/app/context/AuthContext";
 import { createFeedback, updateFeedback, deleteFeedback } from "@/service/api";
-import useFetch from "@/hooks/useFetch";
 import { useNavigation } from "@react-navigation/native";
 import Colors from "@/constants/colors";
-import ToastManager, { Toast } from 'toastify-react-native'
 import ToastCustom from "@/utils/CustomToast";
 
 // ========================== TYPES ==========================
@@ -56,18 +54,6 @@ const ratingItems: RatingItem[] = [
 
 const MAX_CHAR = 200;
 
-const toastConfig = {
-  success: (props: any) => (
-    <View style={{ backgroundColor: '#4CAF50', padding: 16, borderRadius: 10 }}>
-      <Text style={{ color: 'white', fontWeight: 'bold' }}>{props.text1}</Text>
-      {props.text2 && <Text style={{ color: 'white' }}>{props.text2}</Text>}
-    </View>
-  ),
-  // Override other toast types as needed
-}
-
-
-
 // ========================== COMPONENT ==========================
 const Rating = () => {
   const route = useRoute<RouteProp<RootStackParamList, "Rating">>();
@@ -76,10 +62,6 @@ const Rating = () => {
   const { user } = route.params || {};
   const navigation = useNavigation<any>();
   const { onGoBack } = route.params ?? {};
-
-
-
-
   const { accessToken } = useAuth();
 
   const [ratings, setRatings] = useState<RatingValues>({
@@ -94,11 +76,20 @@ const Rating = () => {
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loadingDelete, setLoadingDelete] = useState(false);
-  // const [loadingUpdate, setLoadingUpdate] = useState(false);
-  // const [loadingCreate, setLoadingCreate] = useState(false);
+  const [isChanged, setIsChanged] = useState(false);
+
+  // Theo dõi thay đổi ratings hoặc comment
+  React.useEffect(() => {
+    const changed =
+      ratings.convenience !== (myFeedback?.friendliness_rating || 0) ||
+      ratings.space !== (myFeedback?.space_rating || 0) ||
+      ratings.security !== (myFeedback?.security_rating || 0) ||
+      comment !== (myFeedback?.comment || "");
+    setIsChanged(changed);
+  }, [ratings, comment, myFeedback]);
 
   // ========================== API CALL ==========================
-  // 🔧 Dựng payload chung
+  // Dựng payload chung
   const buildFeedbackData = () => ({
     parking_spot_id: spot.parking_spot_id,
     friendliness_rating: ratings.convenience,
@@ -163,15 +154,6 @@ const Rating = () => {
     try {
       setLoadingDelete(true);
       await deleteFeedback(myFeedback.feedback_id);
-      // Alert.alert("Thành công", "Đánh giá đã được xoá.", [
-      //   {
-      //     text: "OK",
-      //     onPress: () => {
-      //       if (onGoBack) onGoBack(); // gọi callback của parent
-      //       navigation.goBack(); // quay lại màn trước
-      //     },
-      //   },
-      // ]);
       ToastCustom.success("Thành công", "Feedback đã được xoá!")
       if (onGoBack) onGoBack(); // gọi callback của parent
       navigation.goBack(); // quay lại
@@ -310,7 +292,7 @@ const Rating = () => {
 
         {/* Submit button */}
         {myFeedback ? (
-          <View className="flex-row  gap-4">
+          <View className="flex-row gap-4">
             <Pressable
               className="mt-4 py-3 bg-red-600 rounded-xl items-center justify-center h-[45px] flex-1"
               onPress={() => setShowConfirmDelete(true)}
@@ -324,36 +306,48 @@ const Rating = () => {
                 )}
               </Text>
             </Pressable>
-            <Pressable
-              className="mt-4 py-3 bg-blue-500 flex-1 rounded-xl items-center justify-center h-[45px]"
 
-              onPress={() => setShowConfirmUpdate(true)}
-              disabled={loading}
-            >
-              <Text className="text-white font-semibold text-base">
-                {loading ? (
-                  <ActivityIndicator size="small" color="#fff" />
-                ) : (
-                  "Chỉnh sửa"
-                )}
-              </Text>
-            </Pressable>
+            {isChanged ? (
+              <Pressable
+                className="mt-4 py-3 bg-blue-500 flex-1 rounded-xl items-center justify-center h-[45px]"
+                onPress={() => setShowConfirmUpdate(true)}
+                disabled={loading}
+              >
+                <Text className="text-white font-semibold text-base">
+                  {loading ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : (
+                    "Chỉnh sửa"
+                  )}
+                </Text>
+              </Pressable>
+            ) : (
+              <Pressable
+                disabled
+                className="mt-4 bg-gray-200 py-3 flex-1 rounded-lg items-center justify-center h-[45px]"
+              >
+                <Text className="text-center text-gray-600 font-semibold text-base">
+                  Chỉnh sửa
+                </Text>
+              </Pressable>
+            )}
           </View>
+        ) : (
+          <GradientButton
+            className="mt-4 py-3 bg-blue-500 rounded-xl items-center justify-center h-[45px]"
+            onPress={() => setShowConfirmCreate(true)}
+            disabled={loading}
+          >
+            <Text className="text-white font-semibold text-base">
+              {loading ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                "Gửi đánh giá"
+              )}
+            </Text>
+          </GradientButton>
+        )}
 
-        ) : <GradientButton
-          className="mt-4 py-3 bg-blue-500 rounded-xl items-center justify-center h-[45px]"
-          onPress={() => setShowConfirmCreate(true)}
-          disabled={loading}
-        >
-          <Text className="text-white font-semibold text-base">
-            {loading ? (
-                  <ActivityIndicator size="small" color="#fff" />
-                ) : (
-                  "Gửi đánh giá"
-                )}
-          </Text>
-        </GradientButton>
-        }
 
 
         <ConfirmFeedbackModal

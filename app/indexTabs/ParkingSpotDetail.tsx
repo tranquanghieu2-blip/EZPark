@@ -1,8 +1,8 @@
 import React, { useState, useCallback, useEffect } from "react";
-import { View,Text,ScrollView,Pressable,TouchableOpacity,Image,ActivityIndicator,} from "react-native";
+import { View, Text, ScrollView, Pressable, TouchableOpacity, Image, ActivityIndicator, } from "react-native";
 import { useRoute, RouteProp, useNavigation } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import {IconStar,IconStarHalf,IconStarNo,IconDistance,IconParkingSpotType,} from "@/components/Icons";
+import { IconStar, IconStarHalf, IconStarNo, IconDistance, IconParkingSpotType, } from "@/components/Icons";
 import Colors from "@/constants/colors";
 import { images } from "@/constants/images";
 import CustomMenu from "@/components/CustomMenu";
@@ -123,11 +123,12 @@ const ParkingSpotDetail = () => {
   useEffect(() => {
     if (!spot?.parking_spot_id) return;
 
-    const limit = myFeedback ? 4 : 5;
-
-    resetFeedbacks();
-    fetchFeedbacks(spot.parking_spot_id, true, limit);
-  }, [spot?.parking_spot_id, myFeedback?.feedback_id]);
+    // Chỉ chạy khi myFeedback đã load xong
+    if (myFeedbackLoading === false) {
+      const limit = myFeedback ? 4 : 5;
+      fetchFeedbacks(spot.parking_spot_id, true, limit);
+    }
+  }, [spot?.parking_spot_id, myFeedbackLoading]);
 
   const handleLoadMore = async () => {
     setLoadingMore(true);
@@ -467,9 +468,9 @@ const ParkingSpotDetail = () => {
                 </View>
 
                 {item.comment ? (
-                  <Text className="text-black text-base">{item.comment}</Text>
+                  <Text className="mt-1 text-black text-base">{item.comment}</Text>
                 ) : (
-                  <Text className="text-gray-500 italic text-base">Chưa thêm bình luận.</Text>
+                  <Text className="mt-1 text-gray-500 italic text-base">Chưa thêm bình luận.</Text>
                 )}
               </View>
 
