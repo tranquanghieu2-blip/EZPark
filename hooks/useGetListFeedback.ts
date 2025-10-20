@@ -38,7 +38,7 @@ export const useGetListFeedback = () => {
       setOffset(currentOffset + data.feedbacks.length);
       setHasMore(data.hasMore ?? data.feedbacks.length === limit);
     } catch (err) {
-      console.error("❌ Lỗi khi lấy danh sách feedback:", err);
+      console.error("Lỗi khi lấy danh sách feedback:", err);
     } finally {
       setLoading(false);
     }

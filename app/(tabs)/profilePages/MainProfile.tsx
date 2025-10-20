@@ -88,7 +88,9 @@ export default function Profile() {
 
         {/* Danh sách tùy chọn chính */}
         <View className="mt-5 mx-4 bg-white rounded-2xl border border-gray-200 overflow-hidden">
-          <Pressable className="flex-row items-center px-4 py-3 border-b border-gray-200 active:bg-gray-50">
+          <Pressable className="flex-row items-center px-4 py-3 border-b border-gray-200 active:bg-gray-50"
+            onPress={() => navigation.navigate("ChangeProfile", {user: user})}
+          >
             <IconEditAccount size={20} color="#000" />
             <Text className="flex-1 ml-3 text-[15px] text-black">
               Chỉnh sửa thông tin cá nhân
@@ -112,7 +114,9 @@ export default function Profile() {
             <Text className="text-blue-500 font-medium">Tiếng Việt</Text>
           </Pressable>
 
-          <Pressable className="flex-row items-center px-4 py-3 active:bg-gray-50">
+          <Pressable className="flex-row items-center px-4 py-3 active:bg-gray-50"
+            onPress={() => navigation.navigate("ChangePassword", {user: user})}
+          >
             <IconPassword size={20} color="#000" />
             <Text className="flex-1 ml-3 text-[15px] text-black">
               Thay đổi mật khẩu

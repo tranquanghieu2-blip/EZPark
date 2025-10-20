@@ -1,22 +1,8 @@
 import React, { useState, useCallback, useEffect } from "react";
-import {
-  View,
-  Text,
-  ScrollView,
-  Pressable,
-  TouchableOpacity,
-  Image,
-  ActivityIndicator,
-} from "react-native";
+import { View,Text,ScrollView,Pressable,TouchableOpacity,Image,ActivityIndicator,} from "react-native";
 import { useRoute, RouteProp, useNavigation } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import {
-  IconStar,
-  IconStarHalf,
-  IconStarNo,
-  IconDistance,
-  IconParkingSpotType,
-} from "@/components/Icons";
+import {IconStar,IconStarHalf,IconStarNo,IconDistance,IconParkingSpotType,} from "@/components/Icons";
 import Colors from "@/constants/colors";
 import { images } from "@/constants/images";
 import CustomMenu from "@/components/CustomMenu";
@@ -26,15 +12,12 @@ import { getFeedbackStatistic, getListFeedback, getMyFeedback } from "@/service/
 import { useGetListFeedback } from "@/hooks/useGetListFeedback";
 import { FlatList } from "react-native-gesture-handler";
 import GradientButton from "@/components/GradientButton";
-import { SafeAreaView } from "react-native-safe-area-context";
 
 // ================= Type định nghĩa =================
 type RootStackParamList = {
   SearchParkingSpot: undefined;
   ParkingSpotDetail: { spot: SearchParkingSpot };
 };
-
-type Props = NativeStackScreenProps<RootStackParamList, "ParkingSpotDetail">;
 
 type RatingsMap = { 1: number; 2: number; 3: number; 4: number; 5: number };
 
@@ -138,7 +121,6 @@ const ParkingSpotDetail = () => {
   console.log(feedbacks)
 
   useEffect(() => {
-    console.log(spot.parking_spot_id);
     if (!spot?.parking_spot_id) return;
 
     const limit = myFeedback ? 4 : 5;
@@ -195,16 +177,6 @@ const ParkingSpotDetail = () => {
 
   // ==== Tính toán trung bình mock data ====
   const totalReviews = Object.values(MOCK_RATINGS).reduce((s, v) => s + v, 0);
-  const weightedSum = Object.entries(MOCK_RATINGS).reduce(
-    (s, [star, count]) => s + Number(star) * count,
-    0
-  );
-  const avg = totalReviews > 0 ? Math.round((weightedSum / totalReviews) * 10) / 10 : 0;
-
-  const roundedRating = Math.round(rating); // làm tròn theo quy tắc 0.5 trở lên → +1
-
-  const handleDelete = () => console.log("Delete clicked");
-  const handleUpdate = () => console.log("Update clicked");
 
   return (
     <View className="flex-1 bg-white">

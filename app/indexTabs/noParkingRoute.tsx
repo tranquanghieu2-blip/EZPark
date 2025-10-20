@@ -220,10 +220,8 @@ const NoParkingRoute = () => {
 
         {/* ================= ROUTES (clustered) ================= */}
         {
-          clusterPolylines(
-            routesWithGeometry || [],
-            region.longitudeDelta / 5
-          ).map((route) => {
+          
+            routesWithGeometry?.map((route) => {
             if (!route.route) return null;
 
             const now = new Date();

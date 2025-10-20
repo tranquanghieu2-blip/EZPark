@@ -9,7 +9,7 @@ import { DEFAULT_TAB_BAR_STYLE } from "@/utils/tabBarStyle";
 
 import Index from "./index";
 import Favourite from "./favourite";
-import Profile from "./profile";
+import ProfileStack from "./profilePages/profileStack";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -78,7 +78,7 @@ const _Layout = () => {
       />
       <Tab.Screen
         name="profile"
-        component={Profile}
+        component={ProfileStack}
         options={{
           tabBarIcon: ({ focused }) => (
             <TabIcon focused={focused} icon={IconsPerson} title="Tài khoản" />
