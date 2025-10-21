@@ -135,14 +135,17 @@ const SearchParkingSpot = () => {
   // chạy mỗi khi màn hình focus lại
   useFocusEffect(
     useCallback(() => {
+      console.log("Query:", debouncedQuery, "Filters:", filters, "Location:", location);
+
       if (!location) return;
+
       fetchSpots(
         debouncedQuery,
-        true, // true = reset lại danh sách
+        true,
         filters.parkingType ? typeLabel2[filters.parkingType] : undefined,
         location
       );
-    }, [location]) // 👈 chỉ phụ thuộc vào location, đừng thêm fetchSpots
+    }, [debouncedQuery, filters.parkingType, location]) // <- IMPORTANT
   );
 
 

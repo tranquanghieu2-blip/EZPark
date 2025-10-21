@@ -1,11 +1,11 @@
 import GradientButton from "@/components/GradientButton";
-import { IconEmail, IconsPerson } from "@/components/Icons";
+import { IconCamera, IconsPerson } from "@/components/Icons";
 import { InputRow } from "@/components/InputRow";
 import { useAuth } from "@/app/context/AuthContext";
 import MessageModal from "@/modals/MessageModal";
 import { login } from "@/service/api";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -13,9 +13,11 @@ import {
   Pressable,
   ScrollView,
   Text,
-  View,
+  View, Image,
+  Alert
 } from "react-native";
 import usePost from "@/hooks/usePost";
+import { launchImageLibrary, Asset } from 'react-native-image-picker';
 
 // ================= Type định nghĩa =================
 type RootStackParamList = {
@@ -29,30 +31,59 @@ const ChangeProfile = () => {
   const { user } = route.params;
   const { login: saveAuth } = useAuth();
 
-  const [email, setEmail] = useState(user.username);
+  // === helper: show alert cross-platform
+  const showAlert = (title: string, message?: string) => {
+    Alert.alert(title, message);
+  };
+
   const [name, setName] = useState(user.name);
   const [showFailModal, setShowFailModal] = useState(false);
   const [isChanged, setIsChanged] = useState(false);
-
   const { loading, execute } = usePost(login);
+  const [selectedImage, setSelectedImage] = useState<Asset | null>(null); // ảnh mới được chọn
+  const [previewUri, setPreviewUri] = useState<string | undefined>(user.avatar ?? undefined);
+  const [isSaving, setIsSaving] = useState<boolean>(false);
 
-  // ✅ Kiểm tra hợp lệ
-  const emailValid = /^\S+@\S+\.\S+$/.test(email);
   const nameValid = /^[A-Za-zÀ-ỹ\s]+$/.test(name);
+  const nameChanged = name.trim() !== (user.name ?? "").trim();
+  const avatarChanged = !!selectedImage;
+
+  const canSave = (nameChanged || avatarChanged) && nameValid && !isSaving;
 
   // ✅ Theo dõi thay đổi email hoặc name
   useEffect(() => {
-    const changed = email !== user.username || name !== user.name;
+    const changed = name !== user.name;
     setIsChanged(changed);
-  }, [email, name, user.username, user.name]);
-
-  // ✅ Điều kiện để hiển thị nút GradientButton
-  const canSave = isChanged && emailValid && nameValid;
+  }, [name, user.name]);
 
   const handleSave = async () => {
-    console.log("Lưu thay đổi:", { name, email });
+    console.log("Lưu thay đổi:", { name });
     // TODO: Gọi API cập nhật profile tại đây
   };
+
+  // === Image picker
+  const handlePickImage = useCallback(() => {
+    launchImageLibrary(
+      {
+        mediaType: "photo",
+        quality: 0.8,
+        includeBase64: false,
+      },
+      (result) => {
+        if (result.didCancel) return;
+        if (result.errorCode) {
+          showAlert("Lỗi", "Không thể mở thư viện ảnh: " + result.errorMessage);
+          return;
+        }
+        const asset = result.assets && result.assets[0];
+        if (asset) {
+          setSelectedImage(asset);
+          setPreviewUri(asset.uri);
+        }
+      }
+    );
+  }, []);
+
 
   return (
     <KeyboardAvoidingView
@@ -64,6 +95,27 @@ const ChangeProfile = () => {
         keyboardShouldPersistTaps="handled"
       >
         <View className="mb-3">
+          {/* Ảnh đại diện */}
+          <View className="items-center">
+            <View className="relative">
+              {previewUri ? (
+                <Image source={{ uri: previewUri }} className="w-28 h-28 rounded-full border-4 border-white" />
+              ) : (
+                <View className="w-28 h-28 rounded-full bg-gray-300 border-4 border-white items-center justify-center">
+                  <Text className="text-3xl font-bold text-white">
+                    {name?.[0]?.toUpperCase() ?? "U"}
+                  </Text>
+                </View>
+              )}
+              <Pressable className="absolute bottom-1 right-1 bg-white p-1.5 rounded-full shadow"
+                onPress={handlePickImage}
+                disabled={isSaving}>
+                <IconCamera size={16} color="#000" />
+              </Pressable>
+            </View>
+          </View>
+
+
           <Text className="text-base text-black mb-1 font-medium">Nhập tên</Text>
           <InputRow
             icon={<IconsPerson size={22} color="#fff" />}
@@ -72,16 +124,6 @@ const ChangeProfile = () => {
             onChangeText={setName}
             valid={nameValid}
             errorMsg="Tên không được chứa ký tự đặc biệt"
-          />
-
-          <Text className="text-base text-black mb-1 font-medium mt-3">Nhập email</Text>
-          <InputRow
-            icon={<IconEmail size={24} color="#fff" />}
-            placeholder="Email"
-            value={email}
-            onChangeText={setEmail}
-            valid={emailValid}
-            errorMsg="Email không hợp lệ"
           />
         </View>
 
