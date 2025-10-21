@@ -113,7 +113,8 @@ export const searchParkingSpot = async ({
   page = 1,
   limit = 5,
   offset = 0,
-  type
+  type,
+  avgRating
 }: {
   nameParking: string;
   latitude: number;
@@ -122,8 +123,9 @@ export const searchParkingSpot = async ({
   limit?: number;
   offset?: number;
   type?: string;
+  avgRating?: number;
 }): Promise<SearchParkingSpot[]> => {
-  const url = `${API_CONFIG.BASE_URL}/parking-spots/search?query=${nameParking}&lat=${latitude}&lng=${longitude}&page=${page}&limit=${limit}&offset=${offset}&type=${type}`;
+  const url = `${API_CONFIG.BASE_URL}/parking-spots/search?query=${nameParking}&lat=${latitude}&lng=${longitude}&page=${page}&limit=${limit}&offset=${offset}&type=${type}&avgRating=${avgRating}`;
 
   const response = await fetch(url, {
     method: "GET",

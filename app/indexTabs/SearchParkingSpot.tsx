@@ -13,7 +13,6 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
-import useFetch from "@/hooks/useFetch";
 import {
   IconDistance,
   IconFilter,
@@ -31,7 +30,7 @@ import { useSearchParking } from "@/hooks/useSearchParking";
 import { DEFAULT_TAB_BAR_STYLE } from "@/utils/tabBarStyle";
 import { useSmartMapboxLocation } from "@/hooks/usePeriodicMapboxLocation";
 
-// ⭐ Hiển thị hàng sao
+// Hiển thị hàng sao
 const RatingStars = ({ value, size = 16 }: { value: number; size?: number }) => {
   const stars = [];
   const fullStars = Math.floor(value);
@@ -82,12 +81,13 @@ const SearchParkingSpot = () => {
     "Đỗ xe ven đường": "on street parking",
   };
 
-  const [filters, setFilters] = useState<{ criteria: string[]; parkingType?: string }>({
+  const [filters, setFilters] = useState<{ criteria: string[]; parkingType?: string; selectedRating?: number | null }>({
     criteria: [],
     parkingType: undefined,
+    selectedRating: null,
   });
 
-  // 🔍 Tự động tìm khi query hoặc filter thay đổi
+  // Tự động tìm khi query hoặc filter thay đổi
   useEffect(() => {
     if (!location) {
       console.log("⚠️ Chưa có vị trí người dùng, chưa thể tìm kiếm...");
@@ -99,6 +99,7 @@ const SearchParkingSpot = () => {
         debouncedQuery,
         true,
         filters.parkingType ? typeLabel2[filters.parkingType] : undefined,
+        filters.selectedRating ?? undefined,
         location
       );
     } else {
@@ -115,6 +116,7 @@ const SearchParkingSpot = () => {
       debouncedQuery,
       false,
       filters.parkingType ? typeLabel2[filters.parkingType] : undefined,
+      filters.selectedRating ?? undefined,
       location
     );
     setLoadingMore(false);
@@ -127,6 +129,7 @@ const SearchParkingSpot = () => {
       debouncedQuery,
       true,
       filters.parkingType ? typeLabel2[filters.parkingType] : undefined,
+      filters.selectedRating ?? undefined,
       location
     );
     setLoadingReset(false);
@@ -136,13 +139,12 @@ const SearchParkingSpot = () => {
   useFocusEffect(
     useCallback(() => {
       console.log("Query:", debouncedQuery, "Filters:", filters, "Location:", location);
-
       if (!location) return;
-
       fetchSpots(
         debouncedQuery,
         true,
         filters.parkingType ? typeLabel2[filters.parkingType] : undefined,
+        filters.selectedRating ?? undefined,
         location
       );
     }, [debouncedQuery, filters.parkingType, location]) // <- IMPORTANT
@@ -314,6 +316,7 @@ const SearchParkingSpot = () => {
             setFilters({
               criteria: selectedFilters.criteria,
               parkingType: selectedFilters.parkingType || undefined,
+              selectedRating: selectedFilters.selectedRating ?? null,
             });
             if (!location) return;
             fetchSpots(
@@ -322,6 +325,7 @@ const SearchParkingSpot = () => {
               selectedFilters.parkingType
                 ? typeLabel2[selectedFilters.parkingType]
                 : undefined,
+              filters.selectedRating ?? undefined,
               location
             );
           }}

@@ -14,12 +14,14 @@ export const useSearchParking = () => {
    * @param query - Tên bãi đỗ xe muốn tìm
    * @param reset - Có reset danh sách không
    * @param typeParkingSpot - Loại bãi đỗ (nếu có)
+   * @param selectedRating - Đánh giá đã chọn (nếu có)
    * @param coords - Vị trí hiện tại { latitude, longitude }
    */
   const fetchSpots = async (
     query: string,
     reset = false,
     typeParkingSpot?: string,
+    selectedRating?: number,
     coords?: { latitude: number; longitude: number }
   ) => {
     if (!query.trim() || !coords) return;
@@ -36,6 +38,7 @@ export const useSearchParking = () => {
         limit,
         offset: reset ? 0 : offset,
         type: typeParkingSpot,
+        avgRating: selectedRating,
       });
 
       // 2️⃣ Tính khoảng cách

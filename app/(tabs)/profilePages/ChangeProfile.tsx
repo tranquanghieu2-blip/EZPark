@@ -3,7 +3,6 @@ import { IconCamera, IconsPerson } from "@/components/Icons";
 import { InputRow } from "@/components/InputRow";
 import { useAuth } from "@/app/context/AuthContext";
 import MessageModal from "@/modals/MessageModal";
-import { fetchUserProfile, login } from "@/service/api";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import React, { useState, useEffect, useCallback } from "react";
 import {
@@ -13,16 +12,14 @@ import {
   Pressable,
   ScrollView,
   Text,
-  View, Image,
+  View,
+  Image,
   Alert
 } from "react-native";
-import usePost from "@/hooks/usePost";
-import { launchImageLibrary, Asset } from 'react-native-image-picker';
+import { launchImageLibrary, Asset } from "react-native-image-picker";
 import { updateUserProfile } from "@/service/api";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Storage } from "@/utils/storage";
+import ToastCustom from "@/utils/CustomToast";
 
-// ================= Type định nghĩa =================
 type RootStackParamList = {
   MainProfile: undefined;
   ChangeProfile: { user: User };
@@ -34,65 +31,23 @@ const ChangeProfile = () => {
   const { user } = route.params;
   const { updateUser } = useAuth();
 
-
-  // === helper: show alert cross-platform
   const showAlert = (title: string, message?: string) => {
     Alert.alert(title, message);
   };
 
   const [name, setName] = useState(user.name);
   const [showFailModal, setShowFailModal] = useState(false);
-  const [isChanged, setIsChanged] = useState(false);
-  const { loading, execute } = usePost(login);
-  const [selectedImage, setSelectedImage] = useState<Asset | null>(null); // ảnh mới được chọn
+  const [selectedImage, setSelectedImage] = useState<Asset | null>(null);
   const [previewUri, setPreviewUri] = useState<string | undefined>(user.avatar ?? undefined);
-  const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
 
   const nameValid = /^[A-Za-zÀ-ỹ\s]+$/.test(name);
   const nameChanged = name.trim() !== (user.name ?? "").trim();
   const avatarChanged = !!selectedImage;
 
-  const canSave = (nameChanged || avatarChanged) && nameValid && !isSaving;
+  const canSave = (nameChanged || avatarChanged) && nameValid;
 
-  // Theo dõi thay đổi name
-  useEffect(() => {
-    const changed = name !== user.name;
-    setIsChanged(changed);
-  }, [name, user.name]);
-
-  const handleSave = async () => {
-    console.log("Lưu thay đổi:", { name });
-    // TODO: Gọi API cập nhật profile tại đây
-    setIsSaving(true);
-    try {
-      const profileData: {
-        name?: string;
-        avatar?: { uri: string; type?: string; fileName?: string } | null;
-      } = {};
-      if (nameChanged) {
-        profileData.name = name;
-      }
-      if (avatarChanged && selectedImage) {
-        profileData.avatar = {
-          uri: selectedImage.uri!,
-          type: selectedImage.type,
-          fileName: selectedImage.fileName,
-        };
-      }
-      const updatedUser = await updateUserProfile(profileData);
-      if (!updatedUser) throw new Error("Dữ liệu người dùng không hợp lệ");
-      await updateUser(updatedUser);
-      console.log("Cập nhật profile thành công");
-      navigation.goBack();
-    } catch (error) {
-      console.error("Lỗi cập nhật profile:", error);
-      showAlert("Cập nhật thất bại", "Không thể lưu thay đổi, vui lòng thử lại.");
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  // === Image picker
+  // --- Pick image ---
   const handlePickImage = useCallback(() => {
     launchImageLibrary(
       {
@@ -115,6 +70,40 @@ const ChangeProfile = () => {
     );
   }, []);
 
+  // --- Save profile ---
+  const handleSave = async () => {
+    if (!canSave) return;
+
+    setLoading(true);
+    try {
+      const profileData: {
+        name?: string;
+        avatar?: { uri: string; type?: string; fileName?: string } | null;
+      } = {};
+
+      if (nameChanged) profileData.name = name;
+      if (avatarChanged && selectedImage) {
+        profileData.avatar = {
+          uri: selectedImage.uri!,
+          type: selectedImage.type,
+          fileName: selectedImage.fileName,
+        };
+      }
+
+      const updatedUser = await updateUserProfile(profileData);
+      if (!updatedUser) throw new Error("Dữ liệu người dùng không hợp lệ");
+
+      await updateUser(updatedUser);
+      ToastCustom.success("Thành công", "Thông tin của bạn đã được cập nhật!");
+      navigation.goBack();
+    } catch (error) {
+      console.error("Lỗi cập nhật profile:", error);
+      ToastCustom.error("Lỗi", "Không thể lưu thay đổi, vui lòng thử lại.");
+      setShowFailModal(true);
+    } finally {
+      setLoading(false); // đảm bảo tắt loading ở cuối cùng
+    }
+  };
 
   return (
     <KeyboardAvoidingView
@@ -125,40 +114,43 @@ const ChangeProfile = () => {
         contentContainerStyle={{ flexGrow: 1, padding: 24 }}
         keyboardShouldPersistTaps="handled"
       >
-        <View className="mb-3">
-          {/* Ảnh đại diện */}
-          <View className="items-center">
-            <View className="relative">
-              {previewUri ? (
-                <Image source={{ uri: previewUri }} className="w-28 h-28 rounded-full border-4 border-white" />
-              ) : (
-                <View className="w-28 h-28 rounded-full bg-gray-300 border-4 border-white items-center justify-center">
-                  <Text className="text-3xl font-bold text-white">
-                    {name?.[0]?.toUpperCase() ?? "U"}
-                  </Text>
-                </View>
-              )}
-              <Pressable className="absolute bottom-1 right-1 bg-white p-1.5 rounded-full shadow"
-                onPress={handlePickImage}
-                disabled={isSaving}>
-                <IconCamera size={16} color="#000" />
-              </Pressable>
-            </View>
+        {/* Ảnh đại diện */}
+        <View className="items-center mb-5">
+          <View className="relative">
+            {previewUri ? (
+              <Image
+                source={{ uri: previewUri }}
+                className="w-28 h-28 rounded-full border-4 border-white"
+              />
+            ) : (
+              <View className="w-28 h-28 rounded-full bg-gray-300 border-4 border-white items-center justify-center">
+                <Text className="text-3xl font-bold text-white">
+                  {name?.[0]?.toUpperCase() ?? "U"}
+                </Text>
+              </View>
+            )}
+            <Pressable
+              className="absolute bottom-1 right-1 bg-white p-1.5 rounded-full shadow"
+              onPress={handlePickImage}
+              disabled={loading}
+            >
+              <IconCamera size={16} color="#000" />
+            </Pressable>
           </View>
-
-
-          <Text className="text-base text-black mb-1 font-medium">Nhập tên</Text>
-          <InputRow
-            icon={<IconsPerson size={22} color="#fff" />}
-            placeholder="Họ tên"
-            value={name}
-            onChangeText={setName}
-            valid={nameValid}
-            errorMsg="Tên không được chứa ký tự đặc biệt"
-          />
         </View>
 
-        {/* ==== Nút Lưu thay đổi ==== */}
+        {/* Input Name */}
+        <Text className="text-base text-black mb-1 font-medium">Nhập tên</Text>
+        <InputRow
+          icon={<IconsPerson size={22} color="#fff" />}
+          placeholder="Họ tên"
+          value={name}
+          onChangeText={setName}
+          valid={nameValid}
+          errorMsg="Tên không được chứa ký tự đặc biệt"
+        />
+
+        {/* Button */}
         <View className="h-[50px] mb-3 mt-5">
           {canSave ? (
             <GradientButton
@@ -187,7 +179,7 @@ const ChangeProfile = () => {
         </View>
       </ScrollView>
 
-      {/* Modal thông báo lỗi */}
+      {/* Modal lỗi */}
       <MessageModal
         visible={showFailModal}
         onClose={() => setShowFailModal(false)}
