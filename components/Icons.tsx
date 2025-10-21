@@ -136,3 +136,7 @@ export const IconLogout = (props: any) => (
 export const IconExclaimation = (props: any) => (
   <FontAwesome5 name="exclamation-circle" iconStyle="solid" {...props} />
 );
+
+export const IconCamera = (props: any) => (
+  <MaterialDesignIcons name="camera-image" iconStyle="solid" {...props} />
+);
