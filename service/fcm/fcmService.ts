@@ -169,13 +169,17 @@ export const subscribeToRoute = async (routeId: number) => {
 // Hủy đăng ký thông báo tuyến đường
 export const unsubscribeFromRoute = async () => {
   try {
-    await axios.delete(`${API_CONFIG.BASE_URL}/notifications/cancel/${getFcmToken}`);
-    return true;
+    const fcmToken = await getFcmToken();
+    if (!fcmToken) throw new Error('No FCM token available');
+    
+    const res = await axios.delete(`${API_CONFIG.BASE_URL}/notifications/cancel/${fcmToken}`);
+    return res.status === 200;
   } catch (error) {
     console.error('Unsubscribe error:', error);
     return false;
   }
 };
+
 
 // Hủy thông báo toàn thiết bị khi người dùng tắt thông báo
 export const disableNotifications = async () => {

@@ -1,10 +1,10 @@
 import notifee from "@notifee/react-native";
-import { useEffect, useRef, useState } from "react";
-import  {useSmartMapboxLocation}  from '@/hooks/usePeriodicMapboxLocation';
-import { subscribeToRoute, unsubscribeFromRoute } from '@/service/fcm/fcmService';
-import { isUserOnRoute, getPointDistanceMeters } from "@/hooks/Helper/UseConfirmParkringHelper";
-
-const DEFAULT_MOVE_THRESHOLD_METERS = 30;
+import { useState, useRef, useEffect } from "react";
+import {
+  subscribeToRoute,
+  unsubscribeFromRoute,
+} from "@/service/fcm/fcmService";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type ConfirmedState = {
   routeId: number;
@@ -14,23 +14,13 @@ type ConfirmedState = {
   confirmedLon: number;
   endTime?: Date | null;
   route?: [number, number][];
-  scheduledNotificationIds: string[];
 };
 
-export const useConfirmedParking = (opts?: { moveThresholdMeters?: number }) => {
- const location = useSmartMapboxLocation();
-  const moveThreshold = opts?.moveThresholdMeters ?? DEFAULT_MOVE_THRESHOLD_METERS;
-
+export const useConfirmedParking = () => {
   const [confirmed, setConfirmed] = useState<ConfirmedState | null>(null);
   const endTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  /** Hủy local notification local */
-  const cancelScheduledNotifications = async (ids?: string[]) => {
-    if (!ids?.length) return;
-    await Promise.all(ids.map((id) => notifee.cancelNotification(id)));
-  };
-
-  /** Xác nhận tuyến đường */
+  // Xác nhận đỗ xe
   const confirmRoute = async (params: {
     routeId: number;
     street?: string;
@@ -38,62 +28,74 @@ export const useConfirmedParking = (opts?: { moveThresholdMeters?: number }) => 
     confirmedLon: number;
     endTime?: Date | null;
     route?: [number, number][];
-    scheduledNotificationIds?: string[];
   }) => {
-    // Không cho xác nhận lại
-    if (confirmed?.routeId === params.routeId) return;
+    try {
+      await subscribeToRoute(params.routeId);
+      await notifee.requestPermission();
 
-    // Đăng ký thông báo BE
-    await subscribeToRoute(params.routeId);
-    await notifee.requestPermission();
+      setConfirmed({
+        routeId: params.routeId,
+        street: params.street,
+        confirmedAt: new Date(),
+        confirmedLat: params.confirmedLat,
+        confirmedLon: params.confirmedLon,
+        endTime: params.endTime ?? null,
+        route: params.route,
+      });
 
-    setConfirmed({
-      routeId: params.routeId,
-      street: params.street,
-      confirmedAt: new Date(),
-      confirmedLat: params.confirmedLat,
-      confirmedLon: params.confirmedLon,
-      endTime: params.endTime ?? null,
-      scheduledNotificationIds: [],
-      route: params.route,
-    });
-
-    if (endTimerRef.current) clearTimeout(endTimerRef.current);
-    if (params.endTime) {
-      const ms = params.endTime.getTime() - Date.now();
-      if (ms > 0) {
-        endTimerRef.current = setTimeout(() => clearConfirmed(), ms + 500);
-      }
+      console.log("Đã xác nhận đỗ:", params.routeId);
+    } catch (err) {
+      console.error("confirmRoute error:", err);
     }
   };
 
-  /** Hủy xác nhận */
+  // Hủy xác nhận đỗ xe
   const clearConfirmed = async () => {
-    if (!confirmed) return;
-    await cancelScheduledNotifications(confirmed.scheduledNotificationIds);
-    await unsubscribeFromRoute();
-    setConfirmed(null);
-    if (endTimerRef.current) {
-      clearTimeout(endTimerRef.current);
-      endTimerRef.current = null;
+    try {
+      await unsubscribeFromRoute();
+      setConfirmed(null);
+      console.log("Đã hủy xác nhận đỗ");
+    } catch (err) {
+      console.error("clearConfirmed error:", err);
     }
   };
 
-  /** Theo dõi vị trí để tự clear khi rời tuyến */
+  // Tải trạng thái khi khởi động
   useEffect(() => {
-    if (!confirmed || !location) return;
+    const loadState = async () => {
+      try {
+        const savedState = await AsyncStorage.getItem('confirmedParking');
+        if (savedState) {
+          const parsed = JSON.parse(savedState);
+          if (parsed.confirmedAt) parsed.confirmedAt = new Date(parsed.confirmedAt);
+          if (parsed.endTime) parsed.endTime = parsed.endTime ? new Date(parsed.endTime) : null;
+          setConfirmed(parsed);
+          console.log("Đã tải trạng thái đỗ xe:", parsed);
+        }
+      } catch (err) {
+        console.error("Lỗi tải trạng thái:", err);
+      }
+    };
+    loadState();
+  }, []);
 
-    const stillOnRoute = confirmed.route
-      ? isUserOnRoute(location.latitude, location.longitude, confirmed.route, moveThreshold)
-      : getPointDistanceMeters(
-          confirmed.confirmedLat,
-          confirmed.confirmedLon,
-          location.latitude,
-          location.longitude
-        ) < moveThreshold;
-
-    if (!stillOnRoute) clearConfirmed();
-  }, [location, confirmed, moveThreshold]);
+  // Lưu trạng thái khi thay đổi
+  useEffect(() => {
+    const saveState = async () => {
+      try {
+        if (confirmed) {
+          await AsyncStorage.setItem('confirmedParking', JSON.stringify(confirmed));
+          console.log("Đã lưu trạng thái đỗ xe");
+        } else {
+          await AsyncStorage.removeItem('confirmedParking');
+          console.log("Đã xóa trạng thái đỗ xe");
+        }
+      } catch (err) {
+        console.error("Lỗi lưu trạng thái:", err);
+      }
+    };
+    saveState();
+  }, [confirmed]);
 
   useEffect(() => {
     return () => {

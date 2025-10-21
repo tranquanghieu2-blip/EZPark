@@ -35,12 +35,12 @@ export async function getRoute(
   end: [number, number]
 ) {
   try {
-    const url = `https://router.project-osrm.org/route/v1/driving/${start[0]},${start[1]};${end[0]},${end[1]}?overview=full&geometries=geojson`;
+    const url = `https://router.project-osrm.org/route/v1/driving/${start[0]},${start[1]};${end[0]},${end[1]}?overview=full&geometries=geojson&alternatives=true`;
 
     const res = await fetch(url);
 
     if (!res.ok) {
-      throw new Error(`HTTP error! status: ${res.status} lỗi routing`);
+      throw new Error(`HTTP error! status: ${res.status}`);
     }
 
     const data = await res.json();
@@ -49,9 +49,10 @@ export async function getRoute(
       throw new Error("Không tìm thấy route nào từ OSRM");
     }
 
-    return data.routes[0];
+    return data.routes; 
   } catch (err) {
     console.error("Error fetching route:", err);
-    return null;
+    return null; 
   }
 }
+
