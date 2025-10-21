@@ -10,16 +10,19 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import GradientWrapper from "@/components/GradientWrapper";
 import GradientButton from "@/components/GradientButton";
+import { IconStar } from "@/components/Icons";
+import Colors from "@/constants/colors";
 
 interface FilterModalProps {
   visible: boolean;
   onClose: () => void;
-  onConfirm: (filters: { criteria: string[]; parkingType: string | null }) => void;
+  onConfirm: (filters: { criteria: string[]; parkingType: string | null; selectedRating: number | null }) => void;
 }
 
 const FilterModal: React.FC<FilterModalProps> = ({ visible, onClose, onConfirm }) => {
   const [criteria, setCriteria] = useState<string[]>([]);
   const [parkingType, setParkingType] = useState<string | null>(null);
+  const [selectedRating, setSelectedRating] = useState<number | null>(null);
 
   // Toggle criteria (multi-select)
   const toggleCriteria = (value: string) => {
@@ -32,6 +35,7 @@ const FilterModal: React.FC<FilterModalProps> = ({ visible, onClose, onConfirm }
   const resetFilters = () => {
     setCriteria([]);
     setParkingType(null);
+    setSelectedRating(null);
   };
 
   return (
@@ -41,11 +45,11 @@ const FilterModal: React.FC<FilterModalProps> = ({ visible, onClose, onConfirm }
           <TouchableWithoutFeedback>
             <SafeAreaView className="bg-white w-4/5 rounded-xl p-7">
               {/* Title */}
-              <Text className="text-lg font-semibold text-center mb-4">Bộ lọc</Text>
+              <Text className="text-xl font-semibold text-center mb-4">Bộ lọc</Text>
 
               {/* Criteria buttons */}
-              <View className="flex-row justify-center mb-4">
-                {["Gần đây", "Top rate"].map((item) => {
+              {/* <View className="flex-row justify-center mb-4">
+                {["Gần đây"].map((item) => {
                   const selected = criteria.includes(item);
                   return (
                     <TouchableOpacity
@@ -65,7 +69,53 @@ const FilterModal: React.FC<FilterModalProps> = ({ visible, onClose, onConfirm }
                     </TouchableOpacity>
                   );
                 })}
+              </View> */}
+
+              {/** Average rating radio buttons */}
+              <View className="mb-4">
+                <Text className="font-medium mb-2 text-lg">Đánh giá trung bình</Text>
+                {[5, 4, 3, 2, 1].map((star) => {
+                  const isSelected = selectedRating === star;
+                  return (
+                    <Pressable
+                      key={star}
+                      onPress={() => setSelectedRating(star)}
+                      className="flex-row items-center mb-2"
+                    >
+                      {/* Radio circle */}
+                      <View
+                        style={{
+                          width: 22,
+                          height: 22,
+                          borderRadius: 11,
+                          borderWidth: 2,
+                          borderColor: isSelected ? "#f87171" : "#d1d5db",
+                          justifyContent: "center",
+                          alignItems: "center",
+                        }}
+                      >
+                        {isSelected && (
+                          <View
+                            style={{
+                              width: 12,
+                              height: 12,
+                              borderRadius: 6,
+                              backgroundColor: "#f87171",
+                            }}
+                          />
+                        )}
+                      </View>
+
+                      {/* Label */}
+                      <View className="flex-row items-center">
+                        <Text className="ml-2 mr-1">{star}</Text>
+                        <IconStar size={16} color={Colors.star} />
+                      </View>
+                    </Pressable>
+                  );
+                })}
               </View>
+
 
               {/* Parking type radio buttons */}
               <View className="mb-4">
@@ -112,20 +162,20 @@ const FilterModal: React.FC<FilterModalProps> = ({ visible, onClose, onConfirm }
                   onPress={resetFilters}
                   className="flex-1 py-3 rounded-lg bg-gray-200 items-center justify-center"
                 >
-                  <Text className="text-center text-black font-semibold text-lg">
+                  <Text className="text-center text-black font-semibold text-base">
                     Xoá lọc
                   </Text>
                 </Pressable>
 
                 <GradientButton
                   onPress={() => {
-                    onConfirm({ criteria, parkingType });
+                    onConfirm({ criteria, parkingType, selectedRating });
                     onClose();
                   }}
                   className="py-3 px-5 rounded-lg items-center justify-center flex-1"
                   className2="flex-1"
                 >
-                  <Text className="text-center text-white font-semibold text-lg">
+                  <Text className="text-center text-white font-semibold text-base">
                     Xác nhận
                   </Text>
                 </GradientButton>
