@@ -4,6 +4,7 @@ import {MaterialIcons} from "@react-native-vector-icons/material-icons"
 import {MaterialDesignIcons} from "@react-native-vector-icons/material-design-icons"
 import React from "react";
 
+
 // Gom toàn bộ icon Tab vào đây
 export const IconsMap = (props: any) => (
   <FontAwesome name="map-marker" iconStyle="solid" {...props} />
@@ -140,3 +141,16 @@ export const IconExclaimation = (props: any) => (
 export const IconCamera = (props: any) => (
   <MaterialDesignIcons name="camera-image" iconStyle="solid" {...props} />
 );
+
+export const IconNoFavourate = ( props: any) => (
+  <FontAwesome name="heart-o" iconStyle="solid" {...props} />
+);
+
+export const IconFavourate = ( props: any) => (
+  <FontAwesome name="heart" iconStyle="solid" {...props} />
+);
+
+export const IconCancelRouting = (props: any) => (
+  <MaterialDesignIcons name="cancel" iconStyle="solid" {...props} />
+);
+

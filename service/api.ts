@@ -338,6 +338,12 @@ export const fetchUserProfile = async (): Promise<User> => {
   } catch (error) {
     handleApiError("fetching user profile", error);
     throw error; // ✅ Nên ném lỗi ra để component có thể bắt và xử lý
+export const addFavoriteParkingSpot = async (parking_spot_id: number) => {
+  try {
+    const res = await api.post(`/favorites/`, { parking_spot_id });
+    return res.data.data;
+  } catch (error) {
+    handleApiError("adding favorite parking spot", error);
   }
 };
 
@@ -377,3 +383,12 @@ export const updateUserProfile = async (profileData: {
 };
 
 
+export const removeFavoriteParkingSpot = async (parking_spot_id: number) => {
+  
+  try {
+    const res = await api.delete(`/favorites/delete/${parking_spot_id}`);  
+    return res.data.data;
+  } catch (error) { 
+    handleApiError("removing favorite parking spot", error);
+  }
+}

@@ -31,9 +31,12 @@ const ParkingSpotDetailModal: React.FC<Props> = ({
 }) => {
   const navigation = useNavigation();
   const [distance, setDistance] = useState<string | null>(null);
+   const [distanceLoading, setDistanceLoading] = useState(false); 
 
   useEffect(() => {
     if (detail && currentLocation) {
+      setDistanceLoading(true); 
+      setDistance(null); 
       getRoute(
         [currentLocation.longitude, currentLocation.latitude],
         [detail.longitude, detail.latitude],
@@ -48,7 +51,15 @@ const ParkingSpotDetailModal: React.FC<Props> = ({
         .catch(err => {
           console.error('Route error:', err);
           setDistance(null);
+        })
+        .finally(() => {
+          setDistanceLoading(false);
         });
+        
+    }
+    else {
+      setDistance(null);
+      setDistanceLoading(false);
     }
   }, [detail, currentLocation]);
 
@@ -67,10 +78,22 @@ const ParkingSpotDetailModal: React.FC<Props> = ({
                   {detail.name}
                 </Text>
               </View>
+              {/* Distance với loading */}
               <View className="w-fit self-center">
-                <Text className="text-base text-center bg-gray-200 w-fit px-4 py-1 rounded-full mt-2">
-                  {distance}
-                </Text>
+                {distanceLoading ? (
+                  <View className="bg-gray-200 px-4 py-1 rounded-full mt-2 flex-row items-center justify-center min-w-[80px]">
+                    <ActivityIndicator size="small" color={Colors.blue_button} />
+                    
+                  </View>
+                ) : distance ? (
+                  <Text className="text-base text-center bg-gray-200 w-fit px-4 py-1 rounded-full mt-2">
+                    {distance}
+                  </Text>
+                ) : (
+                  <Text className="text-base text-center bg-gray-200 w-fit px-4 py-1 rounded-full mt-2 text-gray-500">
+                    Không xác định
+                  </Text>
+                )}
               </View>
 
               <View className="mt-3 flex gap-2 w-4/5">
@@ -100,9 +123,15 @@ const ParkingSpotDetailModal: React.FC<Props> = ({
           )}
           <View className="flex-row justify-center w-full gap-2">
             <Pressable
-              onPress={onClose}
-              className="bg-gray-200 flex-1 h-[40px] px-4 py-2 mt-4 rounded-xl self-center justify-center items-center"
+            
+              onPress={() => {
+                onClose();
+                setDistance(null);
+              }}
+              
+              className="bg-gray-300 active:bg-gray-200 flex-1 h-[40px] px-4 py-2 mt-4 rounded-xl self-center justify-center items-center"
             >
+              
               <Text className="text-black text-center font-semibold">Đóng</Text>
             </Pressable>
             <Pressable
@@ -138,7 +167,7 @@ const ParkingSpotDetailModal: React.FC<Props> = ({
                     [detail.longitude, detail.latitude],
                   )
                     .then(routes => {
-                      if (routes && routes.length > 0 && onRouteFound) {
+                      if (routes && routes.length > 0 && onRouteFound) { 
                         const allCoords = routes.map((r: any) =>
                           r.geometry.coordinates.map(
                             ([lon, lat]: [number, number]) => ({
@@ -148,7 +177,7 @@ const ParkingSpotDetailModal: React.FC<Props> = ({
                             }),
                           ),
                         );
-                        onRouteFound(allCoords); //  Truyền ra mảng 2 chiều
+                        onRouteFound(allCoords); 
                         console.log("Route example:", allCoords[0].slice(0, 3));
 
                       }
@@ -158,7 +187,7 @@ const ParkingSpotDetailModal: React.FC<Props> = ({
                     .catch(err => console.error('Route error:', err));
                 }
               }}
-              className="bg-blue-500 flex-1 h-[40px] px-4 py-2 mt-4 rounded-xl self-center justify-center items-center"
+              className="bg-blue-500 active:bg-blue-600 flex-1 h-[40px] px-4 py-2 mt-4 rounded-xl self-center justify-center items-center"
             >
               <Text className="text-white text-center font-semibold">
                 Chỉ đường

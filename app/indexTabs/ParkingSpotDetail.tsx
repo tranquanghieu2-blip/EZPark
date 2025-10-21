@@ -1,17 +1,40 @@
-import React, { useState, useCallback, useEffect } from "react";
-import { View, Text, ScrollView, Pressable, TouchableOpacity, Image, ActivityIndicator, } from "react-native";
-import { useRoute, RouteProp, useNavigation } from "@react-navigation/native";
-import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { IconStar, IconStarHalf, IconStarNo, IconDistance, IconParkingSpotType, } from "@/components/Icons";
-import Colors from "@/constants/colors";
-import { images } from "@/constants/images";
-import CustomMenu from "@/components/CustomMenu";
-import { useAuth } from "@/app/context/AuthContext";
-import useFetch from "@/hooks/useFetch";
-import { getFeedbackStatistic, getListFeedback, getMyFeedback } from "@/service/api";
-import { useGetListFeedback } from "@/hooks/useGetListFeedback";
-import { FlatList } from "react-native-gesture-handler";
-import GradientButton from "@/components/GradientButton";
+import React, { useState, useCallback, useEffect } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  Pressable,
+  TouchableOpacity,
+  Image,
+  ActivityIndicator,
+} from 'react-native';
+import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import {
+  IconStar,
+  IconStarHalf,
+  IconStarNo,
+  IconDistance,
+  IconParkingSpotType,
+  IconNoFavourate,
+  IconFavourate,
+} from '@/components/Icons';
+import Colors from '@/constants/colors';
+import { images } from '@/constants/images';
+import CustomMenu from '@/components/CustomMenu';
+import { useAuth } from '@/app/context/AuthContext';
+import useFetch from '@/hooks/useFetch';
+import {
+  addFavoriteParkingSpot,
+  getFeedbackStatistic,
+  getListFeedback,
+  getMyFeedback,
+  removeFavoriteParkingSpot,
+} from '@/service/api';
+import { useGetListFeedback } from '@/hooks/useGetListFeedback';
+import { FlatList } from 'react-native-gesture-handler';
+import GradientButton from '@/components/GradientButton';
+import ToastCustom from '@/utils/CustomToast';
 
 // ================= Type định nghĩa =================
 type RootStackParamList = {
@@ -26,7 +49,13 @@ type RatingsMap = { 1: number; 2: number; 3: number; 4: number; 5: number };
 // ================= Helper Components =================
 
 // Hiển thị hàng sao
-const RatingStars = ({ value, size = 16 }: { value: number; size?: number }) => {
+const RatingStars = ({
+  value,
+  size = 16,
+}: {
+  value: number;
+  size?: number;
+}) => {
   const stars = [];
   const fullStars = Math.floor(value);
   const hasHalfStar = value % 1 >= 0.25 && value % 1 < 0.95;
@@ -39,13 +68,15 @@ const RatingStars = ({ value, size = 16 }: { value: number; size?: number }) => 
     stars.push(<IconStarHalf key="half" size={size} color={Colors.star} />);
   }
   for (let i = 0; i < emptyStars; i++) {
-    stars.push(<IconStarNo key={`empty-${i}`} size={size} color={Colors.star_no} />);
+    stars.push(
+      <IconStarNo key={`empty-${i}`} size={size} color={Colors.star_no} />,
+    );
   }
 
   return <View className="flex-row items-center">{stars}</View>;
 };
 
-// 📊 Thanh tỷ lệ đánh giá
+// Thanh tỷ lệ đánh giá
 const RatingBar = ({
   level,
   count,
@@ -76,38 +107,71 @@ const RatingBar = ({
 };
 
 // ================= Main Component =================
-const typeLabel: Record<"parking hub" | "on street parking", string> = {
-  "parking hub": "Bãi đỗ xe tập trung",
-  "on street parking": "Đỗ xe ven đường",
+const typeLabel: Record<'parking hub' | 'on street parking', string> = {
+  'parking hub': 'Bãi đỗ xe tập trung',
+  'on street parking': 'Đỗ xe ven đường',
 };
+
+  const typeLabel2: Record<string, string> = {
+    "Bãi đỗ xe tập trung": "parking hub",
+    "Đỗ xe ven đường": "on street parking",
+  };
 
 const ParkingSpotDetail = () => {
   const navigation = useNavigation<any>();
-  const route = useRoute<RouteProp<RootStackParamList, "ParkingSpotDetail">>();
+  const route = useRoute<RouteProp<RootStackParamList, 'ParkingSpotDetail'>>();
   const { spot } = route.params;
   const { user, accessToken } = useAuth();
   const [loadingMore, setLoadingMore] = useState(false);
   const [loadingReset, setLoadingReset] = useState(false);
+  // State cho trạng thái yêu thích
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [isToggling, setIsToggling] = useState(false);
 
   // === Gọi API đánh giá của người dùng ===
   const fetchMyFeedback = useCallback(() => {
     if (!spot?.parking_spot_id) {
-      return Promise.reject(new Error("Missing parking_spot_id"));
+      return Promise.reject(new Error('Missing parking_spot_id'));
     }
     return getMyFeedback(spot.parking_spot_id);
   }, [spot?.parking_spot_id]);
-
 
   const {
     data: myFeedback,
     loading: myFeedbackLoading,
     error: myFeedbackError,
     refetch: refetchFeedback,
-  } = useFetch<Feedback>(
-    accessToken ? fetchMyFeedback : null,
-    true,
-    [spot?.parking_spot_id]
-  );
+  } = useFetch<Feedback>(accessToken ? fetchMyFeedback : null, true, [
+    spot?.parking_spot_id,
+  ]);
+
+const handleToggleFavorite = async () => {
+
+  if (isToggling) return; 
+  const newFavoriteState = !isFavorite;
+  setIsToggling(true);
+  
+  try {
+    // Cập nhật state trước
+    setIsFavorite(newFavoriteState);
+    
+    // Gọi API tương ứng
+    if (newFavoriteState) {
+      await addFavoriteParkingSpot(spot.parking_spot_id);
+      ToastCustom.success('Đã thêm vào yêu thích', `${spot.name} đã được lưu`);
+    } else {
+      await removeFavoriteParkingSpot(spot.parking_spot_id);
+      ToastCustom.info('Đã bỏ yêu thích', `${spot.name} đã được gỡ khỏi danh sách`);
+    }
+  } catch (error) {
+    // Rollback state nếu API thất bại
+    setIsFavorite(!newFavoriteState);
+    ToastCustom.error('Lỗi', 'Không thể cập nhật trạng thái yêu thích');
+    console.error('Toggle favorite error:', error);
+  } finally {
+      setIsToggling(false);
+    }
+};
 
   // ==== Danh sách feedback ====
   const {
@@ -118,7 +182,7 @@ const ParkingSpotDetail = () => {
     hasMore,
   } = useGetListFeedback();
 
-  console.log(feedbacks)
+  console.log(feedbacks);
 
   useEffect(() => {
     if (!spot?.parking_spot_id) return;
@@ -132,23 +196,15 @@ const ParkingSpotDetail = () => {
 
   const handleLoadMore = async () => {
     setLoadingMore(true);
-    await fetchFeedbacks(
-      spot.parking_spot_id,
-      false
-    );
+    await fetchFeedbacks(spot.parking_spot_id, false);
     setLoadingMore(false);
   };
 
   const handleReset = async () => {
     setLoadingReset(true);
-    await fetchFeedbacks(
-      spot.parking_spot_id,
-      true
-    );
+    await fetchFeedbacks(spot.parking_spot_id, true);
     setLoadingReset(false);
   };
-
-
 
   // ==== Thống kê feedback ====
   const {
@@ -161,9 +217,8 @@ const ParkingSpotDetail = () => {
       ? () => getFeedbackStatistic(spot.parking_spot_id)
       : null,
     true,
-    [spot?.parking_spot_id]
+    [spot?.parking_spot_id],
   );
-
 
   const MOCK_RATINGS: RatingsMap = {
     5: statistics?.ratingDistribution?.fiveStar ?? 0,
@@ -181,10 +236,29 @@ const ParkingSpotDetail = () => {
 
   return (
     <View className="flex-1 bg-white">
-      <ScrollView className="flex-1 bg-white mx-4" showsVerticalScrollIndicator={false}>
+      <ScrollView
+        className="flex-1 bg-white mx-4"
+        showsVerticalScrollIndicator={false}
+      >
         {/* ==== Thông tin bãi đỗ ==== */}
         <View className="flex gap-1 mt-3 ">
-          <Text className="text-xl font-bold text-black">{spot.name}</Text>
+          <View className="flex-row items-center">
+            <Text className="text-xl font-bold text-black flex-1">
+              {spot.name}
+            </Text>
+            <TouchableOpacity
+              onPress={handleToggleFavorite}
+              style={{ marginTop: -8, marginLeft: 3 }}
+              activeOpacity={0.7}
+            >
+              {isFavorite ? (
+                <IconFavourate size={32} color={Colors.heart} />
+              ) : (
+                <IconNoFavourate size={32} color={Colors.heart} />
+              )}
+            </TouchableOpacity>
+          </View>
+
           <Text className="text-base text-gray-600">{spot.address}</Text>
 
           <View className="flex-row items-center mt-1 flex-wrap">
@@ -200,8 +274,13 @@ const ParkingSpotDetail = () => {
 
             {/* Đánh giá sao */}
             <View className="flex-row items-center gap-1">
-              <Text className="text-sm font-medium text-gray-700">{Number((statistics?.avgRating ?? 0).toFixed(1))}</Text>
-              <RatingStars value={Number((statistics?.avgRating ?? 0).toFixed(1))} size={16} />
+              <Text className="text-sm font-medium text-gray-700">
+                {Number((statistics?.avgRating ?? 0).toFixed(1))}
+              </Text>
+              <RatingStars
+                value={Number((statistics?.avgRating ?? 0).toFixed(1))}
+                size={16}
+              />
               <Text className="text-sm text-gray-500">
                 ({totalReviews.toLocaleString()})
               </Text>
@@ -220,7 +299,9 @@ const ParkingSpotDetail = () => {
 
           {/* Nút chỉ đường */}
           <Pressable className="bg-blue-500 active:bg-blue-600 px-4 py-3 rounded-xl items-center justify-center mt-4">
-            <Text className="text-white font-semibold text-base">Chỉ đường</Text>
+            <Text className="text-white font-semibold text-base">
+              Chỉ đường
+            </Text>
           </Pressable>
 
           <View className="h-[1px] bg-gray-300 w-full mt-3" />
@@ -228,12 +309,14 @@ const ParkingSpotDetail = () => {
 
         {/* ==== Đánh giá tổng quan ==== */}
         <View className="mt-5">
-          <Text className="text-lg font-semibold text-black mb-4">Đánh giá tổng quan</Text>
+          <Text className="text-lg font-semibold text-black mb-4">
+            Đánh giá tổng quan
+          </Text>
 
           <View
             className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100"
             style={{
-              shadowColor: "#000",
+              shadowColor: '#000',
               shadowOpacity: 0.05,
               shadowRadius: 4,
               elevation: 2,
@@ -241,9 +324,14 @@ const ParkingSpotDetail = () => {
           >
             <View className="flex-row">
               <View className="w-1/3 items-center justify-center pr-2">
-                <Text className="text-3xl font-extrabold text-gray-900">{Number((statistics?.avgRating ?? 0).toFixed(1))}</Text>
+                <Text className="text-3xl font-extrabold text-gray-900">
+                  {Number((statistics?.avgRating ?? 0).toFixed(1))}
+                </Text>
                 <View className="mt-2">
-                  <RatingStars value={Number((statistics?.avgRating ?? 0).toFixed(1))} size={16} />
+                  <RatingStars
+                    value={Number((statistics?.avgRating ?? 0).toFixed(1))}
+                    size={16}
+                  />
                 </View>
                 <Text className="mt-2 text-sm text-gray-500">
                   {totalReviews.toLocaleString()} đánh giá
@@ -251,7 +339,7 @@ const ParkingSpotDetail = () => {
               </View>
 
               <View className="flex-1 pl-3">
-                {[5, 4, 3, 2, 1].map((lvl) => (
+                {[5, 4, 3, 2, 1].map(lvl => (
                   <RatingBar
                     key={lvl}
                     level={lvl}
@@ -269,30 +357,34 @@ const ParkingSpotDetail = () => {
         {/* ==== Đánh giá của bạn ==== */}
         <View className="mt-5">
           <View className="flex-row justify-between items-center">
-            <Text className="text-lg font-semibold text-black">Đánh giá của bạn</Text>
+            <Text className="text-lg font-semibold text-black">
+              Đánh giá của bạn
+            </Text>
             {/* {hasFeedback && <CustomMenu onUpdate={handleUpdate} onDelete={handleDelete} />} */}
           </View>
-
 
           {myFeedbackLoading && (
             <View className="flex-row items-center justify-center mt-4">
               <ActivityIndicator size="small" color={Colors.blue_button} />
-              <Text className="ml-2 text-gray-600">Đang tải đánh giá của bạn...</Text>
+              <Text className="ml-2 text-gray-600">
+                Đang tải đánh giá của bạn...
+              </Text>
             </View>
           )}
-
 
           {myFeedbackError && !myFeedbackLoading && (
             <View className="mt-3 p-3 bg-red-50 rounded-xl">
               <Text className="text-red-600 font-medium mb-2">
-                ⚠️ {myFeedbackError.message || "Không thể tải đánh giá."}
+                ⚠️ {myFeedbackError.message || 'Không thể tải đánh giá.'}
               </Text>
-              <TouchableOpacity onPress={refetchFeedback} className="self-start">
+              <TouchableOpacity
+                onPress={refetchFeedback}
+                className="self-start"
+              >
                 <Text className="text-blue-600 underline">Thử lại</Text>
               </TouchableOpacity>
             </View>
           )}
-
 
           {!myFeedbackLoading && !myFeedbackError && (
             <>
@@ -323,10 +415,10 @@ const ParkingSpotDetail = () => {
                 </View>
 
                 <View className="flex-row ml-4">
-                  {[1, 2, 3, 4, 5].map((star) => {
+                  {[1, 2, 3, 4, 5].map(star => {
                     const diff = rating - star;
 
-                    // ⭐ logic xác định loại sao
+                    //  logic xác định loại sao
                     const isFull = diff >= 0;
                     const isHalf = diff > -1 && diff < 0;
                     const isEmpty = diff <= -1;
@@ -335,7 +427,7 @@ const ParkingSpotDetail = () => {
                       <TouchableOpacity
                         key={star}
                         onPress={() =>
-                          navigation.navigate("Rating", {
+                          navigation.navigate('Rating', {
                             spot,
                             myFeedback,
                             user,
@@ -348,36 +440,51 @@ const ParkingSpotDetail = () => {
                         activeOpacity={0.7}
                       >
                         {isFull ? (
-                          <IconStar size={40} color={Colors.star} style={{ marginHorizontal: 4 }} />
+                          <IconStar
+                            size={40}
+                            color={Colors.star}
+                            style={{ marginHorizontal: 4 }}
+                          />
                         ) : isHalf ? (
-                          <IconStarHalf size={40} color={Colors.star} style={{ marginHorizontal: 4 }} />
+                          <IconStarHalf
+                            size={40}
+                            color={Colors.star}
+                            style={{ marginHorizontal: 4 }}
+                          />
                         ) : (
-                          <IconStarNo size={40} color={Colors.star_no} style={{ marginHorizontal: 4 }} />
+                          <IconStarNo
+                            size={40}
+                            color={Colors.star_no}
+                            style={{ marginHorizontal: 4 }}
+                          />
                         )}
                       </TouchableOpacity>
                     );
                   })}
                 </View>
-
-
               </View>
 
               {hasFeedback ? (
                 <View className="mt-3">
                   {myFeedback.comment ? (
-                    <Text className="text-black text-base">{myFeedback.comment}</Text>
+                    <Text className="text-black text-base">
+                      {myFeedback.comment}
+                    </Text>
                   ) : (
-                    <Text className="text-gray-500 italic">Bạn chưa thêm bình luận.</Text>
+                    <Text className="text-gray-500 italic">
+                      Bạn chưa thêm bình luận.
+                    </Text>
                   )}
                   <Text className="text-gray-500 text-xs mt-1">
-                    Cập nhật lần cuối:{" "}
-                    {new Date(myFeedback.updated_at).toLocaleString("vi-VN")}
+                    Cập nhật lần cuối:{' '}
+                    {new Date(myFeedback.updated_at).toLocaleString('vi-VN')}
                   </Text>
                 </View>
               ) : (
                 <View className="mt-3">
                   <Text className="text-gray-500 italic">
-                    Bạn chưa đánh giá bãi này. Hãy nhấn vào ngôi sao để gửi đánh giá đầu tiên!
+                    Bạn chưa đánh giá bãi này. Hãy nhấn vào ngôi sao để gửi đánh
+                    giá đầu tiên!
                   </Text>
                 </View>
               )}
@@ -396,12 +503,11 @@ const ParkingSpotDetail = () => {
           <FlatList
             className="mt-5"
             data={feedbacks || []}
-            keyExtractor={(item) => item.feedback_id.toString()}
+            keyExtractor={item => item.feedback_id.toString()}
             contentContainerStyle={{ flexGrow: 1 }}
             keyboardShouldPersistTaps="handled"
             scrollEnabled={false}
             renderItem={({ item }) => (
-
               <View className="flex mb-4">
                 <View className="flex-row items-center gap-2">
                   <View className="w-10 h-10 rounded-full overflow-hidden border border-gray-300">
@@ -433,34 +539,43 @@ const ParkingSpotDetail = () => {
                       {item.Driver.name}
                     </Text>
                     <Text className="text-sm text-gray-500">
-                      Đã chia sẻ từ{" "}
-                      {new Date(item?.updated_at ?? item?.created_at).toLocaleDateString("vi-VN")}
+                      Đã chia sẻ từ{' '}
+                      {new Date(
+                        item?.updated_at ?? item?.created_at,
+                      ).toLocaleDateString('vi-VN')}
                     </Text>
                   </View>
                 </View>
 
-
                 <View className="flex-row mt-3">
-                  {[1, 2, 3, 4, 5].map((star) => {
+                  {[1, 2, 3, 4, 5].map(star => {
                     const diff = item.average_rating - star;
 
-                    // ⭐ logic xác định loại sao
+                    //  logic xác định loại sao
                     const isFull = diff >= 0;
                     const isHalf = diff > -1 && diff < 0;
                     const isEmpty = diff <= -1;
 
                     return (
-                      <TouchableOpacity
-                        key={star}
-
-                        activeOpacity={0.7}
-                      >
+                      <TouchableOpacity key={star} activeOpacity={0.7}>
                         {isFull ? (
-                          <IconStar size={20} color={Colors.star} style={{ marginHorizontal: 2 }} />
+                          <IconStar
+                            size={20}
+                            color={Colors.star}
+                            style={{ marginHorizontal: 2 }}
+                          />
                         ) : isHalf ? (
-                          <IconStarHalf size={20} color={Colors.star} style={{ marginHorizontal: 2 }} />
+                          <IconStarHalf
+                            size={20}
+                            color={Colors.star}
+                            style={{ marginHorizontal: 2 }}
+                          />
                         ) : (
-                          <IconStarNo size={20} color={Colors.star_no} style={{ marginHorizontal: 2 }} />
+                          <IconStarNo
+                            size={20}
+                            color={Colors.star_no}
+                            style={{ marginHorizontal: 2 }}
+                          />
                         )}
                       </TouchableOpacity>
                     );
@@ -468,24 +583,26 @@ const ParkingSpotDetail = () => {
                 </View>
 
                 {item.comment ? (
-                  <Text className="mt-1 text-black text-base">{item.comment}</Text>
+                  <Text className="mt-1 text-black text-base">
+                    {item.comment}
+                  </Text>
                 ) : (
-                  <Text className="mt-1 text-gray-500 italic text-base">Chưa thêm bình luận.</Text>
+                  <Text className="mt-1 text-gray-500 italic text-base">
+                    Chưa thêm bình luận.
+                  </Text>
                 )}
               </View>
-
             )}
             ListEmptyComponent={
               <View className="flex-1 justify-center items-center mt-5">
                 <Image
                   source={images.noData}
-                  style={{ width: 100, height: 100, resizeMode: "contain" }}
+                  style={{ width: 100, height: 100, resizeMode: 'contain' }}
                 />
                 <Text className="mt-3 text-base text-gray-500 text-center">
                   Không có đánh giá nào khác
                 </Text>
               </View>
-
             }
             ListHeaderComponent={
               feedbacks.length > 0 ? (
@@ -525,7 +642,9 @@ const ParkingSpotDetail = () => {
                           onPress={handleLoadMore}
                           disabled={loadingMore}
                         >
-                          <Text className="text-white font-semibold">Hiện thêm</Text>
+                          <Text className="text-white font-semibold">
+                            Hiện thêm
+                          </Text>
                         </GradientButton>
                       )}
                     </View>
@@ -536,10 +655,6 @@ const ParkingSpotDetail = () => {
           />
         )}
       </ScrollView>
-
-
-
-
     </View>
   );
 };
