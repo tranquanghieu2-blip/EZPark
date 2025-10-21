@@ -1,4 +1,6 @@
 import api from "@/service/apiClient";
+import { normalizeFilePath } from "@/utils/normalizeFilePath";
+import { UserLocation } from "@rnmapbox/maps";
 
 
 import { Linking } from "react-native";
@@ -327,6 +329,49 @@ export const getFeedbackStatistic = async (parkingSpotId: number): Promise<Feedb
   }
 };
 
+export const fetchUserProfile = async (): Promise<User> => {
+  try {
+    const res = await api.get("/user/profile");
+    return res.data?.data as User;
+  } catch (error) {
+    handleApiError("fetching user profile", error);
+    throw error; // ✅ Nên ném lỗi ra để component có thể bắt và xử lý
+  }
+};
 
+
+export const updateUserProfile = async (profileData: {
+  name?: string;
+  avatar?: { uri: string; type?: string; fileName?: string } | null;
+}): Promise<User> => {
+  try {
+    const formData = new FormData();
+
+    if (profileData.name) {
+      formData.append("name", profileData.name);
+    }
+
+    if (profileData.avatar) {
+      const fileUri = await normalizeFilePath(profileData.avatar.uri);
+      formData.append("avatar", {
+        uri: fileUri,
+        type: profileData.avatar.type || "image/jpeg",
+        name: profileData.avatar.fileName || "avatar.jpg",
+      } as any);
+    }
+
+
+    const res = await api.put(`/user/profile`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+
+    return res.data.data as User;
+  } catch (error: any) {
+    console.error("Lỗi updateUserProfile:", error?.response?.data || error);
+    throw error;
+  }
+};
 
 

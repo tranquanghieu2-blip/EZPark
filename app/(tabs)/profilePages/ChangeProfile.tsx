@@ -3,7 +3,7 @@ import { IconCamera, IconsPerson } from "@/components/Icons";
 import { InputRow } from "@/components/InputRow";
 import { useAuth } from "@/app/context/AuthContext";
 import MessageModal from "@/modals/MessageModal";
-import { login } from "@/service/api";
+import { fetchUserProfile, login } from "@/service/api";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import React, { useState, useEffect, useCallback } from "react";
 import {
@@ -18,6 +18,9 @@ import {
 } from "react-native";
 import usePost from "@/hooks/usePost";
 import { launchImageLibrary, Asset } from 'react-native-image-picker';
+import { updateUserProfile } from "@/service/api";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Storage } from "@/utils/storage";
 
 // ================= Type định nghĩa =================
 type RootStackParamList = {
@@ -29,7 +32,8 @@ const ChangeProfile = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<RouteProp<RootStackParamList, "ChangeProfile">>();
   const { user } = route.params;
-  const { login: saveAuth } = useAuth();
+  const { updateUser } = useAuth();
+
 
   // === helper: show alert cross-platform
   const showAlert = (title: string, message?: string) => {
@@ -50,7 +54,7 @@ const ChangeProfile = () => {
 
   const canSave = (nameChanged || avatarChanged) && nameValid && !isSaving;
 
-  // ✅ Theo dõi thay đổi email hoặc name
+  // Theo dõi thay đổi name
   useEffect(() => {
     const changed = name !== user.name;
     setIsChanged(changed);
@@ -59,6 +63,33 @@ const ChangeProfile = () => {
   const handleSave = async () => {
     console.log("Lưu thay đổi:", { name });
     // TODO: Gọi API cập nhật profile tại đây
+    setIsSaving(true);
+    try {
+      const profileData: {
+        name?: string;
+        avatar?: { uri: string; type?: string; fileName?: string } | null;
+      } = {};
+      if (nameChanged) {
+        profileData.name = name;
+      }
+      if (avatarChanged && selectedImage) {
+        profileData.avatar = {
+          uri: selectedImage.uri!,
+          type: selectedImage.type,
+          fileName: selectedImage.fileName,
+        };
+      }
+      const updatedUser = await updateUserProfile(profileData);
+      if (!updatedUser) throw new Error("Dữ liệu người dùng không hợp lệ");
+      await updateUser(updatedUser);
+      console.log("Cập nhật profile thành công");
+      navigation.goBack();
+    } catch (error) {
+      console.error("Lỗi cập nhật profile:", error);
+      showAlert("Cập nhật thất bại", "Không thể lưu thay đổi, vui lòng thử lại.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // === Image picker
