@@ -74,9 +74,6 @@ export default function Profile() {
                 </Text>
               </View>
             )}
-            <Pressable className="absolute bottom-1 right-1 bg-white p-1.5 rounded-full shadow">
-              <IconEdit size={16} color="#000" />
-            </Pressable>
           </View>
         </View>
 

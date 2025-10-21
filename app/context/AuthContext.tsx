@@ -11,6 +11,7 @@ interface AuthContextType {
   login: (userData: User, token: string, refreshToken: string) => Promise<void>;
   logout: () => Promise<void>;
   updateAccessToken: (token: string) => Promise<void>;
+  updateUser: (updatedUser: User) => Promise<void>; // 👈 thêm dòng này
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -21,6 +22,7 @@ const AuthContext = createContext<AuthContextType>({
   login: async () => {},
   logout: async () => {},
   updateAccessToken: async () => {},
+  updateUser: async () => {}, // 👈 thêm dòng này
 });
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
@@ -87,9 +89,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  // 🔹 Cập nhật thông tin user
+  const updateUser = async (updatedUser: User) => {
+    try {
+      await AsyncStorage.setItem("user", JSON.stringify(updatedUser));
+      setUser(updatedUser);
+    }
+    catch (e) {
+      console.error("Error updating user:", e);
+    }
+  };
+
   return (
     <AuthContext.Provider
-      value={{ user, accessToken, refreshToken, loading, login, logout, updateAccessToken }}
+      value={{ user, accessToken, refreshToken, loading, login, logout, updateAccessToken, updateUser }}
     >
       {children}
     </AuthContext.Provider>
