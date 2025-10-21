@@ -14,57 +14,6 @@ const COLORS = {
 
 type ToastType = keyof typeof COLORS;
 
-// ======================== COMPONENT HIỂN THỊ TOAST ========================
-interface BaseToastProps {
-  type: ToastType;
-  text1: string;
-  text2?: string;
-}
-
-const BaseToast: React.FC<BaseToastProps> = ({ type, text1, text2 }) => {
-  const iconMap: Record<ToastType, string> = {
-    success: "check-circle",
-    error: "times-circle",
-    warning: "exclamation-circle",
-    info: "info-circle",
-  };
-
-  return (
-    <View
-      style={{
-        backgroundColor: COLORS[type],
-        flexDirection: "row",
-        alignItems: "center",
-        padding: 14,
-        borderRadius: 12,
-        marginHorizontal: 12,
-        shadowColor: "#000",
-        shadowOpacity: 0.1,
-        shadowRadius: 3,
-        elevation: 3,
-      }}
-    >
-      <View style={{ flex: 1 }}>
-        <Text style={{ color: "white", fontWeight: "bold", fontSize: 15 }}>
-          {text1}
-        </Text>
-        {text2 ? (
-          <Text style={{ color: "white", marginTop: 2 }}>{text2}</Text>
-        ) : null}
-      </View>
-    </View>
-  );
-};
-
-// ======================== TOAST CONFIG ========================
-export const toastConfig = {
-  success: (props: any) => <BaseToast {...props} type="success" />,
-  error: (props: any) => <BaseToast {...props} type="error" />,
-  warning: (props: any) => <BaseToast {...props} type="warning" />,
-  info: (props: any) => <BaseToast {...props} type="info" />,
-};
-
-// ======================== HÀM GỌI NHANH ========================
 const show = (
   type: ToastType,
   title: string,

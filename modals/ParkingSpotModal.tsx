@@ -1,9 +1,9 @@
-import { IconParking, IconParkingSpotType, IconsMap } from "@/components/Icons";
-import Colors from "@/constants/colors";
-import { getRoute } from "@/service/routingService";
-import { useNavigation } from "@react-navigation/native";
-import React, { useEffect, useState } from "react";
-import { ActivityIndicator, Modal, Pressable, Text, View } from "react-native";
+import { IconParking, IconParkingSpotType, IconsMap } from '@/components/Icons';
+import Colors from '@/constants/colors';
+import { getRoute } from '@/service/routingService';
+import { useNavigation } from '@react-navigation/native';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, Modal, Pressable, Text, View } from 'react-native';
 
 interface Props {
   visible: boolean;
@@ -12,12 +12,12 @@ interface Props {
   error: Error | null;
   detail: ParkingSpotDetail | null;
   currentLocation?: { latitude: number; longitude: number } | null;
-  onRouteFound?: (coords: { latitude: number; longitude: number }[]) => void;
+  onRouteFound?: (coords: { latitude: number; longitude: number }[][]) => void;
 }
 
-const typeLabel: Record<ParkingSpotDetail["type"], string> = {
-  "parking hub": "Bãi đỗ xe tập trung",
-  "on street parking": "Đỗ xe ven đường",
+const typeLabel: Record<ParkingSpotDetail['type'], string> = {
+  'parking hub': 'Bãi đỗ xe tập trung',
+  'on street parking': 'Đỗ xe ven đường',
 };
 
 const ParkingSpotDetailModal: React.FC<Props> = ({
@@ -36,16 +36,17 @@ const ParkingSpotDetailModal: React.FC<Props> = ({
     if (detail && currentLocation) {
       getRoute(
         [currentLocation.longitude, currentLocation.latitude],
-        [detail.longitude, detail.latitude]
+        [detail.longitude, detail.latitude],
       )
-        .then((route) => {
-          if (route) {
-            const distanceKm = (route.distance / 1000).toFixed(2);
+        .then(routes => {
+          if (routes && routes.length > 0) {
+            const mainRoute = routes[0];
+            const distanceKm = (mainRoute.distance / 1000).toFixed(2);
             setDistance(`${distanceKm} km`);
           }
         })
-        .catch((err) => {
-          console.error("Route error:", err);
+        .catch(err => {
+          console.error('Route error:', err);
           setDistance(null);
         });
     }
@@ -105,36 +106,56 @@ const ParkingSpotDetailModal: React.FC<Props> = ({
               <Text className="text-black text-center font-semibold">Đóng</Text>
             </Pressable>
             <Pressable
+              // onPress={() => {
+              //   if (detail && currentLocation) {
+              //     getRoute(
+              //       [currentLocation.longitude, currentLocation.latitude],
+              //       [detail.longitude, detail.latitude],
+              //     )
+              //       .then(route => {
+              //         if (route) {
+              //           if (onRouteFound) {
+              //             const coords = route.geometry.coordinates.map(
+              //               ([lon, lat]: [number, number]) => ({
+              //                 latitude: lat,
+              //                 longitude: lon,
+              //               }),
+              //             );
+              //             onRouteFound(coords);
+              //           }
+              //         }
+              //         onClose();
+              //       })
+              //       .catch(err => {
+              //         console.error('Route error:', err);
+              //       });
+              //   }
+              // }}
               onPress={() => {
                 if (detail && currentLocation) {
                   getRoute(
                     [currentLocation.longitude, currentLocation.latitude],
-                    [detail.longitude, detail.latitude]
+                    [detail.longitude, detail.latitude],
                   )
-                    .then((route) => {
-                      if (route) {
-                        // tính khoảng cách km (làm tròn 2 chữ số)
-                        // const distanceKm = (route.distance / 1000).toFixed(2);    
-                        // const durationMin = Math.round(route.duration / 60);
-                        // console.log("Quãng đường:", distanceKm, "km");
-
-                        if (onRouteFound) {
-                          const coords = route.geometry.coordinates.map(
+                    .then(routes => {
+                      if (routes && routes.length > 0 && onRouteFound) {
+                        const allCoords = routes.map((r: any) =>
+                          r.geometry.coordinates.map(
                             ([lon, lat]: [number, number]) => ({
-                              latitude: lat,
                               longitude: lon,
-                            })
-                          );
-                          onRouteFound(coords);
-                        }
+                              latitude: lat,
+                              
+                            }),
+                          ),
+                        );
+                        onRouteFound(allCoords); //  Truyền ra mảng 2 chiều
+                        console.log("Route example:", allCoords[0].slice(0, 3));
 
-                       
                       }
+                      
                       onClose();
                     })
-                    .catch((err) => {
-                      console.error("Route error:", err);
-                    });
+                    .catch(err => console.error('Route error:', err));
                 }
               }}
               className="bg-blue-500 flex-1 h-[40px] px-4 py-2 mt-4 rounded-xl self-center justify-center items-center"

@@ -30,7 +30,7 @@ import ConfirmTest from '../../modals/confirmTest';
 import { useScheduleTimeTriggers } from '@/hooks/useScheduleTimeTriggers';
 import { useNavigation } from '@react-navigation/native';
 import useFetch from '../../hooks/useFetch';
-import  {useSmartMapboxLocation}  from '@/hooks/usePeriodicMapboxLocation';
+import { useSmartMapboxLocation } from '@/hooks/usePeriodicMapboxLocation';
 
 // ================= Services =================
 import {
@@ -50,15 +50,12 @@ import { Point } from 'geojson';
 import DeviceInfo from 'react-native-device-info';
 // ================= Component =================
 const ParkingSpot = () => {
-
-
-  const location = useSmartMapboxLocation();
-  console.log("Location: ", location)
-
-  const fcmToken = messaging().getToken();
-  console.log('FCM Token:', fcmToken);
-  const deviceId = DeviceInfo.getUniqueId();
-  console.log('Device ID:', deviceId);
+  // const location = useSmartMapboxLocation();
+  // console.log('Location: ', location);
+  // const fcmToken = messaging().getToken();
+  // console.log('FCM Token:', fcmToken);
+  // const deviceId = DeviceInfo.getUniqueId();
+  // console.log('Device ID:', deviceId);
   console.log('Render Parking Spot');
   const shapeSourceRef = useRef<MapboxGL.ShapeSource>(null);
   const cameraRef = useRef<MapboxGL.Camera>(null);
@@ -70,10 +67,8 @@ const ParkingSpot = () => {
     longitude: number;
   } | null>(null);
 
-  
-
   const [routeCoords, setRouteCoords] = useState<
-    { latitude: number; longitude: number }[]
+    { longitude: number; latitude: number }[][]
   >([]);
   const [showParkingDetail, setShowParkingDetail] = useState(false);
   const [showRouteConfirm, setShowRouteConfirm] = useState(false);
@@ -83,6 +78,7 @@ const ParkingSpot = () => {
   const [selectedRoute, setSelectedRoute] = useState<NoParkingRoute | null>(
     null,
   );
+  const [selectedRouteId, setSelectedRouteId] = useState(null);
 
   // === PERMISSIONS ===
   const requestLocationPermission = async () => {
@@ -172,11 +168,11 @@ const ParkingSpot = () => {
 
       {/* Nút nổi */}
       <View className="absolute right-4 bottom-10 z-20 flex-col space-y-4 gap-3">
-        {/* <CircleButton
+        <CircleButton
           icon={<IconQuestion size={20} color={Colors.blue_button} />}
           bgColor="#fff"
-          // onPress={() => startRepeatingNotification()}
-        /> */}
+          onPress={() => setRouteCoords([])}
+        />
         <CircleButton
           icon={<IconRain size={20} color={Colors.blue_button} />}
           bgColor="#fff"
@@ -197,7 +193,7 @@ const ParkingSpot = () => {
                   userLocation.longitude,
                   userLocation.latitude,
                 ],
-                zoomLevel: 16,
+                zoomLevel: 15,
                 animationDuration: 800,
               });
             }
@@ -216,11 +212,13 @@ const ParkingSpot = () => {
         style={styles.map}
         styleURL={MapboxGL.StyleURL.Street}
         onRegionDidChange={onRegionDidChange}
-        compassEnabled={true}
+        scaleBarEnabled={false}
+        attributionEnabled={false}
+        compassEnabled={false}
         logoEnabled={false}
         zoomEnabled={true}
         scrollEnabled={true}
-        pitchEnabled={true}
+        pitchEnabled={false}
       >
         <MapboxGL.Camera
           ref={cameraRef}
@@ -234,59 +232,102 @@ const ParkingSpot = () => {
         />
 
         {/* No Parking Routes */}
-        {noParkingRoutes?.map(
-          route => {
-            const now = new Date();
-            if (isDayRestricted(now, route.days_restricted)) {
-              if (isWithinTimeRange(now, route.time_range)) return null;
-            }
-            const coords = route.route.coordinates.map(([lon, lat]) => [
-              lon,
-              lat,
-            ]);
-            return (
-              <MapboxGL.ShapeSource
-                key={`npr-${route.no_parking_route_id}`}
-                id={`npr-${route.no_parking_route_id}`}
-                shape={{
-                  type: 'Feature',
-                  geometry: { type: 'LineString', coordinates: coords },
-                  properties: {
-                    routeId: route.no_parking_route_id,
-                    ...route,
-                  },
-                }}
-                onPress={e => {
-                  const feature = e.features?.[0];
-                  if (!feature || !feature.properties) return;
-                  const routeId = feature.properties.routeId;
-                  console.log('Clicked route ID:', routeId);
+        {noParkingRoutes?.map(route => {
+          const now = new Date();
+          if (isDayRestricted(now, route.days_restricted)) {
+            if (isWithinTimeRange(now, route.time_range)) return null;
+          }
+          const coords = route.route.coordinates.map(([lon, lat]) => [
+            lon,
+            lat,
+          ]);
+          const isSelected = selectedRouteId === route.no_parking_route_id;
+          return (
+            <MapboxGL.ShapeSource
+              key={`npr-${route.no_parking_route_id}`}
+              id={`npr-${route.no_parking_route_id}`}
+              shape={{
+                type: 'Feature',
+                geometry: { type: 'LineString', coordinates: coords },
+                properties: {
+                  routeId: route.no_parking_route_id,
+                  ...route,
+                },
+              }}
+              onPress={e => {
+                const feature = e.features?.[0];
+                if (!feature || !feature.properties) return;
+                const routeId = feature.properties.routeId;
+                console.log('Clicked route ID:', routeId);
 
-                  const selectedRoute = noParkingRoutes?.find(
-                    r => r.no_parking_route_id == routeId,
-                  );
+                const selectedRoute = noParkingRoutes?.find(
+                  r => r.no_parking_route_id == routeId,
+                );
 
-                  if (selectedRoute) {
-                    setSelectedRoute(selectedRoute);
-                    setShowRouteConfirm(true); // ← Đổi thành showRouteConfirm
-                  }
+                if (selectedRoute) {
+                  setSelectedRoute(selectedRoute);
+                  setShowRouteConfirm(true);
+                  setSelectedRouteId(routeId);
+                }
+              }}
+            >
+              <MapboxGL.LineLayer
+                id={`npr-layer-${route.no_parking_route_id}`}
+                belowLayerID="unclustered-point"
+                style={{
+                  lineColor: 'green', //  Đổi màu khi chọn
+                  lineWidth: isSelected ? 6 : 4, // Tăng độ dày
+                  lineOpacity: isSelected ? 0.9 : 0.6, //  Làm nổi bật hơn
                 }}
-              >
-                <MapboxGL.LineLayer
-                  id={`npr-layer-${route.no_parking_route_id}`}
-                  belowLayerID="unclustered-point"
-                  style={{ lineColor: 'green', lineWidth: 4, lineSortKey: -10 }}
-                />
-              </MapboxGL.ShapeSource>
-            );
-          },
-        )}
+              />
+            </MapboxGL.ShapeSource>
+          );
+        })}
         <MapboxGL.UserLocation
           visible={true}
           showsUserHeadingIndicator={false}
           minDisplacement={3} // chỉ cập nhật khi di chuyển ít nhất 3 mét
           onUpdate={handleUserLocationUpdate}
         />
+        {routeCoords.length > 0 &&
+          routeCoords.map((route, idx) => (
+            <MapboxGL.ShapeSource
+              key={`routeLine-${idx}`}
+              id={`routeLine-${idx}`}
+              shape={{
+                type: 'Feature',
+                geometry: {
+                  type: 'LineString',
+                  coordinates: route.map(p => [p.longitude, p.latitude]),
+                },
+                properties: {},
+              }}
+            >
+              <MapboxGL.LineLayer
+                id={`routeOutline-${idx}`}
+                style={{
+                  lineColor: '#ffffff',
+                  lineWidth: idx === 0 ? 7 : 6,
+                  lineOpacity: 0.9,
+                  lineJoin: 'round',
+                  lineCap: 'round',
+                }}
+              />
+
+              <MapboxGL.LineLayer
+                id={`routeMain-${idx}`}
+                aboveLayerID={`routeOutline-${idx}`}
+                style={{
+                  lineColor: idx === 0 ? '#307bddff' : '#3585ecff',
+                  lineWidth: idx === 0 ? 6 : 4,
+                  lineOpacity: idx === 0 ? 1 : 0.9,
+                  lineBlur: 0.3,
+                  lineJoin: 'round',
+                  lineCap: 'round',
+                }}
+              />
+            </MapboxGL.ShapeSource>
+          ))}
 
         {/* === Parking Spot Clustering === */}
         {parkingSpots && (
@@ -362,7 +403,7 @@ const ParkingSpot = () => {
                 // Nếu click vào marker (không phải cluster)
                 const spotData = feature.properties;
                 setSelectedId(spotData.id);
-                setShowParkingDetail(true); // ← Đổi thành showParkingDetail
+                setShowParkingDetail(true);
               }
             }}
           >
@@ -398,16 +439,16 @@ const ParkingSpot = () => {
                 circleRadius: [
                   'step',
                   ['get', 'point_count'],
-                  12, // default
+                  12, // <10 mặc định
                   10,
-                  18,
+                  18, // lớn hơn 10 thì 18
                   50,
                   24,
                   100,
                   30,
                 ],
                 circleOpacity: 1,
-                circleStrokeColor: 'gray',
+                circleStrokeColor: 'white',
                 circleStrokeWidth: 1.5,
               }}
             />
@@ -421,14 +462,11 @@ const ParkingSpot = () => {
                 textSize: 12,
                 textColor: '#fff',
                 textFont: ['Open Sans Bold', 'Arial Unicode MS Bold'],
-                symbolSortKey: 11
+                symbolSortKey: 11,
               }}
             />
           </MapboxGL.ShapeSource>
         )}
-
-        
-          
       </MapboxGL.MapView>
 
       {/* Loading */}
@@ -449,13 +487,15 @@ const ParkingSpot = () => {
 
       {/* Modal cho Parking Spot Detail */}
       <ParkingSpotDetailModal
-        visible={showParkingDetail} // ← Đổi
-        onClose={() => setShowParkingDetail(false)} // ← Đổi
+        visible={showParkingDetail}
+        onClose={() => setShowParkingDetail(false)}
         loading={parkingSpotDetailLoad}
         error={parkingSpotsErrorr}
         detail={parkingSpotDetail}
         currentLocation={userLocation}
-        onRouteFound={coords => setRouteCoords(coords)}
+        onRouteFound={coords => {
+          setRouteCoords(coords);
+        }}
       />
 
       {/* Modal cho Flood Report */}
@@ -474,7 +514,7 @@ const ParkingSpot = () => {
           route={selectedRoute}
           onClose={() => {
             setSelectedRoute(null);
-            setShowRouteConfirm(false); // ← Thêm dòng này
+            setShowRouteConfirm(false);
           }}
         />
       )}

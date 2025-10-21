@@ -8,7 +8,6 @@ import { AuthProvider, useAuth } from '@/app/context/AuthContext';
 import { setAccessTokenUpdater } from '@/service/apiClient';
 import { View, ActivityIndicator } from 'react-native';
 import ToastManager from 'toastify-react-native';
-import { toastConfig } from '@/utils/CustomToast';
 import { registerDevice } from '@/service/fcm/fcmService';
 import { createNotificationChannel } from '@/service/fcm/notifications';
 import notifee, { AndroidImportance } from '@notifee/react-native';
