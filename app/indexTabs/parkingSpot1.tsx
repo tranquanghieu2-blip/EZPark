@@ -14,7 +14,7 @@ import MapboxGL from '@rnmapbox/maps';
 
 // ================= Components =================
 import CircleButton from '@/components/CircleButton';
-import { IconCrosshairs, IconQuestion, IconRain } from '@/components/Icons';
+import { IconCrosshairs, IconQuestion, IconRain, IconCancelRouting } from '@/components/Icons';
 import SearchBar from '@/components/SearchBar';
 // ================= Constants =================
 import Colors from '@/constants/colors';
@@ -25,7 +25,6 @@ import FloodReportModal from '@/modals/FloodReportModal';
 import { HelpModalParkingSpot } from '@/modals/HelpModal';
 import ParkingSpotDetailModal from '../../modals/ParkingSpotModal';
 import ConfirmParkingRoutesModal from '../../modals/ConfirmParkingRoutes';
-import ConfirmTest from '../../modals/confirmTest';
 // ================= Custom hooks =================
 import { useScheduleTimeTriggers } from '@/hooks/useScheduleTimeTriggers';
 import { useNavigation } from '@react-navigation/native';
@@ -50,7 +49,7 @@ import { Point } from 'geojson';
 import DeviceInfo from 'react-native-device-info';
 // ================= Component =================
 const ParkingSpot = () => {
-  // const location = useSmartMapboxLocation();
+  const location = useSmartMapboxLocation();
   // console.log('Location: ', location);
   // const fcmToken = messaging().getToken();
   // console.log('FCM Token:', fcmToken);
@@ -70,6 +69,9 @@ const ParkingSpot = () => {
   const [routeCoords, setRouteCoords] = useState<
     { longitude: number; latitude: number }[][]
   >([]);
+
+  const [isRouting, setIsRouting] = useState(false);
+
   const [showParkingDetail, setShowParkingDetail] = useState(false);
   const [showRouteConfirm, setShowRouteConfirm] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
@@ -78,7 +80,13 @@ const ParkingSpot = () => {
   const [selectedRoute, setSelectedRoute] = useState<NoParkingRoute | null>(
     null,
   );
-  const [selectedRouteId, setSelectedRouteId] = useState(null);
+  const [selectedRouteId, setSelectedRouteId] = useState<number | null>(null);
+
+   useEffect(() => {
+  if (location) {
+    setUserLocation(location);
+  }
+}, [location]);
 
   // === PERMISSIONS ===
   const requestLocationPermission = async () => {
@@ -100,6 +108,10 @@ const ParkingSpot = () => {
   useEffect(() => {
     requestLocationPermission();
   }, []);
+
+    useEffect(() => {
+    setIsRouting(routeCoords.length > 0);
+  }, [routeCoords]);
 
   // === Fetch parking spots ===
   const {
@@ -147,17 +159,6 @@ const ParkingSpot = () => {
     }
   };
 
-  // === Khi có vị trí người dùng từ Mapbox.UserLocation ===
-  const handleUserLocationUpdate = (location: any) => {
-    const { coords } = location;
-    if (coords) {
-      setUserLocation({
-        latitude: coords.latitude,
-        longitude: coords.longitude,
-      });
-    }
-  };
-
   return (
     <View style={styles.container}>
       {/* Thanh tìm kiếm */}
@@ -168,11 +169,17 @@ const ParkingSpot = () => {
 
       {/* Nút nổi */}
       <View className="absolute right-4 bottom-10 z-20 flex-col space-y-4 gap-3">
-        <CircleButton
-          icon={<IconQuestion size={20} color={Colors.blue_button} />}
-          bgColor="#fff"
-          onPress={() => setRouteCoords([])}
-        />
+
+           {isRouting && (
+          <CircleButton
+            icon={<IconCancelRouting size={40} color={Colors.danger} />}
+            bgColor="#000000c5"
+            onPress={() => {
+              setRouteCoords([]);
+            }}
+          />
+        )}
+        
         <CircleButton
           icon={<IconRain size={20} color={Colors.blue_button} />}
           bgColor="#fff"
@@ -286,8 +293,7 @@ const ParkingSpot = () => {
         <MapboxGL.UserLocation
           visible={true}
           showsUserHeadingIndicator={false}
-          minDisplacement={3} // chỉ cập nhật khi di chuyển ít nhất 3 mét
-          onUpdate={handleUserLocationUpdate}
+          minDisplacement={5} // chỉ cập nhật khi di chuyển ít nhất 5 mét
         />
         {routeCoords.length > 0 &&
           routeCoords.map((route, idx) => (
@@ -476,6 +482,7 @@ const ParkingSpot = () => {
           color={Colors.blue_button}
           className="absolute top-32 self-center z-20"
         />
+
       )}
 
       {/* Error */}
@@ -496,6 +503,7 @@ const ParkingSpot = () => {
         onRouteFound={coords => {
           setRouteCoords(coords);
         }}
+        
       />
 
       {/* Modal cho Flood Report */}

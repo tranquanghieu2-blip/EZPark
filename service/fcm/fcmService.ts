@@ -11,34 +11,6 @@ export const API_CONFIG = {
   },
 };
 
-// Đăng ký thiết bị và token với BE khi bật thông báo
-// export const registerDevice = async () => {
-//   try {
-//     const authStatus = await messaging().requestPermission();
-//     const enabled =
-//       authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
-//       authStatus === messaging.AuthorizationStatus.PROVISIONAL;
-
-//     if (!enabled) return false;
-
-//     const fcmToken = await messaging().getToken();
-//     const deviceId = await DeviceInfo.getUniqueId();
-//     console.log(fcmToken)
-//     console.log(deviceId)
-
-//     await axios.post(`${API_CONFIG.BASE_URL}/devices/register`, {
-//       device_id: deviceId,
-//       token: fcmToken,
-//     });
-    
-//     console.log("first")
-
-//     return true;
-//   } catch (error) {
-//     console.error('Register device error:', error);
-//     return false;
-//   }
-// };
 export const registerDevice = async () => {
   try {
     const authStatus = await messaging().requestPermission();
@@ -88,40 +60,7 @@ export const registerDevice = async () => {
   }
 };
 
-// Refresh token khi có sự thay đổi
-// export const setupTokenRefresh = () => {
-//   messaging().onTokenRefresh(async (newToken) => {
-//     try {
-//       const deviceId = await DeviceInfo.getUniqueId();
-//       await axios.post(`${API_CONFIG.BASE_URL}/notifications/refresh-token`, {
-//         deviceId,
-//         fcmToken: newToken,
-//       });
-//     } catch (error) {
-//       console.error('Token refresh error:', error);
-//     }
-//   });
-// };
 
-// Đăng ký nhận thông báo cho tuyến đường
-// export const subscribeToRoute = async (routeId: number) => {
-//   try {
-//     const fcmToken = await messaging().getToken();
-//     console.log(fcmToken)
-//     console.log(typeof fcmToken)
-//     console.log(routeId)
-//     console.log(typeof routeId)
-//     await axios.post(`${API_CONFIG.BASE_URL}/notifications/schedule`, {
-//       no_parking_route_id: routeId,
-//       fcm_token: fcmToken,
-//     });
-//     return true;
-//   } catch (error) {
-//     console.error('Subscribe error:', error);
-//     return false;
-//   }
-// };
-// ...existing code...
 export const subscribeToRoute = async (routeId: number) => {
   try {
     const fcmToken = await messaging().getToken();
@@ -154,10 +93,8 @@ export const subscribeToRoute = async (routeId: number) => {
     console.log('subscribeToRoute - response status:', res.status, 'body:', data);
 
     if (!res.ok) {
-      // return null so caller can detect failure; server details are logged
       return null;
     }
-
     return data; // successful response body
   } catch (error) {
     console.error('subscribeToRoute - error:', error);
@@ -181,7 +118,7 @@ export const unsubscribeFromRoute = async () => {
 };
 
 
-// Hủy thông báo toàn thiết bị khi người dùng tắt thông báo
+// Hủy thông báo khi người dùng tắt thông báo
 export const disableNotifications = async () => {
   try {
     const deviceId = await DeviceInfo.getUniqueId();

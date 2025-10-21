@@ -33,6 +33,7 @@
     "@react-navigation/stack": "^7.4.9",
     "@rnmapbox/maps": "10.1.45",
     "axios": "^1.12.2",
+    "merge-options": "3.0.0",
     "nativewind": "^4.2.1",
     "react": "19.1.0",
     "react-native": "0.81.4",

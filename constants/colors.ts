@@ -9,6 +9,7 @@ const Colors = {
   white: '#FFFFFF',
   star: '#FFC130',
   star_no: '#d1d5db', 
+  heart: '#ff006a',
 };
 
 export default Colors;
