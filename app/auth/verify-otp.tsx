@@ -10,39 +10,39 @@ import {
   ActivityIndicator,
   Modal,
 } from "react-native";
-
 import GradientButton from "@/components/GradientButton";
 import { images } from "@/constants/images";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import usePost from "@/hooks/usePost";
 import { verifyOtp } from "@/service/api";
 
-// ✅ định nghĩa kiểu param
+// định nghĩa kiểu param
 type RootStackParamList = {
-  "verify-otp": { email: string };
+  "verify-otp": { email: string; flowType: "signup" | "forgot-password" };
   login: undefined;
+  "reset-password": { email: string, code: string };
 };
 
 type VerifyOtpRouteProp = RouteProp<RootStackParamList, "verify-otp">;
 
 export default function VerifyOTP() {
   const route = useRoute<VerifyOtpRouteProp>();
-  const navigation = useNavigation();
-  const { email } = route.params;
-
-  useEffect(() => {
-    console.log("Email nhận từ SignUp:", email);
-  }, []);
+  const navigation = useNavigation<any>();
+  const { email, flowType } = route.params;
 
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
-  const [timer, setTimer] = useState(60);
-  // const [loading, setLoading] = useState(false);
+  const [timer, setTimer] = useState(10);
   const [showFailModal, setShowFailModal] = useState(false);
+  const [isButtonEnabled, setIsButtonEnabled] = useState(false); // kiểm soát enable/disable nút
 
   const inputs = useRef<TextInput[]>([]);
-
   const { loading, execute } = usePost(verifyOtp);
+
+  // Log email nhận được
+  useEffect(() => {
+    console.log("Email nhận từ SignUp:", email);
+  }, [email]);
 
   // Bộ đếm 60s
   useEffect(() => {
@@ -54,8 +54,7 @@ export default function VerifyOTP() {
       });
     }, 1000);
     return () => clearInterval(countdown);
-  }, []); // chỉ chạy 1 lần
-
+  }, [timer]);
 
   // Reset OTP nếu hết thời gian
   useEffect(() => {
@@ -63,6 +62,13 @@ export default function VerifyOTP() {
       setOtp(["", "", "", "", "", ""]);
     }
   }, [timer]);
+
+  // Cập nhật trạng thái enable/disable của nút xác thực
+  useEffect(() => {
+    const isOtpFilled = otp.join("").length === 6;
+    const isTimerRunning = timer > 0;
+    setIsButtonEnabled(isOtpFilled && isTimerRunning);
+  }, [otp, timer]);
 
   // Xử lý thay đổi input
   const handleChange = (text: string, index: number) => {
@@ -83,33 +89,33 @@ export default function VerifyOTP() {
     }
   };
 
-  // API xác thực OTP
+  // Gửi yêu cầu xác thực OTP
   const handleVerify = async () => {
     const code = otp.join("");
-    if (timer === 0) {
-      alert("OTP đã hết hạn. Vui lòng gửi lại mã mới!");
-      return;
-    }
 
-    if (code.length < 6) {
-      alert("Vui lòng nhập đầy đủ 6 số OTP.");
-      return;
-    }
+    if (!isButtonEnabled) return; // tránh bấm khi chưa hợp lệ
 
     console.log("Xác thực OTP:", code, "cho email:", email);
-
     try {
-      const res = await execute(email, code);
-      console.log("Đăng ký thành công:", res);
-      navigation.navigate("login" as never); // ✅ quay về login
+      // const res = await execute(email, code);
+      if (flowType === "forgot-password") {
+        navigation.navigate("reset-password", {email, code });
+        return;
+      }
+      else if (flowType === "signup") {
+        const res = await execute(email, code);
+        console.log("Xác thực thành công cho signup:", res);
+        navigation.navigate("login");
+      }
     } catch (err) {
       setShowFailModal(true);
     }
   };
 
+  // Gửi lại OTP
   const resendOtp = () => {
     console.log("Gửi lại OTP mới...");
-    setTimer(60);
+    setTimer(10);
     setOtp(["", "", "", "", "", ""]);
   };
 
@@ -162,28 +168,36 @@ export default function VerifyOTP() {
 
       {/* Nút xác thực */}
       <View className="h-[50px] mb-3 mt-5">
-        <GradientButton
-          onPress={handleVerify}
-          disabled={loading || timer === 0}
-          className="py-3 px-5 rounded-lg items-center justify-center h-full"
-        >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text className="text-center text-white font-semibold text-lg">
+        {isButtonEnabled && timer > 0 ? (
+          <GradientButton
+            onPress={handleVerify}
+            disabled={loading}
+            className="py-3 px-5 rounded-lg items-center justify-center h-full"
+          >
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text className="text-center text-white font-semibold text-lg">
+                Xác thực
+              </Text>
+            )}
+          </GradientButton>
+        ) : (
+          <Pressable
+            disabled
+            className="bg-gray-200 py-3 px-5 rounded-lg items-center justify-center h-full"
+          >
+            <Text className="text-center text-gray-500 font-semibold text-lg">
               Xác thực
             </Text>
-          )}
-        </GradientButton>
+          </Pressable>
+        )}
       </View>
 
       {/* Gửi lại OTP */}
       <View className="flex-row justify-center mt-2">
         <Text className="text-gray-500">Bạn chưa nhận được OTP? </Text>
-        <Pressable
-          disabled={timer > 0}
-          onPress={resendOtp}
-        >
+        <Pressable disabled={timer > 0} onPress={resendOtp}>
           <Text
             className={`font-semibold ${timer > 0 ? "text-gray-400" : "text-orange-500"
               }`}

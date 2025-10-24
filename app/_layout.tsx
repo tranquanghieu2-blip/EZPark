@@ -13,6 +13,8 @@ import { createNotificationChannel } from '@/service/fcm/notifications';
 import notifee, { AndroidImportance } from '@notifee/react-native';
 import messaging from '@react-native-firebase/messaging';
 import '../global.css';
+import { Toast } from 'toastify-react-native';
+import { ToastCustomView } from '@/components/ToastCustomView';
 
 const Stack = createNativeStackNavigator();
 
@@ -82,7 +84,14 @@ export default function RootLayout() {
       </NavigationContainer>
 
       {/* ToastManager toàn cục */}
-      <ToastManager />
+      <ToastManager config={{
+          success: (props: any) => <ToastCustomView {...props} />,
+          error: (props: any) => <ToastCustomView {...props} />,
+          warning: (props: any) => <ToastCustomView {...props} />,
+          info: (props: any) => <ToastCustomView {...props} />,
+        }} />
+
+      
     </AuthProvider>
   );
 }

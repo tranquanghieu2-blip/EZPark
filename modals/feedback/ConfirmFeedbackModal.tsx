@@ -40,7 +40,7 @@ export function ConfirmFeedbackModal({
         >
           {/* Header icon + title */}
           <View className="items-center mb-4">
-            <View className="bg-red-100 p-3 rounded-full mb-3">
+            <View className="bg-blue-100 p-3 rounded-full mb-3">
               <IconExclaimation size={36} color={Colors.blue_button} />
             </View>
             <Text className="text-xl font-bold text-center text-black">

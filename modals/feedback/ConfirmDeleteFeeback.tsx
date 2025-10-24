@@ -40,7 +40,7 @@ export function ConfirmDeleteFeedback({
           {/* Header icon + title */}
           <View className="items-center mb-4">
             <View className="bg-red-100 p-3 rounded-full mb-3">
-              <IconExclaimation size={36} color={Colors.blue_button} />
+              <IconExclaimation size={36} color={Colors.danger} />
             </View>
             <Text className="text-xl font-bold text-center text-black">
               Xác nhận xoá

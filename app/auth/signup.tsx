@@ -49,8 +49,7 @@ export default function SignUp() {
     try {
       const res = await execute(email, password, name);
       console.log("Đăng ký thành công:", res);
-      navigation.navigate("verify-otp" , { email });
-
+      navigation.navigate("verify-otp", { email, flowType: "signup" });
     } catch (err) {
       setShowFailModal(true);
     }

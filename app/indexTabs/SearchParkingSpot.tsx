@@ -12,7 +12,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { IconDistance, IconFilter, IconParkingSpotType, IconStar, IconStarHalf, IconStarNo } from "@/components/Icons";
 import GradientButton from "@/components/GradientButton";
 import FilterModal from "@/modals/FilterModal";
@@ -77,7 +77,7 @@ const SearchParkingSpot = () => {
   };
 
   // ===============================
-  // 🧩 1️⃣ Fetch mỗi khi query / filters / location thay đổi
+  // Fetch mỗi khi query / filters / location thay đổi
   // ===============================
   useEffect(() => {
     if (!location) return;
@@ -91,7 +91,7 @@ const SearchParkingSpot = () => {
   }, [debouncedQuery, filters, location]);
 
   // ===============================
-  // 🧩 2️⃣ Load thêm
+  // Load thêm
   // ===============================
   const handleLoadMore = async () => {
     if (!location || loadingMore) return;
@@ -107,7 +107,7 @@ const SearchParkingSpot = () => {
   };
 
   // ===============================
-  // 🧩 3️⃣ Reset danh sách (rút gọn)
+  // Reset danh sách (rút gọn)
   // ===============================
   const handleReset = async () => {
     if (!location || loadingReset) return;
@@ -123,7 +123,21 @@ const SearchParkingSpot = () => {
   };
 
   // ===============================
-  // 🧩 4️⃣ Render
+  // Render
+  useFocusEffect(
+    useCallback(() => {
+      // Khi vào lại tab, fetch lại danh sách
+      if (location) {
+        fetchSpots(
+          debouncedQuery,
+          true, // reset = true
+          filters.parkingType ? typeLabel2[filters.parkingType] : undefined,
+          filters.selectedRating ?? undefined,
+          location
+        );
+      }
+    }, [debouncedQuery, filters, location])
+  );
   // ===============================
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
