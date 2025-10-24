@@ -1,6 +1,7 @@
 // src/context/AuthContext.tsx
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { getToken } from "@react-native-firebase/messaging";
 
 
 interface AuthContextType {
@@ -8,7 +9,7 @@ interface AuthContextType {
   accessToken: string | null;
   refreshToken: string | null;
   loading: boolean;
-  login: (userData: User, token: string, refreshToken: string) => Promise<void>;
+  login: (userData: User|null, token: string, refreshToken: string) => Promise<void>;
   logout: () => Promise<void>;
   updateAccessToken: (token: string) => Promise<void>;
   updateUser: (updatedUser: User) => Promise<void>; // 👈 thêm dòng này
@@ -52,20 +53,39 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   // 🔹 Login: Lưu thông tin người dùng + token
-  const login = async (userData: User, token: string, refresh: string) => {
-    try {
-      await AsyncStorage.multiSet([
-        ["user", JSON.stringify(userData)],
-        ["accessToken", token],
-        ["refreshToken", refresh],
-      ]);
+  // const login = async (userData: User, token: string, refresh: string) => {
+  //   // console.log("token:",token)
+  //   try {
+  //     await AsyncStorage.multiSet([
+  //       ["user", JSON.stringify(userData)],
+  //       ["accessToken", token],
+  //       ["refreshToken", refresh],
+  //     ]);
+  //     setUser(userData);
+  //     setAccessToken(token);
+  //     setRefreshToken(refresh);
+  //   } catch (e) {
+  //     console.error("Error saving user:", e);
+  //   }
+  // };
+  const login = async (userData: User | null, token: string, refresh: string) => {
+  try {
+    if (userData) {
+      await AsyncStorage.setItem("user", JSON.stringify(userData));
       setUser(userData);
-      setAccessToken(token);
-      setRefreshToken(refresh);
-    } catch (e) {
-      console.error("Error saving user:", e);
     }
-  };
+
+    await AsyncStorage.multiSet([
+      ["accessToken", token],
+      ["refreshToken", refresh],
+    ]);
+    setAccessToken(token);
+    setRefreshToken(refresh);
+  } catch (e) {
+    console.error("Error saving user:", e);
+  }
+};
+
 
   // 🔹 Logout: Xóa toàn bộ dữ liệu
   const logout = async () => {

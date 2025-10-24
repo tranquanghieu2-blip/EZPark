@@ -1,3 +1,4 @@
+
 interface ParkingSpot {
   parking_spot_id: number;
   latitude: number;
@@ -94,4 +95,14 @@ interface ListFeedback {
   limit?: number;
   offset?: number;
   total?: number
-}
+};
+
+interface getListFavoriteParkingSpots {
+  favorite_id: number;
+  driver_id: number;
+  parking_spot_id: number;
+  name: string;
+  address: string;
+  type: "parking hub" | "on street parking";
+  created_at: string;
+};

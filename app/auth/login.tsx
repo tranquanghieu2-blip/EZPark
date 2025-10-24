@@ -1,14 +1,14 @@
-import GradientButton from "@/components/GradientButton";
-import GradientText from "@/components/GradientText";
-import { IconEmail, IconPassword } from "@/components/Icons";
-import { InputRow } from "@/components/InputRow";
-import { icons } from "@/constants/icons";
-import usePost from "@/hooks/usePost";
-import { useAuth } from "@/app/context/AuthContext";
-import MessageModal from "@/modals/MessageModal";
-import { GGLogin, login } from "@/service/api";
-import { useNavigation } from "@react-navigation/native";
-import React, { useState } from "react";
+import GradientButton from '@/components/GradientButton';
+import GradientText from '@/components/GradientText';
+import { IconEmail, IconPassword } from '@/components/Icons';
+import { InputRow } from '@/components/InputRow';
+import { icons } from '@/constants/icons';
+import usePost from '@/hooks/usePost';
+import { useAuth } from '@/app/context/AuthContext';
+import MessageModal from '@/modals/MessageModal';
+import { GGLogin, login } from '@/service/api';
+import { useNavigation } from '@react-navigation/native';
+import React, { useState } from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -17,15 +17,40 @@ import {
   Pressable,
   ScrollView,
   Text,
-  View
-} from "react-native";
+  View,
+} from 'react-native';
+import { useEffect } from 'react';
+import { Linking } from 'react-native';
 
 export default function Login() {
   const navigation = useNavigation<any>();
-  const { login: saveAuth } = useAuth(); // ✅ Hàm login từ AuthContext
+  const { login: saveAuth } = useAuth(); // Hàm login từ AuthContext
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  useEffect(() => {
+    console.log("123123123")
+    const handleDeepLink = (event: { url: string }) => {
+      const url = event.url;
+      if (url.startsWith('ezpark://auth')) {
+        const params = new URLSearchParams(url.split('?')[1]);
+        const accessToken = params.get('accessToken');
+        const refreshToken = params.get('refreshToken');
+
+        if (accessToken && refreshToken) {
+          saveAuth(null, accessToken, refreshToken);
+        }
+      }
+    };
+
+    const sub = Linking.addEventListener('url', handleDeepLink);
+    Linking.getInitialURL().then(url => {
+      if (url) handleDeepLink({ url });
+    });
+
+    return () => sub.remove();
+  }, []);
+
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showFailModal, setShowFailModal] = useState(false);
 
@@ -33,22 +58,23 @@ export default function Login() {
 
   // Validate logic
   const emailValid = /^\S+@\S+\.\S+$/.test(email);
-  const passwordValid = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z\d]).{10,}$/.test(password);
+  const passwordValid = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z\d]).{10,}$/.test(
+    password,
+  );
 
   const handleLogin = async () => {
-    if (!emailValid) return alert("Email không hợp lệ");
-    if (!passwordValid) return alert("Mật khẩu phải >= 9 ký tự, có chữ và số");
+    if (!emailValid) return alert('Email không hợp lệ');
+    if (!passwordValid) return alert('Mật khẩu phải >= 9 ký tự, có chữ và số');
 
     try {
       const res = await execute(email, password);
-      console.log("Đăng nhập thành công:", res);
+      console.log('Đăng nhập thành công:', res);
 
       if (res?.user && res?.accessToken) {
         await saveAuth(res.user, res.accessToken, res.refreshToken);
       } else {
-        throw new Error("Dữ liệu đăng nhập không hợp lệ");
+        throw new Error('Dữ liệu đăng nhập không hợp lệ');
       }
-      
     } catch (err) {
       setShowFailModal(true);
     }
@@ -56,11 +82,15 @@ export default function Login() {
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       className="flex-1 bg-white"
     >
       <ScrollView
-        contentContainerStyle={{ flexGrow: 1, justifyContent: "center", padding: 24 }}
+        contentContainerStyle={{
+          flexGrow: 1,
+          justifyContent: 'center',
+          padding: 24,
+        }}
         keyboardShouldPersistTaps="handled"
       >
         {/* Logo */}
@@ -71,7 +101,11 @@ export default function Login() {
             resizeMode="contain"
           />
           <View
-            style={{ height: 70, justifyContent: "center", alignItems: "center" }}
+            style={{
+              height: 70,
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}
           >
             <GradientText />
           </View>
@@ -117,16 +151,22 @@ export default function Login() {
         </View>
 
         {/* Đăng nhập bằng Google */}
-        <Pressable className="bg-gray-200 py-3 rounded-lg mb-3 h-[50px] items-center justify-center flex-row gap-2"
-          onPress={() => { GGLogin() }}>
+        <Pressable
+          className="bg-gray-200 py-3 rounded-lg mb-3 h-[50px] items-center justify-center flex-row gap-2"
+          onPress={() => {
+            GGLogin();
+          }}
+        >
           <Image source={icons.google} style={{ width: 24, height: 24 }} />
-          <Text className="text-center text-black font-medium" >
+          <Text className="text-center text-black font-medium">
             Đăng nhập bằng Google
           </Text>
         </Pressable>
 
         {/* Quên mật khẩu */}
-        <Pressable onPress={() => navigation.navigate("forgot-password" as never)}>
+        <Pressable
+          onPress={() => navigation.navigate('forgot-password' as never)}
+        >
           <Text className="text-center text-gray-500 mb-4">
             Bạn quên mật khẩu?
           </Text>
@@ -142,7 +182,7 @@ export default function Login() {
         {/* Chưa có tài khoản */}
         <View className="flex-row justify-center">
           <Text className="text-gray-500">Bạn chưa có tài khoản? </Text>
-          <Pressable onPress={() => navigation.navigate("signup" as never)}>
+          <Pressable onPress={() => navigation.navigate('signup' as never)}>
             <Text className="text-orange-500 font-semibold">Đăng ký</Text>
           </Pressable>
         </View>

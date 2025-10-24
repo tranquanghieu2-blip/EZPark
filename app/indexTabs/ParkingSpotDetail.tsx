@@ -160,7 +160,7 @@ const handleToggleFavorite = async () => {
       await addFavoriteParkingSpot(spot.parking_spot_id);
       ToastCustom.success('Đã thêm vào yêu thích', `${spot.name} đã được lưu`);
     } else {
-      await removeFavoriteParkingSpot(spot.parking_spot_id);
+      // await removeFavoriteParkingSpot(spot.parking_spot_id);
       ToastCustom.info('Đã bỏ yêu thích', `${spot.name} đã được gỡ khỏi danh sách`);
     }
   } catch (error) {

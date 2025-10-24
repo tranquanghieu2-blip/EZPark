@@ -202,7 +202,7 @@ export async function login(email: string, password: string) {
   return json;
 }
 export async function GGLogin() {
-  Linking.openURL(`${API_CONFIG.BASE_URL}/api/auth/google`);
+  Linking.openURL(`${API_CONFIG.BASE_URL}/auth/google`);
 
 }
 
@@ -385,12 +385,19 @@ export const addFavoriteParkingSpot = async (parking_spot_id: number) => {
 };
 
 export const removeFavoriteParkingSpot = async (parking_spot_id: number) => {
-  
   try {
-    const res = await api.delete(`/favorites/delete/${parking_spot_id}`);  
-    return res.data.data;
+    await api.delete(`/favorites/delete/${parking_spot_id}`);  
   } catch (error) { 
     handleApiError("removing favorite parking spot", error);
   }
 };
   
+export const getListFavoriteParkingSpots = async (): Promise<getListFavoriteParkingSpots[]> => {
+  try {
+    const res = await api.get("/favorites/list");
+    return res.data.data;
+  } catch (error) {
+    handleApiError("fetching favorite parking spots", error);
+    throw error;
+  }
+};
