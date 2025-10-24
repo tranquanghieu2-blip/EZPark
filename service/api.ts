@@ -125,7 +125,7 @@ export const searchParkingSpot = async ({
   type?: string;
   avgRating?: number;
 }): Promise<SearchParkingSpot[]> => {
-  const url = `${API_CONFIG.BASE_URL}/parking-spots/search?query=${nameParking}&lat=${latitude}&lng=${longitude}&page=${page}&limit=${limit}&offset=${offset}&type=${type}&avgRating=${avgRating}`;
+  const url = `${API_CONFIG.BASE_URL}/parking-spots/search?query=${nameParking}&lat=${latitude}&lng=${longitude}&page=${page}&limit=${limit}&offset=${offset}&type=${type}&rate=${avgRating}`;
 
   const response = await fetch(url, {
     method: "GET",
@@ -398,6 +398,25 @@ export const getListFavoriteParkingSpots = async (): Promise<getListFavoritePark
     return res.data.data;
   } catch (error) {
     handleApiError("fetching favorite parking spots", error);
+    throw error;
+  }
+};
+
+
+export const updatePassword = async (passwordData: {
+  currentPassword: string;
+  newPassword: string;
+  refreshToken?: string;
+}) => {
+  try {
+    const res = await api.put("/auth/change-password", passwordData, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    return res.data;
+  } catch (error: any) {
+    console.error("Lỗi updatePassword:", error?.response?.data.message || error);
     throw error;
   }
 };

@@ -16,6 +16,8 @@ import {
   View,
 } from "react-native";
 import usePost from "@/hooks/usePost";
+import { updatePassword } from "@/service/api";
+import ToastCustom from "@/utils/CustomToast";
 
 // ================= Type định nghĩa =================
 type RootStackParamList = {
@@ -27,7 +29,7 @@ const ChangePassword = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<RouteProp<RootStackParamList, "ChangePassword">>();
   const { user } = route.params;
-  const { login: saveAuth } = useAuth();
+  const {refreshToken } = useAuth();
 
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -38,17 +40,16 @@ const ChangePassword = () => {
   const [showFailModal, setShowFailModal] = useState(false);
   const [isChanged, setIsChanged] = useState(false);
   const [isSamePassword, setIsSamePassword] = useState(false);
+  const [loading, setLoading] = useState<boolean>(false);
 
-  const { loading, execute } = usePost(login);
-
-  // ✅ Kiểm tra định dạng mật khẩu
+  // Kiểm tra định dạng mật khẩu
   const passwordPattern = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z\d]).{10,}$/;
   const oldPasswordValid = passwordPattern.test(oldPassword);
   const newPasswordValid = passwordPattern.test(newPassword);
   const confirmValid =
     confirmNewPassword === newPassword && confirmNewPassword.length > 0;
 
-  // ✅ Theo dõi thay đổi mật khẩu
+  // Theo dõi thay đổi mật khẩu
   useEffect(() => {
     const changed =
       oldPassword.length > 0 &&
@@ -59,13 +60,35 @@ const ChangePassword = () => {
     setIsChanged(changed);
   }, [oldPassword, newPassword, confirmNewPassword]);
 
-  // ✅ Chỉ hiển thị nút khi hợp lệ & không trùng mật khẩu
+  // Chỉ hiển thị nút khi hợp lệ & không trùng mật khẩu
   const canSave =
     isChanged && !isSamePassword && oldPasswordValid && newPasswordValid && confirmValid;
 
   const handleSave = async () => {
     console.log("Lưu thay đổi:", { oldPassword, newPassword });
     // TODO: Gọi API đổi mật khẩu tại đây
+    try {
+      setLoading(true);
+      const passwordData = {
+        currentPassword: oldPassword,
+        newPassword: newPassword,
+        refreshToken: refreshToken || "",
+      };
+      const response = await updatePassword(passwordData);
+      if (response?.success) {
+        ToastCustom.success("Thành công", "Cập nhật mật khẩu thành công");
+        navigation.goBack();
+      } else {
+        ToastCustom.error("Cập nhật mật khẩu thất bại", "Vui lòng thử lại.");
+        setLoading(false);
+      }
+    } catch (error: any) {
+      ToastCustom.error("Cập nhật mật khẩu thất bại", error?.response?.data.message || "Vui lòng thử lại.");
+      setLoading(false);
+    } finally {
+      setLoading(false);
+    }
+
   };
 
   return (
@@ -162,7 +185,7 @@ const ChangePassword = () => {
         visible={showFailModal}
         onClose={() => setShowFailModal(false)}
         title="Cập nhật thất bại"
-        message="Không thể lưu thay đổi, vui lòng thử lại."
+        message="Không thể lưu mật khẩu, vui lòng thử lại."
         type="error"
       />
     </KeyboardAvoidingView>

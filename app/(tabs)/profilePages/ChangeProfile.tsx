@@ -41,8 +41,10 @@ const ChangeProfile = () => {
   const [previewUri, setPreviewUri] = useState<string | undefined>(user.avatar ?? undefined);
   const [loading, setLoading] = useState<boolean>(false);
 
-  const nameValid = /^[A-Za-zÀ-ỹ\s]+$/.test(name);
-  const nameChanged = name.trim() !== (user.name ?? "").trim();
+  const trimmedName = name.trim();
+  const nameValid =
+    trimmedName.length > 0 && /^[A-Za-zÀ-ỹ]+(?:\s[A-Za-zÀ-ỹ]+)*$/.test(trimmedName);
+  const nameChanged = trimmedName !== (user.name ?? "").trim();
   const avatarChanged = !!selectedImage;
 
   const canSave = (nameChanged || avatarChanged) && nameValid;
