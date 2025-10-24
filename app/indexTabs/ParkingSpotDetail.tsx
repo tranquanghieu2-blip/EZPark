@@ -30,6 +30,7 @@ import {
   getListFeedback,
   getMyFeedback,
   removeFavoriteParkingSpot,
+  checkFavoriteParkingSpot,
 } from '@/service/api';
 import { useGetListFeedback } from '@/hooks/useGetListFeedback';
 import { FlatList } from 'react-native-gesture-handler';
@@ -112,10 +113,10 @@ const typeLabel: Record<'parking hub' | 'on street parking', string> = {
   'on street parking': 'Đỗ xe ven đường',
 };
 
-  const typeLabel2: Record<string, string> = {
-    "Bãi đỗ xe tập trung": "parking hub",
-    "Đỗ xe ven đường": "on street parking",
-  };
+const typeLabel2: Record<string, string> = {
+  'Bãi đỗ xe tập trung': 'parking hub',
+  'Đỗ xe ven đường': 'on street parking',
+};
 
 const ParkingSpotDetail = () => {
   const navigation = useNavigation<any>();
@@ -126,6 +127,9 @@ const ParkingSpotDetail = () => {
   const [loadingReset, setLoadingReset] = useState(false);
   // State cho trạng thái yêu thích
   const [isFavorite, setIsFavorite] = useState(false);
+  const [favoriteId, setFavoriteId] = useState<number | null>(null);
+  const [favoriteLoading, setFavoriteLoading] = useState(false);
+
   const [isToggling, setIsToggling] = useState(false);
 
   // === Gọi API đánh giá của người dùng ===
@@ -145,33 +149,70 @@ const ParkingSpotDetail = () => {
     spot?.parking_spot_id,
   ]);
 
-const handleToggleFavorite = async () => {
+  useEffect(() => {
+    console.log('checkFavorite:', spot?.parking_spot_id, favoriteId);
 
-  if (isToggling) return; 
-  const newFavoriteState = !isFavorite;
-  setIsToggling(true);
-  
-  try {
-    // Cập nhật state trước
-    setIsFavorite(newFavoriteState);
-    
-    // Gọi API tương ứng
-    if (newFavoriteState) {
-      await addFavoriteParkingSpot(spot.parking_spot_id);
-      ToastCustom.success('Đã thêm vào yêu thích', `${spot.name} đã được lưu`);
-    } else {
-      // await removeFavoriteParkingSpot(spot.parking_spot_id);
-      ToastCustom.info('Đã bỏ yêu thích', `${spot.name} đã được gỡ khỏi danh sách`);
-    }
-  } catch (error) {
-    // Rollback state nếu API thất bại
-    setIsFavorite(!newFavoriteState);
-    ToastCustom.error('Lỗi', 'Không thể cập nhật trạng thái yêu thích');
-    console.error('Toggle favorite error:', error);
-  } finally {
+    if (!spot?.parking_spot_id) return;
+
+    const checkFavoriteStatus = async () => {
+      setFavoriteLoading(true);
+      try {
+        const { isFavorite, favoriteId } = await checkFavoriteParkingSpot(
+          spot.parking_spot_id,
+        );
+        setIsFavorite(isFavorite);
+        setFavoriteId(favoriteId);
+      } finally {
+        setFavoriteLoading(false);
+      }
+    };
+
+    checkFavoriteStatus();
+  }, [spot?.parking_spot_id]);
+
+  const handleToggleFavorite = async () => {
+    if (isToggling || favoriteLoading) return;
+
+    const previousFavorite = isFavorite;
+    const previousFavoriteId = favoriteId;
+
+    setIsToggling(true);
+
+    try {
+      if (!isFavorite) {
+        // Optimistic update
+        setIsFavorite(true);
+
+        const added = await addFavoriteParkingSpot(spot.parking_spot_id);
+        setFavoriteId(added.favorite_id);
+        ToastCustom.success(
+          'Đã thêm vào yêu thích',
+          `${spot.name} đã được lưu`,
+        );
+      } else {
+        if (favoriteId) {
+          // Optimistic update
+          setIsFavorite(false);
+          setFavoriteId(null);
+
+          await removeFavoriteParkingSpot(favoriteId);
+          ToastCustom.info(
+            'Đã bỏ yêu thích',
+            `${spot.name} đã được gỡ khỏi danh sách`,
+          );
+        }
+      }
+    } catch (error) {
+      // Rollback khi lỗi
+      setIsFavorite(previousFavorite);
+      setFavoriteId(previousFavoriteId);
+
+      console.error('Toggle favorite error:', error);
+      ToastCustom.error('Lỗi', 'Không thể cập nhật trạng thái yêu thích');
+    } finally {
       setIsToggling(false);
     }
-};
+  };
 
   // ==== Danh sách feedback ====
   const {
@@ -246,17 +287,27 @@ const handleToggleFavorite = async () => {
             <Text className="text-xl font-bold text-black flex-1">
               {spot.name}
             </Text>
-            <TouchableOpacity
-              onPress={handleToggleFavorite}
-              style={{ marginTop: -8, marginLeft: 3 }}
-              activeOpacity={0.7}
-            >
-              {isFavorite ? (
-                <IconFavourate size={32} color={Colors.heart} />
-              ) : (
-                <IconNoFavourate size={32} color={Colors.heart} />
-              )}
-            </TouchableOpacity>
+
+            {favoriteLoading ? (
+              // Hiển thị loading khi đang kiểm tra trạng thái
+              <ActivityIndicator
+                size="small"
+                color={Colors.blue_button}
+                style={{ marginTop: -8, marginLeft: 3 }}
+              />
+            ) : (
+              <TouchableOpacity
+                onPress={handleToggleFavorite}
+                style={{ marginTop: -8, marginLeft: 3 }}
+                activeOpacity={0.7}
+              >
+                {isFavorite ? (
+                  <IconFavourate size={32} color={Colors.heart} />
+                ) : (
+                  <IconNoFavourate size={32} color={Colors.heart} />
+                )}
+              </TouchableOpacity>
+            )}
           </View>
 
           <Text className="text-base text-gray-600">{spot.address}</Text>
