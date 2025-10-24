@@ -35,7 +35,7 @@ export default function SignUp() {
 
   // validate logic
   const emailValid = /^\S+@\S+\.\S+$/.test(email);
-  const nameValid = /^[A-Za-zÀ-ỹ\s]+$/.test(name);
+  const nameValid = /^[A-Za-zÀ-ỹ]+(?:\s[A-Za-zÀ-ỹ]+)*$/.test(name);
   const passwordValid = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z\d]).{10,}$/.test(password);
   const confirmValid = confirm === password && confirm.length > 0;
 
