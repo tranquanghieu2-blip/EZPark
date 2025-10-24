@@ -13,6 +13,7 @@ import { IconFavourate, IconStar } from '@/components/Icons';
 import Colors from '@/constants/colors';
 import { images } from '@/constants/images';
 import api from '@/service/apiClient';
+import { StackNavigationProp } from '@react-navigation/stack';
 
 const Favourite = () => {
   const navigation = useNavigation<any>();
@@ -69,11 +70,8 @@ const Favourite = () => {
           renderItem={({ item }) => (
             <TouchableOpacity
               className="py-4 border-b border-gray-200"
-              onPress={() =>
-                navigation.navigate('ParkingSpotDetail', {
-                  spotId: item.parking_spot_id,
-                })
-              }
+              //NAVIGATION Ở ĐÂY NÈEEEEEEEEEEEEEEEE
+              // onPress={() => navigation.navigate('ParkingSpotDetail', { spot: item })}
             >
               <View>
                 <View className="flex-row justify-between">

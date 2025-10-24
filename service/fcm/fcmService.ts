@@ -101,7 +101,6 @@ export const subscribeToRoute = async (routeId: number) => {
     return null;
   }
 };
-// ...existing code...
 
 // Hủy đăng ký thông báo tuyến đường
 export const unsubscribeFromRoute = async () => {

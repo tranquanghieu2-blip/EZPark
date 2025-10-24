@@ -157,6 +157,13 @@ const ConfirmParkingRoutesModal: React.FC<Props> = ({ route, onClose }) => {
     route?.no_parking_route_id !== undefined &&
     String(confirmed.routeId) === String(route.no_parking_route_id);
 
+  // Khi hết hạn và confirmed bị clear, UI sẽ cập nhật lại
+  useEffect(() => {
+    if (isConfirmed === false && route) {
+      console.log('UI cập nhật: đã hết hạn, hiển thị lại nút xác nhận');
+    }
+  }, [isConfirmed]);
+
   return (
     <Modal
       transparent
