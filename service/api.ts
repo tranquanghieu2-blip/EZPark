@@ -70,8 +70,8 @@ export const fetchParkingSpotDetail = async (
 
     const data = await response.json();
     return data;
-  } catch (error) {
-    console.error('Fetch error:', error);
+  } catch (error: any) {
+    console.error('Fetch error:', error.message || error);
     throw error;
   }
 };
@@ -436,6 +436,77 @@ export const updatePassword = async (passwordData: {
   } catch (error: any) {
     console.error(
       'Lỗi updatePassword:',
+      error?.response?.data.message || error,
+    );
+    throw error;
+  }
+};
+
+export const sendPasswordResetOtp = async (email: string) => {
+  try {
+    const res = await fetch(`${API_CONFIG.BASE_URL}/auth/forgot-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+
+    const json = await res.json();
+
+    if (!res.ok || !json.success) {  
+      console.error('Lỗi sendPasswordResetOtp:', json);
+      throw new Error(json?.message || 'Failed to send password reset OTP');
+    }
+
+    return json;
+  } catch (error) {
+    console.error('Lỗi sendPasswordResetOtp:', error);
+    throw new Error('Network or server error while sending OTP');
+  }
+};
+
+
+export const verifyPasswordResetOtp = async (email: string, resetOTP: string) => {
+  try {
+    const res = await fetch(`${API_CONFIG.BASE_URL}/auth/verify-reset-otp`, {
+      method: 'POST',
+      headers: API_CONFIG.headers,
+      body: JSON.stringify({ email, resetOTP }),
+    });
+    const json = await res.json();
+    if (!res.ok || !json.success) {
+      console.error('Lỗi verifyPasswordResetOtp:', json);
+      throw new Error(json?.message || 'Failed to verify password reset OTP');
+    }
+    return json;
+  } catch (error: any) {
+    console.error(
+      'Lỗi verifyPasswordResetOtp:',
+      error?.response?.data.message || error,
+    );
+    throw error;
+  }
+};
+
+export const resetPassword = async (
+  email: string,
+  resetToken: string,
+  newPassword: string
+) => {
+  try {
+    const res = await fetch(`${API_CONFIG.BASE_URL}/auth/reset-password`, {
+      method: 'POST',
+      headers: API_CONFIG.headers,
+      body: JSON.stringify({ email, resetToken, newPassword }),
+    });
+    const json = await res.json();
+    if (!res.ok || !json.success) {
+      console.error('Lỗi resetPassword:', json);
+      throw new Error(json?.message || 'Failed to reset password');
+    }
+    return json;
+  } catch (error: any) {
+    console.error(
+      'Lỗi resetPassword:',
       error?.response?.data.message || error,
     );
     throw error;

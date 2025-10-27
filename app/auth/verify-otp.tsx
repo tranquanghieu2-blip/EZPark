@@ -14,7 +14,8 @@ import GradientButton from "@/components/GradientButton";
 import { images } from "@/constants/images";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import usePost from "@/hooks/usePost";
-import { verifyOtp } from "@/service/api";
+import { verifyOtp, verifyPasswordResetOtp } from "@/service/api";
+import ToastCustom from "@/utils/CustomToast";
 
 // định nghĩa kiểu param
 type RootStackParamList = {
@@ -32,7 +33,7 @@ export default function VerifyOTP() {
 
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
-  const [timer, setTimer] = useState(10);
+  const [timer, setTimer] = useState(60);
   const [showFailModal, setShowFailModal] = useState(false);
   const [isButtonEnabled, setIsButtonEnabled] = useState(false); // kiểm soát enable/disable nút
 
@@ -97,26 +98,33 @@ export default function VerifyOTP() {
 
     console.log("Xác thực OTP:", code, "cho email:", email);
     try {
-      // const res = await execute(email, code);
       if (flowType === "forgot-password") {
-        navigation.navigate("reset-password", {email, code });
+        const res = await verifyPasswordResetOtp(email, code);
+        if (!res.success) {
+          throw new Error(res.message || "Lỗi không xác định");
+        }
+        ToastCustom.success("Xác thực thành công", "OTP hợp lệ. Vui lòng đặt lại mật khẩu mới.");
+        navigation.navigate("reset-password", {email: res?.email, resetToken: res?.resetToken});
         return;
       }
       else if (flowType === "signup") {
         const res = await execute(email, code);
         console.log("Xác thực thành công cho signup:", res);
+        ToastCustom.success("Xác thực thành công", "OTP hợp lệ. Bạn có thể đăng nhập ngay bây giờ.");
         navigation.navigate("login");
       }
     } catch (err) {
-      setShowFailModal(true);
+      console.error("Xác thực OTP thất bại:", err);
+      ToastCustom.error("Xác thực thất bại", "Mã OTP không hợp lệ hoặc đã hết hạn. Vui lòng thử lại.");
     }
   };
 
   // Gửi lại OTP
   const resendOtp = () => {
     console.log("Gửi lại OTP mới...");
-    setTimer(10);
+    setTimer(60);
     setOtp(["", "", "", "", "", ""]);
+
   };
 
   return (
