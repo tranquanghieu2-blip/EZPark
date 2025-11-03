@@ -26,28 +26,32 @@ export default function Login() {
   const navigation = useNavigation<any>();
   const { login: saveAuth } = useAuth(); // Hàm login từ AuthContext
 
-  useEffect(() => {
-    console.log("123123123")
-    const handleDeepLink = (event: { url: string }) => {
-      const url = event.url;
-      if (url.startsWith('ezpark://auth')) {
-        const params = new URLSearchParams(url.split('?')[1]);
-        const accessToken = params.get('accessToken');
-        const refreshToken = params.get('refreshToken');
+ useEffect(() => {
+  const handleDeepLink = async (event: { url: string }) => {
+    const url = event.url;
+    if (url.startsWith('ezpark://auth')) {
+      const params = new URLSearchParams(url.split('?')[1]);
+      const accessToken = params.get('accessToken');
+      const refreshToken = params.get('refreshToken');
 
-        if (accessToken && refreshToken) {
-          saveAuth(null, accessToken, refreshToken);
-        }
+      if (accessToken && refreshToken) {
+        await saveAuth(null, accessToken, refreshToken);
+        navigation.reset({
+          index: 0,
+          routes: [ { name: '(tabs)'}], // đổi tên route đúng với app bạn
+        });
       }
-    };
+    }
+  };
 
-    const sub = Linking.addEventListener('url', handleDeepLink);
-    Linking.getInitialURL().then(url => {
-      if (url) handleDeepLink({ url });
-    });
+  const sub = Linking.addEventListener('url', handleDeepLink);
+  Linking.getInitialURL().then(url => {
+    if (url) handleDeepLink({ url });
+  });
 
-    return () => sub.remove();
-  }, []);
+  return () => sub.remove();
+}, []);
+
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

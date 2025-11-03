@@ -67,7 +67,6 @@ export const fetchParkingSpotDetail = async (
         `Error fetching parking spot detail: ${response.statusText}`,
       );
     }
-
     const data = await response.json();
     return data;
   } catch (error) {

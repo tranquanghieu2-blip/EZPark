@@ -14,6 +14,7 @@ import Colors from '@/constants/colors';
 import { images } from '@/constants/images';
 import api from '@/service/apiClient';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { mapEvents, EVENT_OPEN_SPOT } from '@/utils/eventEmitter';
 
 const Favourite = () => {
   const navigation = useNavigation<any>();
@@ -64,15 +65,18 @@ const Favourite = () => {
           <ActivityIndicator size="large" color={Colors.primary} />
         </View>
       ) : (
-        <FlatList
-          data={favorites}
-          keyExtractor={item => item.favorite_id.toString()}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              className="py-4 border-b border-gray-200"
-              //NAVIGATION Ở ĐÂY NÈEEEEEEEEEEEEEEEE
-              // onPress={() => navigation.navigate('ParkingSpotDetail', { spot: item })}
-            >
+      <FlatList
+        data={favorites}
+        keyExtractor={item => item.favorite_id.toString()}
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            className="py-4 border-b border-gray-200"
+            onPress={() => {
+              const spotId = item.parking_spot_id ?? item.id ?? item.spot_id;
+              mapEvents.emit(EVENT_OPEN_SPOT, spotId);
+              navigation.navigate('index');
+            }}
+          >
               <View>
                 <View className="flex-row justify-between">
                   <Text className="text-lg font-bold text-gray-900 flex-1">

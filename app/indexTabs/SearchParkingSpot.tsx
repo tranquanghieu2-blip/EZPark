@@ -39,6 +39,8 @@ const RatingStars = ({ value, size = 16 }: { value: number; size?: number }) => 
 const SearchParkingSpot = () => {
   const navigation = useNavigation<any>();
   const location = useSmartMapboxLocation();
+  // const location= {latitude: 16.0611987, longitude: 108.2191217}
+
 
   // Ẩn tab bar
   useEffect(() => {

@@ -17,7 +17,7 @@ import {
   fetchNoParkingRoutes,
   updateNoParkingRouteGeometry,
 } from "@/service/api";
-import { getRoute } from "@/service/routingService";
+import { getRoutes } from "@/service/routingService";
 // ================= Utils =================
 import { clusterPolylines } from "@/utils/clusterPolylines";
 import { getPolylineStyleOfRoute } from "@/utils/polylineStyle";
@@ -63,7 +63,7 @@ const NoParkingRoute = () => {
           noParkingRoutes.map(async (route) => {
             if (route.route) return route;
             try {
-              const routeData = await getRoute(route.location_begin, route.location_end);
+              const routeData = await getRoutes(route.location_begin, route.location_end);
               if (routeData?.geometry) {
                 const geometry = routeData.geometry;
                 await updateNoParkingRouteGeometry(route.no_parking_route_id, geometry);
@@ -192,10 +192,10 @@ const NoParkingRoute = () => {
         ref={mapRef}
         style={styles.map}
         styleURL={MapboxGL.StyleURL.Street}
-        onMapIdle={(feature) => {
-          console.log("Map is idle", feature);
-          handleRegionChange(feature);
-        }}
+        // onMapIdle={(feature) => {
+        //   console.log("Map is idle", feature);
+        //   handleRegionChange(feature);
+        // }}
         // onRegionDidChange={onRegionDidChange}
         zoomEnabled
         scrollEnabled

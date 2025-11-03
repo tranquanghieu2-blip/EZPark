@@ -1,5 +1,5 @@
 // ================= Thông dụng =================
-import React, { useCallback, useRef, useState, useEffect } from 'react';
+import React, { useCallback, useRef, useState, useEffect, use } from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -14,8 +14,14 @@ import MapboxGL from '@rnmapbox/maps';
 
 // ================= Components =================
 import CircleButton from '@/components/CircleButton';
-import { IconCrosshairs, IconQuestion, IconRain, IconCancelRouting } from '@/components/Icons';
+import {
+  IconCrosshairs,
+  IconQuestion,
+  IconRain,
+  IconCancelRouting,
+} from '@/components/Icons';
 import SearchBar from '@/components/SearchBar';
+// import UserLocationMarker from '@/components/UserLocation';
 // ================= Constants =================
 import Colors from '@/constants/colors';
 import { icons } from '@/constants/icons';
@@ -47,10 +53,17 @@ import messaging from '@react-native-firebase/messaging';
 
 import { Point } from 'geojson';
 import DeviceInfo from 'react-native-device-info';
+import { mapEvents, EVENT_OPEN_SPOT } from '@/utils/eventEmitter';
+
+import { getRoutes } from '@/service/routingService';
+import haversine from 'haversine-distance';
+import { debounce } from 'lodash';
+
 // ================= Component =================
 const ParkingSpot = () => {
-  const location = useSmartMapboxLocation();
-  // console.log('Location: ', location);
+  const location = useSmartMapboxLocation(10);
+  // const location= {latitude: 16.0611987, longitude: 108.2191217}
+  // console.log("Location: ", location)
   // const fcmToken = messaging().getToken();
   // console.log('FCM Token:', fcmToken);
   // const deviceId = DeviceInfo.getUniqueId();
@@ -81,12 +94,103 @@ const ParkingSpot = () => {
     null,
   );
   const [selectedRouteId, setSelectedRouteId] = useState<number | null>(null);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [showInstructionModal, setShowInstructionModal] = useState(false);
 
-   useEffect(() => {
-  if (location) {
-    setUserLocation(location);
-  }
-}, [location]);
+  // lưu điểm đích và vị trí cuối cùng để tính lại route
+  const [destination, setDestination] = useState<{
+    lat: number;
+    lon: number;
+  } | null>(null);
+  const [lastRoutePos, setLastRoutePos] = useState<{
+    lat: number;
+    lon: number;
+  } | null>(null);
+
+  useEffect(() => {
+    const handleOpenSpot = (spotId: number) => {
+      setSelectedId(spotId);
+      setShowParkingDetail(true);
+    };
+
+    mapEvents.on(EVENT_OPEN_SPOT, handleOpenSpot);
+
+    return () => {
+      mapEvents.off(EVENT_OPEN_SPOT, handleOpenSpot);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!cameraRef.current) return;
+    if (!routeCoords || routeCoords.length === 0) {
+      // Nếu muốn trả camera về vị trí người dùng khi hủy route:
+      if (userLocation && cameraRef.current) {
+        cameraRef.current.setCamera({
+          centerCoordinate: [userLocation.longitude, userLocation.latitude],
+          zoomLevel: 12,
+          animationDuration: 700,
+        });
+      }
+      return;
+    }
+
+    // Lấy route chính (route đầu tiên)
+    const coords = routeCoords[0];
+    if (!coords || coords.length === 0) return;
+
+    // Tính bounding box
+    let minLat = coords[0].latitude;
+    let maxLat = coords[0].latitude;
+    let minLon = coords[0].longitude;
+    let maxLon = coords[0].longitude;
+
+    coords.forEach(p => {
+      if (p.latitude < minLat) minLat = p.latitude;
+      if (p.latitude > maxLat) maxLat = p.latitude;
+      if (p.longitude < minLon) minLon = p.longitude;
+      if (p.longitude > maxLon) maxLon = p.longitude;
+    });
+
+    // Thêm small padding vào bbox (dạng độ, an toàn)
+    const latPadding = (maxLat - minLat) * 0.15 || 0.002; // 15% hoặc min safe
+    const lonPadding = (maxLon - minLon) * 0.15 || 0.002;
+
+    const sw = [minLon - lonPadding, minLat - latPadding]; // [lon, lat]
+    const ne = [maxLon + lonPadding, maxLat + latPadding]; // [lon, lat]
+
+    try {
+      // Cách 1: setCamera với bounds (thường dùng cho @rnmapbox/maps)
+      cameraRef.current.fitBounds(ne, sw, 80, 900);
+
+      // Nếu SDK của bạn hỗ trợ fitBounds trực tiếp, dùng thay thế:
+      // cameraRef.current.fitBounds(ne, sw, 40); // (ne, sw, padding)
+    } catch (err) {
+      console.warn(
+        'Error fitting camera to route bounds, fallback to center/zoom:',
+        err,
+      );
+      // fallback: center to midpoint + zoom
+      const midLat = (minLat + maxLat) / 2;
+      const midLon = (minLon + maxLon) / 2;
+      cameraRef.current.setCamera({
+        centerCoordinate: [midLon, midLat],
+        zoomLevel: 12,
+        animationDuration: 700,
+      });
+    }
+  }, [routeCoords, cameraRef, userLocation]);
+
+  useEffect(() => {
+    console.log("first")
+    if (
+      location &&
+      (!userLocation ||
+        location.latitude !== userLocation.latitude ||
+        location.longitude !== userLocation.longitude)
+    ) {
+      setUserLocation(location);
+    }
+  }, [location]);
 
   // === PERMISSIONS ===
   const requestLocationPermission = async () => {
@@ -109,7 +213,8 @@ const ParkingSpot = () => {
     requestLocationPermission();
   }, []);
 
-    useEffect(() => {
+  useEffect(() => {
+    console.log("22222222")
     setIsRouting(routeCoords.length > 0);
   }, [routeCoords]);
 
@@ -159,6 +264,61 @@ const ParkingSpot = () => {
     }
   };
 
+  //logic cập nhật route động theo vị trí hiện tại
+  const updateDynamicRoute = useCallback(
+    async (currentPos: { lat: number; lon: number }) => {
+      if (!destination) return;
+
+      const dist =
+        lastRoutePos &&
+        haversine(
+          { lat: lastRoutePos.lat, lon: lastRoutePos.lon },
+          { lat: currentPos.lat, lon: currentPos.lon },
+        );
+
+      // Chỉ cập nhật nếu di chuyển > 40m
+      if (dist && dist < 40) return;
+
+      try {
+        const routes = await getRoutes(
+          [currentPos.lon, currentPos.lat],
+          [destination.lon, destination.lat],
+        );
+
+        if (routes?.[0]?.geometry?.coordinates) {
+          const coords = routes[0].geometry.coordinates.map(
+            ([lon, lat]: [number, number]) => ({
+              longitude: lon,
+              latitude: lat,
+            }),
+          );
+          setRouteCoords([coords]);
+          setLastRoutePos(currentPos);
+        }
+      } catch (error) {
+        console.warn('Không thể cập nhật route:', error);
+      }
+    },
+    [destination, lastRoutePos],
+  );
+  //debounce để tránh gọi API quá nhiều
+  const debouncedUpdateRoute = useRef(
+    debounce(
+      (pos: { lat: number; lon: number }) => updateDynamicRoute(pos),
+      4000,
+    ),
+  ).current;
+  //mỗi khi userLocation thay đổi, tính lại route
+  useEffect(() => {
+    console.log("1111111111111")
+    if (!userLocation || !destination) return;
+    debouncedUpdateRoute({
+      lat: userLocation.latitude,
+      lon: userLocation.longitude,
+    });
+  }, [userLocation, destination]);
+
+
   return (
     <View style={styles.container}>
       {/* Thanh tìm kiếm */}
@@ -169,17 +329,20 @@ const ParkingSpot = () => {
 
       {/* Nút nổi */}
       <View className="absolute right-4 bottom-10 z-20 flex-col space-y-4 gap-3">
-
-           {isRouting && (
+        {isRouting && (
           <CircleButton
             icon={<IconCancelRouting size={40} color={Colors.danger} />}
             bgColor="#000000c5"
             onPress={() => {
               setRouteCoords([]);
+              setDestination(null);
+              setLastRoutePos(null);
+              setShowInstructionModal(false);
+              setShowDropdown(false);
             }}
           />
         )}
-        
+
         <CircleButton
           icon={<IconRain size={20} color={Colors.blue_button} />}
           bgColor="#fff"
@@ -290,11 +453,20 @@ const ParkingSpot = () => {
             </MapboxGL.ShapeSource>
           );
         })}
+
+
+
         <MapboxGL.UserLocation
+
           visible={true}
           showsUserHeadingIndicator={false}
-          minDisplacement={5} // chỉ cập nhật khi di chuyển ít nhất 5 mét
+          minDisplacement={10} // chỉ cập nhật khi di chuyển ít nhất 10 mét
+          onUpdate={() => {
+            console.log('UPDATE USER LOCATION');
+          }}
         />
+        
+
         {routeCoords.length > 0 &&
           routeCoords.map((route, idx) => (
             <MapboxGL.ShapeSource
@@ -334,6 +506,75 @@ const ParkingSpot = () => {
               />
             </MapboxGL.ShapeSource>
           ))}
+
+        {/* MARKERS: origin & destination */}
+        {routeCoords.length > 0 &&
+          (() => {
+            const main = routeCoords[0];
+            if (!main || main.length === 0) return null;
+            const origin = main[0];
+            const destination = main[main.length - 1];
+
+            return (
+              <>
+                <MapboxGL.PointAnnotation
+                  id="route-origin"
+                  key="route-origin"
+                  coordinate={[origin.longitude, origin.latitude]}
+                >
+                  <View
+                    style={{
+                      width: 18,
+                      height: 18,
+                      borderRadius: 9,
+                      backgroundColor: '#fff',
+                      borderWidth: 3,
+                      borderColor: '#307bdd',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <View
+                      style={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: 4,
+                        backgroundColor: '#307bdd',
+                      }}
+                    />
+                  </View>
+                </MapboxGL.PointAnnotation>
+
+                <MapboxGL.PointAnnotation
+                  id="route-destination"
+                  key="route-destination"
+                  coordinate={[destination.longitude, destination.latitude]}
+                >
+                  <View
+                    style={{
+                      width: 18,
+                      height: 18,
+                      borderRadius: 9,
+                      backgroundColor: '#fff',
+                      borderWidth: 3,
+                      borderColor: '#34c759',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <View
+                      style={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: 4,
+                        backgroundColor: '#34c759',
+                      }}
+                    />
+                  </View>
+                </MapboxGL.PointAnnotation>
+              </>
+            );
+          })()}
 
         {/* === Parking Spot Clustering === */}
         {parkingSpots && (
@@ -482,7 +723,6 @@ const ParkingSpot = () => {
           color={Colors.blue_button}
           className="absolute top-32 self-center z-20"
         />
-
       )}
 
       {/* Error */}
@@ -499,11 +739,26 @@ const ParkingSpot = () => {
         loading={parkingSpotDetailLoad}
         error={parkingSpotsErrorr}
         detail={parkingSpotDetail}
+        showInstructionModal={showInstructionModal}
+        showDropdown={showDropdown}
         currentLocation={userLocation}
+        onSetShowInstructionModal={setShowInstructionModal}
+        onSetShowDropdown={setShowDropdown}
         onRouteFound={coords => {
           setRouteCoords(coords);
+          if (userLocation && coords.length > 0) {
+            const main = coords[0];
+            const destinationPoint = main[main.length - 1];
+            setDestination({
+              lat: destinationPoint.latitude,
+              lon: destinationPoint.longitude,
+            });
+            setLastRoutePos({
+              lat: userLocation.latitude,
+              lon: userLocation.longitude,
+            });
+          }
         }}
-        
       />
 
       {/* Modal cho Flood Report */}

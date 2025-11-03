@@ -46,24 +46,6 @@ function getDistanceMeters(
   return Math.sqrt(dx * dx + dy * dy);
 }
 
-/** Khoảng cách 2 điểm */
-// function getPointDistanceMeters(
-//   lat1: number,
-//   lon1: number,
-//   lat2: number,
-//   lon2: number,
-// ): number {
-//   const toRad = (v: number): number => (v * Math.PI) / 180;
-//   const R = 6371000;
-//   const dLat = toRad(lat2 - lat1);
-//   const dLon = toRad(lon2 - lon1);
-//   const a =
-//     Math.sin(dLat / 2) ** 2 +
-//     Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
-//   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-//   return R * c;
-// }
-
 /** Kiểm tra user có nằm gần tuyến đường (polyline) không */
 function isUserOnRoute(
   userLat: number,
@@ -95,7 +77,7 @@ const ConfirmParkingRoutesModal: React.FC<Props> = ({ route, onClose }) => {
       location.latitude,
       location.longitude,
       route.route?.coordinates || [],
-      10,
+      50,
     );
 
   useEffect(() => {

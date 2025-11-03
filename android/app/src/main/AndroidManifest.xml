@@ -33,6 +33,13 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <intent-filter android:label="ezpark">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="ezpark" android:host="auth" />
+            </intent-filter>
         </activity>
 
         <meta-data
@@ -43,13 +50,6 @@
             android:name="io.invertase.firebase.messaging.ReactNativeFirebaseMessagingService"
             android:exported="true"
             tools:replace="android:exported">
-            <intent-filter>
-                <action android:name="com.google.firebase.MESSAGING_EVENT" />
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="ezpark" android:host="auth" />
-            </intent-filter>
         </service>
 
     </application>

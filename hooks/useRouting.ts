@@ -1,6 +1,6 @@
  // hooks/useRouting.ts
 import { useEffect, useState } from "react";
-import { getRoute } from "../service/routingService";
+import { getRoutes } from "../service/routingService";
 
 export function useRouting(
   start: [number, number] | null,
@@ -13,7 +13,7 @@ export function useRouting(
     if (!start || !end) return;
 
     setLoading(true);
-    getRoute(start, end).then((data) => {
+    getRoutes(start, end).then((data) => {
       setRoute(data);
       setLoading(false);
     });

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getRoute } from "@/service/routingService";
+import { getRoutes } from "@/service/routingService";
 
 export function useRoutingBatch(routes: NoParkingRoute[] | null) {
   const [results, setResults] = useState<(any | null)[]>([]);
@@ -14,7 +14,7 @@ export function useRoutingBatch(routes: NoParkingRoute[] | null) {
       routes.map((r) => {
         const start: [number, number] = [r.location_begin[0], r.location_begin[1]];
         const end: [number, number] = [r.location_end[0], r.location_end[1]];
-        return getRoute(start, end);
+        return getRoutes(start, end);
       })
     )
       .then(setResults)
