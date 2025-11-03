@@ -14,12 +14,13 @@ import ToastCustom from "@/utils/CustomToast";
 import { IconPassword } from "@/components/Icons";
 import { InputRow } from "@/components/InputRow";
 import MessageModal from "@/modals/MessageModal";
+import { resetPassword } from "@/service/api";
 
 // định nghĩa kiểu param
 type RootStackParamList = {
   "verify-otp": { email: string; flowType: "signup" | "forgot-password" };
   login: undefined;
-  "reset-password": { email: string, code: string };
+  "reset-password": { email: string, resetToken: string };
 };
 
 type ResetPasswordRouteProp = RouteProp<RootStackParamList, "reset-password">;
@@ -27,7 +28,7 @@ type ResetPasswordRouteProp = RouteProp<RootStackParamList, "reset-password">;
 const ResetPassword = () => {
   const route = useRoute<ResetPasswordRouteProp>();
   const navigation = useNavigation<any>();
-  const { email, code } = route.params;
+  const { email, resetToken } = route.params;
   // console.log("ResetPassword received email:", email);
   // console.log("ResetPassword received code:", code);
 
@@ -61,19 +62,21 @@ const ResetPassword = () => {
 
   const handleSave = async () => {
     console.log("Lưu thay đổi:", { password });
-    // TODO: Gọi API đổi mật khẩu tại đây
-    setLoading(true);
-    ToastCustom.success("Cập nhật mật khẩu thành công", "Bạn đã cập nhật mật khẩu thành công. Vui lòng đăng nhập lại.");
-    // navigation.navigate("login");
     try {
-      
+      setLoading(true);
+      const res = await resetPassword(email, resetToken, password);
+      if (res.success) {
+        ToastCustom.success("Cập nhật mật khẩu thành công", "Bạn đã cập nhật mật khẩu thành công. Vui lòng đăng nhập lại.");
+        navigation.navigate("login");
+      } else {
+        throw new Error(res.message || "Lỗi không xác định");
+      }
     } catch (error: any) {
       ToastCustom.error("Cập nhật mật khẩu thất bại", error?.response?.data.message || "Vui lòng thử lại.");
       setLoading(false);
     } finally {
       setLoading(false);
     }
-
   };
 
   return (

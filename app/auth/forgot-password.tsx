@@ -16,8 +16,7 @@ import {
   Image,
   Alert
 } from "react-native";
-import { launchImageLibrary, Asset } from "react-native-image-picker";
-import { updateUserProfile } from "@/service/api";
+import { sendPasswordResetOtp } from "@/service/api";
 import ToastCustom from "@/utils/CustomToast";
 
 type RootStackParamList = {
@@ -40,23 +39,30 @@ const ForgotPassword = () => {
   const canSave = emailValid;
 
   // --- Save profile ---
-  const handleSave = async () => {
-    if (!canSave) return;
+const handleSave = async () => {
+  if (!canSave) return;
 
-    setLoading(true);
-    try {
-      // const res = await updateUserProfile({ email: trimmedEmail });
-      // console.log("Cập nhật profile thành công:", res);
-      ToastCustom.success("Thành công", "Cập nhật thông tin thành công.");
-      navigation.navigate("verify-otp", { email, flowType: "forgot-password" });
-    } catch (error) {
-      console.error("Lỗi cập nhật profile:", error);
-      ToastCustom.error("Lỗi", "Không thể lưu thay đổi, vui lòng thử lại.");
-      setShowFailModal(true);
-    } finally {
-      setLoading(false); // đảm bảo tắt loading ở cuối cùng
+  setLoading(true);
+  try {
+    const res = await sendPasswordResetOtp(trimmedEmail);
+
+    if (res.success) {
+      ToastCustom.success("Thành công", "Mã OTP đã được gửi đến email của bạn.");
+      navigation.navigate("verify-otp", {
+        email: trimmedEmail,
+        flowType: "forgot-password",
+      });
+    } else {
+      throw new Error(res.message || "Gửi OTP thất bại.");
     }
-  };
+  } catch (error: any) {
+    console.error("Lỗi gửi OTP:", error);
+    ToastCustom.error("Lỗi", error.message || "Không thể gửi mã OTP, vui lòng thử lại.");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   return (
     <KeyboardAvoidingView
