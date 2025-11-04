@@ -17,14 +17,17 @@ import {
   FlatList,
   ListRenderItem,
   Image,
+  Pressable,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import Ionicons from "@react-native-vector-icons/ionicons";
 import { useNavigation } from "@react-navigation/native";
 import { images } from "@/constants/images";
 import { DEFAULT_TAB_BAR_STYLE } from "@/utils/tabBarStyle";
 import { IconMicro } from "@/components/Icons";
 import Colors from "@/constants/colors";
+import { useAuth } from "../context/AuthContext";
+import NoUserLogin from "@/components/NoUserLogin";
 
 /* -------------------------------------------------
    Kiểu dữ liệu tin nhắn
@@ -33,7 +36,7 @@ type Message = {
   id: string;
   from: "user" | "bot";
   text: string;
-  time: string; // 🕒 thêm thời gian gửi
+  time: string; // thêm thời gian gửi
 };
 
 /* -------------------------------------------------
@@ -179,9 +182,17 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSend, sending }) => {
 -------------------------------------------------- */
 const ChatBot: React.FC = () => {
   const navigation = useNavigation<any>();
+  const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [sending, setSending] = useState(false);
   const flatRef = useRef<FlatList<Message>>(null);
+  const [keyboardOffset, setKeyboardOffset] = useState(0);
+  const insets = useSafeAreaInsets();
+
+  // Nếu chưa đăng nhập
+  if (!user) {
+    return <NoUserLogin />;
+  }
 
   // Gợi ý mặc định
   const suggestions = useMemo(
@@ -202,6 +213,22 @@ const ChatBot: React.FC = () => {
       navigation.getParent()?.setOptions({ tabBarStyle: DEFAULT_TAB_BAR_STYLE });
     };
   }, [navigation]);
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener("keyboardDidShow", (e) => {
+      const height = e.endCoordinates.height;
+      setKeyboardOffset(height * 0.35); // hoặc 1.0 nếu muốn trượt cao hơn một chút
+    });
+
+    const hideSub = Keyboard.addListener("keyboardDidHide", () => {
+      setKeyboardOffset(0);
+    });
+
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   // helper
   const uid = useCallback(
@@ -289,7 +316,9 @@ const ChatBot: React.FC = () => {
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 80 : 0}
+        keyboardVerticalOffset={Platform.OS === "ios"
+          ? keyboardOffset + insets.bottom
+          : keyboardOffset}
       >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <View className="flex-1">
