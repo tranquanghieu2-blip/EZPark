@@ -154,3 +154,11 @@ export const IconCancelRouting = (props: any) => (
   <MaterialDesignIcons name="cancel" iconStyle="solid" {...props} />
 );
 
+export const IconVolumeHigh = (props: any) => (
+  <MaterialDesignIcons name="volume-high" iconStyle="solid" {...props} />
+);
+
+export const IconMicro = (props: any) => (
+  <FontAwesome5 name="microphone" iconStyle="solid" {...props} />
+);
+

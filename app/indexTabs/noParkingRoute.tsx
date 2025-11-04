@@ -25,6 +25,8 @@ import { isDayRestricted, isWithinTimeRange } from "@/utils/validation";
 // ================= Modals =================
 import { HelpModalNoParkingRoute } from "@/modals/HelpModal";
 import NoParkingRouteModal from "@/modals/NoParkingRouteModal";
+import { images } from "@/constants/images";
+import { useNavigation } from "@react-navigation/native";
 
 MapboxGL.setAccessToken(
   "sk.eyJ1IjoiaGlldWRldiIsImEiOiJjbWdpdjdsenAwYzA3MmpyNGNuOWR6czM0In0.v4WG4w0POwNCmA1UjDNAOQ"
@@ -32,6 +34,7 @@ MapboxGL.setAccessToken(
 
 const NoParkingRoute = () => {
   console.log("Render No Parking Route");
+  const navigation = useNavigation<any>();
 
   // ================== STATE ==================
   const [center, setCenter] = useState<{ latitude: number; longitude: number }>(DA_NANG_CENTER);
@@ -170,6 +173,11 @@ const NoParkingRoute = () => {
 
       {/* Nút chức năng */}
       <View className="absolute right-4 bottom-10 z-20 flex-col space-y-4 gap-2">
+        <CircleButton
+          icon={<Image source={images.chatbot} style={{ width: 35, height: 25 }} />}
+          bgColor="#fff"
+          onPress={() => navigation.navigate("ChatBot")}
+        />
         <CircleButton
           icon={<IconQuestion size={20} color={Colors.blue_button} />}
           bgColor="#fff"
