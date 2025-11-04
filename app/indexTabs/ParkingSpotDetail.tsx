@@ -16,8 +16,8 @@ import {
   IconStarNo,
   IconDistance,
   IconParkingSpotType,
-  IconNoFavourate,
-  IconFavourate,
+  IconFavorite,
+  IconNoFavorite,
 } from '@/components/Icons';
 import Colors from '@/constants/colors';
 import { images } from '@/constants/images';
@@ -302,9 +302,9 @@ const ParkingSpotDetail = () => {
                 activeOpacity={0.7}
               >
                 {isFavorite ? (
-                  <IconFavourate size={32} color={Colors.heart} />
+                  <IconFavorite size={32} color={Colors.heart} />
                 ) : (
-                  <IconNoFavourate size={32} color={Colors.heart} />
+                  <IconNoFavorite size={32} color={Colors.heart} />
                 )}
               </TouchableOpacity>
             )}

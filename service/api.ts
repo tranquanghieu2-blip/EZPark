@@ -409,8 +409,8 @@ export const checkFavoriteParkingSpot = async (
     const favoriteId = res.data?.data?.favorite_id ?? null;
 
     return {
-      isFavorite: !!favoriteId,
       favoriteId,
+      isFavorite: !!favoriteId,
     };
   } catch (error) {
     handleApiError("Checking favorite status", error);
