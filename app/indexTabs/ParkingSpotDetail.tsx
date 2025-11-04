@@ -36,6 +36,7 @@ import { useGetListFeedback } from '@/hooks/useGetListFeedback';
 import { FlatList } from 'react-native-gesture-handler';
 import GradientButton from '@/components/GradientButton';
 import ToastCustom from '@/utils/CustomToast';
+import NoUserLogin from '@/components/NoUserLogin';
 
 // ================= Type định nghĩa =================
 type RootStackParamList = {
@@ -131,6 +132,11 @@ const ParkingSpotDetail = () => {
   const [favoriteLoading, setFavoriteLoading] = useState(false);
 
   const [isToggling, setIsToggling] = useState(false);
+
+  // Nếu chưa đăng nhập
+  if (!user) {
+    return <NoUserLogin />;
+  }
 
   // === Gọi API đánh giá của người dùng ===
   const fetchMyFeedback = useCallback(() => {

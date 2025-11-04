@@ -23,6 +23,7 @@ import {
   IconArchiveLock,
   IconLogout,
 } from "@/components/Icons";
+import NoUserLogin from "@/components/NoUserLogin";
 
 export default function Profile() {
   const navigation = useNavigation<any>();
@@ -32,24 +33,12 @@ export default function Profile() {
   const screenHeight = Dimensions.get("screen").height;
   const headerHeight = screenHeight * 0.3 + insets.top;
 
-  // ⛔ Nếu chưa đăng nhập
+  // Nếu chưa đăng nhập
   if (!user) {
-    return (
-      <View className="flex-1 justify-center items-center bg-white px-6">
-        <Text className="mb-4 text-lg text-center text-gray-700">
-          Vui lòng đăng nhập để sử dụng chức năng này
-        </Text>
-        <Pressable
-          onPress={() => navigation.navigate("auth", { screen: "login" })}
-          className="px-5 py-3 bg-blue-500 rounded-lg"
-        >
-          <Text className="text-white font-semibold">Đăng nhập</Text>
-        </Pressable>
-      </View>
-    );
+    return <NoUserLogin />;
   }
 
-  // ✅ Nếu đã đăng nhập
+  // Nếu đã đăng nhập
   return (
     <View className="flex-1 bg-gray-50">
       {/* Header tràn lên status bar */}

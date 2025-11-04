@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Image,
+  Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -15,12 +16,20 @@ import { images } from '@/constants/images';
 import api from '@/service/apiClient';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { mapEvents, EVENT_OPEN_SPOT } from '@/utils/eventEmitter';
+import { useAuth } from '../context/AuthContext';
+import NoUserLogin from '@/components/NoUserLogin';
 
 const Favourite = () => {
   const navigation = useNavigation<any>();
+  const { user } = useAuth();
   const [favorites, setFavorites] = useState<any[]>([]);
   const [loading, setLoading] = useState(true); // lần đầu load
   const [refreshing, setRefreshing] = useState(false); // khi kéo để reload
+
+  // Nếu chưa đăng nhập
+  if (!user) {
+    return <NoUserLogin />;
+  }
 
   const typeLabel: Record<'parking hub' | 'on street parking', string> = {
     'parking hub': 'Bãi đỗ xe tập trung',
@@ -65,18 +74,18 @@ const Favourite = () => {
           <ActivityIndicator size="large" color={Colors.primary} />
         </View>
       ) : (
-      <FlatList
-        data={favorites}
-        keyExtractor={item => item.favorite_id.toString()}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            className="py-4 border-b border-gray-200"
-            onPress={() => {
-              const spotId = item.parking_spot_id ?? item.id ?? item.spot_id;
-              mapEvents.emit(EVENT_OPEN_SPOT, spotId);
-              navigation.navigate('index');
-            }}
-          >
+        <FlatList
+          data={favorites}
+          keyExtractor={item => item.favorite_id.toString()}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              className="py-4 border-b border-gray-200"
+              onPress={() => {
+                const spotId = item.parking_spot_id ?? item.id ?? item.spot_id;
+                mapEvents.emit(EVENT_OPEN_SPOT, spotId);
+                navigation.navigate('index');
+              }}
+            >
               <View>
                 <View className="flex-row justify-between">
                   <Text className="text-lg font-bold text-gray-900 flex-1">

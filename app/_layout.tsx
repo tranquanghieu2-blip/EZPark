@@ -41,13 +41,14 @@ function AppNavigator() {
         gestureEnabled: false, // Tắt vuốt ngang
       }}
     >
-      {user ? (
-        // 🔹 Nếu đã đăng nhập -> vào màn hình chính
+      {/* {user ? ( */}
+        {/* // 🔹 Nếu đã đăng nhập -> vào màn hình chính */}
         <Stack.Screen name="(tabs)" component={_Layout} />
-      ) : (
-        // 🔹 Nếu chưa đăng nhập -> vào auth layout
         <Stack.Screen name="auth" component={AuthLayout} />
-      )}
+       {/* ) : ( */}
+        {/* // 🔹 Nếu chưa đăng nhập -> vào auth layout */}
+        {/* <Stack.Screen name="auth" component={AuthLayout} /> */}
+      {/* )} */}
     </Stack.Navigator>
   );
 }

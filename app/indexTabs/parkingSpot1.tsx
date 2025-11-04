@@ -60,9 +60,11 @@ import { mapEvents, EVENT_OPEN_SPOT } from '@/utils/eventEmitter';
 import { getRoutes } from '@/service/routingService';
 import haversine from 'haversine-distance';
 import { debounce } from 'lodash';
+import { useAuth } from '../context/AuthContext';
 
 // ================= Component =================
 const ParkingSpot = () => {
+  const { user } = useAuth();
   const location = useSmartMapboxLocation(10);
   // const location= {latitude: 16.0611987, longitude: 108.2191217}
   // console.log("Location: ", location)
@@ -326,36 +328,37 @@ const ParkingSpot = () => {
     });
   }, [userLocation, destination]);
 
+  if (user) {
+    // Chỉ có API check single
+    useEffect(() => {
+      if (!parkingSpots?.length) return;
 
-// Chỉ có API check single
-useEffect(() => {
-  if (!parkingSpots?.length) return;
+      const checkAllFavorites = async () => {
+        try {
+          const favoritePromises = parkingSpots.map(spot =>
+            checkFavoriteParkingSpot(spot.parking_spot_id)
+              .then(result => ({ spotId: spot.parking_spot_id, isFavorite: result.isFavorite }))
+              .catch(() => ({ spotId: spot.parking_spot_id, isFavorite: false }))
+          );
 
-  const checkAllFavorites = async () => {
-    try {
-      const favoritePromises = parkingSpots.map(spot => 
-        checkFavoriteParkingSpot(spot.parking_spot_id)
-          .then(result => ({ spotId: spot.parking_spot_id, isFavorite: result.isFavorite }))
-          .catch(() => ({ spotId: spot.parking_spot_id, isFavorite: false }))
-      );
+          const favoriteResults = await Promise.all(favoritePromises);
 
-      const favoriteResults = await Promise.all(favoritePromises);
-      
-      const favoriteSet = new Set<number>();
-      favoriteResults.forEach(result => {
-        if (result.isFavorite) {
-          favoriteSet.add(result.spotId);
+          const favoriteSet = new Set<number>();
+          favoriteResults.forEach(result => {
+            if (result.isFavorite) {
+              favoriteSet.add(result.spotId);
+            }
+          });
+
+          setFavoriteSpots(favoriteSet);
+        } catch (error) {
+          console.error('Error checking all favorites:', error);
         }
-      });
-      
-      setFavoriteSpots(favoriteSet);
-    } catch (error) {
-      console.error('Error checking all favorites:', error);
-    }
-  };
+      };
 
-  checkAllFavorites();
-}, [parkingSpots]);
+      checkAllFavorites();
+    }, [parkingSpots]);
+  }
 
 
 
@@ -662,7 +665,7 @@ useEffect(() => {
                   id: spot.parking_spot_id,
                   latitude: spot.latitude,
                   longitude: spot.longitude,
-                   isFavorite: favoriteSpots.has(spot.parking_spot_id),
+                  isFavorite: favoriteSpots.has(spot.parking_spot_id),
                 },
                 ...spot,
               })),
