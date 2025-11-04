@@ -142,11 +142,11 @@ export const IconCamera = (props: any) => (
   <MaterialDesignIcons name="camera-image" iconStyle="solid" {...props} />
 );
 
-export const IconNoFavourate = ( props: any) => (
+export const IconNoFavorite = ( props: any) => (
   <FontAwesome name="heart-o" iconStyle="solid" {...props} />
 );
 
-export const IconFavourate = ( props: any) => (
+export const IconFavorite = ( props: any) => (
   <FontAwesome name="heart" iconStyle="solid" {...props} />
 );
 

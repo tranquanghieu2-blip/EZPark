@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
-import { IconFavourate, IconStar } from '@/components/Icons';
+import { IconFavorite, IconStar } from '@/components/Icons';
 import Colors from '@/constants/colors';
 import { images } from '@/constants/images';
 import api from '@/service/apiClient';
@@ -82,7 +82,7 @@ const Favourite = () => {
                   <Text className="text-lg font-bold text-gray-900 flex-1">
                     {item.name}
                   </Text>
-                  <IconFavourate size={18} color={Colors.heart} />
+                  <IconFavorite size={18} color={Colors.heart} />
                 </View>
                 <Text className="text-sm text-gray-600 mt-1">
                   {item.address}

@@ -1,4 +1,9 @@
-import { IconParking, IconParkingSpotType, IconsMap } from '@/components/Icons';
+import {
+  IconFavorite,
+  IconParking,
+  IconParkingSpotType,
+  IconsMap,
+} from '@/components/Icons';
 import Colors from '@/constants/colors';
 import { getRoutes } from '@/service/routingService';
 import { useNavigation } from '@react-navigation/native';
@@ -12,6 +17,7 @@ import {
   ScrollView,
 } from 'react-native';
 
+import { Linking } from 'react-native';
 interface Props {
   visible: boolean;
   onClose: () => void;
@@ -53,6 +59,9 @@ const ParkingSpotDetailModal: React.FC<Props> = ({
     { instruction: string; distance?: number; duration?: number }[]
   >([]);
 
+
+
+
   useEffect(() => {
     if (detail && currentLocation) {
       setDistanceLoading(true);
@@ -93,6 +102,13 @@ const ParkingSpotDetailModal: React.FC<Props> = ({
       : `${mins} phút`;
   };
 
+  const openGoogleMaps = (latitude: number, longitude: number) => {
+    const url = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`;
+    Linking.openURL(url).catch(err =>
+      console.error('Không thể mở Google Maps:', err),
+    );
+  };
+
   return (
     <>
       {/* Modal chi tiết bãi đỗ */}
@@ -105,10 +121,9 @@ const ParkingSpotDetailModal: React.FC<Props> = ({
               <Text>Lỗi: {error.message}</Text>
             ) : detail ? (
               <View>
-                <Text className="font-semibold text-xl text-center">
+                <Text className="font-semibold text-xl text-center mb-4">
                   {detail.name}
                 </Text>
-
                 {/* Distance */}
                 <View className="w-fit self-center">
                   {distanceLoading ? (
@@ -170,36 +185,41 @@ const ParkingSpotDetailModal: React.FC<Props> = ({
               </Pressable>
 
               <Pressable
-                onPress={() => {
-                  if (detail && currentLocation) {
-                    getRoutes(
-                      [currentLocation.longitude, currentLocation.latitude],
-                      [detail.longitude, detail.latitude],
-                    )
-                      .then(routes => {
-                        if (routes && routes.length > 0) {
-                          const main = routes[0];
-                          if (main.instructions) {
-                            setInstructions(main.instructions);
-                          }
+                // onPress={() => {
+                //   if (detail && currentLocation) {
+                //     getRoutes(
+                //       [currentLocation.longitude, currentLocation.latitude],
+                //       [detail.longitude, detail.latitude],
+                //     )
+                //       .then(routes => {
+                //         if (routes && routes.length > 0) {
+                //           const main = routes[0];
+                //           if (main.instructions) {
+                //             setInstructions(main.instructions);
+                //           }
 
-                          if (onRouteFound) {
-                            const coords = routes.map((r: any) =>
-                              r.geometry.coordinates.map(
-                                ([lon, lat]: [number, number]) => ({
-                                  longitude: lon,
-                                  latitude: lat,
-                                }),
-                              ),
-                            );
-                            onRouteFound(coords);
-                          }
-                          // Hiện dropdown sau khi có route
-                          onSetShowDropdown?.(true);
-                        }
-                        onClose();
-                      })
-                      .catch(err => console.error('Route error:', err));
+                //           if (onRouteFound) {
+                //             const coords = routes.map((r: any) =>
+                //               r.geometry.coordinates.map(
+                //                 ([lon, lat]: [number, number]) => ({
+                //                   longitude: lon,
+                //                   latitude: lat,
+                //                 }),
+                //               ),
+                //             );
+                //             onRouteFound(coords);
+                //           }
+                //           // Hiện dropdown sau khi có route
+                //           onSetShowDropdown?.(true);
+                //         }
+                //         onClose();
+                //       })
+                //       .catch(err => console.error('Route error:', err));
+                //   }
+                // }}
+                onPress={() => {
+                  if (detail) {
+                    openGoogleMaps(detail.latitude, detail.longitude);
                   }
                 }}
                 className="bg-blue-500 active:bg-blue-600 flex-1 h-[40px] px-4 py-2 mt-4 rounded-xl self-center justify-center items-center"
