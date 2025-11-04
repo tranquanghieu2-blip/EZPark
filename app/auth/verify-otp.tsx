@@ -14,12 +14,12 @@ import GradientButton from "@/components/GradientButton";
 import { images } from "@/constants/images";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import usePost from "@/hooks/usePost";
-import { verifyOtp, verifyPasswordResetOtp } from "@/service/api";
+import { sendPasswordResetOtp, signUp, verifyOtp, verifyPasswordResetOtp } from "@/service/api";
 import ToastCustom from "@/utils/CustomToast";
 
 // định nghĩa kiểu param
 type RootStackParamList = {
-  "verify-otp": { email: string; flowType: "signup" | "forgot-password" };
+  "verify-otp": { email: string; password?: string, name?: string, flowType: "signup" | "forgot-password" };
   login: undefined;
   "reset-password": { email: string, code: string };
 };
@@ -29,23 +29,28 @@ type VerifyOtpRouteProp = RouteProp<RootStackParamList, "verify-otp">;
 export default function VerifyOTP() {
   const route = useRoute<VerifyOtpRouteProp>();
   const navigation = useNavigation<any>();
-  const { email, flowType } = route.params;
+  const { email, password, name, flowType } = route.params;
 
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
-  const [timer, setTimer] = useState(60);
+  // const [timer, setTimer] = useState(60);
+  const [timer, setTimer] = useState(180);
   const [showFailModal, setShowFailModal] = useState(false);
   const [isButtonEnabled, setIsButtonEnabled] = useState(false); // kiểm soát enable/disable nút
 
   const inputs = useRef<TextInput[]>([]);
-  const { loading, execute } = usePost(verifyOtp);
+  // const { loading: loadingVerifySignup, execute: executeVerifySignup } = usePost(verifyOtp);
+  // const { loading: loadingSignUp, execute: executeSignUp, error: errorSignUp } = usePost(signUp);
+  const [loadingVerify, setLoadingVerify] = useState(false);
+  const [loadingResend, setLoadingResend] = useState(false);
+
 
   // Log email nhận được
   useEffect(() => {
     console.log("Email nhận từ SignUp:", email);
   }, [email]);
 
-  // Bộ đếm 60s
+  // Bộ đếm ngược
   useEffect(() => {
     if (timer <= 0) return;
     const countdown = setInterval(() => {
@@ -63,6 +68,14 @@ export default function VerifyOTP() {
       setOtp(["", "", "", "", "", ""]);
     }
   }, [timer]);
+
+  // format mm:ss
+  const formatTime = (secs: number) => {
+    const minutes = Math.floor(secs / 60);
+    const remainingSeconds = secs % 60;
+    return `${String(minutes).padStart(2, "0")}:${String(remainingSeconds).padStart(2, "0")}`;
+  };
+
 
   // Cập nhật trạng thái enable/disable của nút xác thực
   useEffect(() => {
@@ -90,41 +103,62 @@ export default function VerifyOTP() {
     }
   };
 
-  // Gửi yêu cầu xác thực OTP
+  // Hàm xử lý xác thực OTP
   const handleVerify = async () => {
+    if (!isButtonEnabled || loadingVerify) return;
+
+    setLoadingVerify(true);
     const code = otp.join("");
 
-    if (!isButtonEnabled) return; // tránh bấm khi chưa hợp lệ
-
-    console.log("Xác thực OTP:", code, "cho email:", email);
     try {
+      let res;
       if (flowType === "forgot-password") {
-        const res = await verifyPasswordResetOtp(email, code);
-        if (!res.success) {
-          throw new Error(res.message || "Lỗi không xác định");
-        }
-        ToastCustom.success("Xác thực thành công", "OTP hợp lệ. Vui lòng đặt lại mật khẩu mới.");
-        navigation.navigate("reset-password", {email: res?.email, resetToken: res?.resetToken});
-        return;
-      }
-      else if (flowType === "signup") {
-        const res = await execute(email, code);
-        console.log("Xác thực thành công cho signup:", res);
-        ToastCustom.success("Xác thực thành công", "OTP hợp lệ. Bạn có thể đăng nhập ngay bây giờ.");
+        res = await verifyPasswordResetOtp(email, code);
+        if (!res?.success) throw new Error(res?.message);
+
+        ToastCustom.success("Xác thực thành công", "Vui lòng đặt lại mật khẩu mới.");
+        navigation.navigate("reset-password", {
+          email: res?.email,
+          resetToken: res?.resetToken,
+        });
+      } else {
+        res = await verifyOtp(email, code);
+        if (!res?.success) throw new Error(res?.message);
+
+        ToastCustom.success("Xác thực thành công", "Bạn có thể đăng nhập ngay bây giờ.");
         navigation.navigate("login");
       }
-    } catch (err) {
-      console.error("Xác thực OTP thất bại:", err);
-      ToastCustom.error("Xác thực thất bại", "Mã OTP không hợp lệ hoặc đã hết hạn. Vui lòng thử lại.");
+    } catch (err: any) {
+      console.error("Lỗi xác thực OTP:", err);
+      ToastCustom.error("Xác thực thất bại", err?.message || "OTP không hợp lệ hoặc đã hết hạn.");
+    } finally {
+      setLoadingVerify(false);
     }
   };
 
   // Gửi lại OTP
-  const resendOtp = () => {
-    console.log("Gửi lại OTP mới...");
-    setTimer(60);
+  const handleResendOtp = async () => {
+    if (timer > 0 || loadingResend) return;
+    setLoadingResend(true);
     setOtp(["", "", "", "", "", ""]);
 
+    try {
+      let res;
+      if (flowType === "signup") {
+        res = await signUp(email, password!, name!);
+      } else {
+        res = await sendPasswordResetOtp(email);
+      }
+
+      if (!res?.success) throw new Error(res?.message);
+      ToastCustom.success("OTP đã được gửi lại", "Vui lòng kiểm tra email của bạn.");
+      setTimer(180);
+    } catch (err: any) {
+      console.error("Lỗi gửi lại OTP:", err);
+      ToastCustom.error("Gửi lại thất bại", err?.message || "Không thể gửi OTP, thử lại sau.");
+    } finally {
+      setLoadingResend(false);
+    }
   };
 
   return (
@@ -170,7 +204,7 @@ export default function VerifyOTP() {
       {/* Bộ đếm OTP */}
       <Text className="text-center text-gray-500 mb-4">
         {timer > 0
-          ? `Mã OTP sẽ hết hạn sau ${timer}s`
+          ? `Mã OTP sẽ hết hạn sau ${formatTime(timer)}`
           : "OTP đã hết hạn. Vui lòng gửi lại mã mới."}
       </Text>
 
@@ -179,10 +213,10 @@ export default function VerifyOTP() {
         {isButtonEnabled && timer > 0 ? (
           <GradientButton
             onPress={handleVerify}
-            disabled={loading}
+            disabled={loadingVerify}
             className="py-3 px-5 rounded-lg items-center justify-center h-full"
           >
-            {loading ? (
+            {loadingVerify ? (
               <ActivityIndicator color="#fff" />
             ) : (
               <Text className="text-center text-white font-semibold text-lg">
@@ -205,14 +239,19 @@ export default function VerifyOTP() {
       {/* Gửi lại OTP */}
       <View className="flex-row justify-center mt-2">
         <Text className="text-gray-500">Bạn chưa nhận được OTP? </Text>
-        <Pressable disabled={timer > 0} onPress={resendOtp}>
-          <Text
-            className={`font-semibold ${timer > 0 ? "text-gray-400" : "text-orange-500"
-              }`}
-          >
-            Gửi lại OTP
-          </Text>
+        <Pressable disabled={timer > 0 || loadingResend} onPress={handleResendOtp}>
+          {loadingResend ? (
+            <ActivityIndicator size="small" color="#FB923C" />
+          ) : (
+            <Text
+              className={`font-semibold ${timer > 0 ? "text-gray-400" : "text-orange-500"
+                }`}
+            >
+              Gửi lại OTP
+            </Text>
+          )}
         </Pressable>
+
       </View>
 
       {/* Modal lỗi */}

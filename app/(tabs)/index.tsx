@@ -3,12 +3,14 @@ import { View, Text } from "react-native";
 import { createStackNavigator } from "@react-navigation/stack";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 import colors from "@/constants/colors";
+import ChatHeader from "@/components/ChatHeader";
 
 import ParkingSpot from "../indexTabs/parkingSpot1";
 import NoParkingRoute from "../indexTabs/noParkingRoute";
 import SearchParkingSpot from "../indexTabs/SearchParkingSpot";
 import ParkingSpotDetail from "../indexTabs/ParkingSpotDetail";
 import Rating from "../indexTabs/Rating";
+import ChatBot from "../indexTabs/ChatBot";
 
 const Stack = createStackNavigator();
 const TopTab = createMaterialTopTabNavigator();
@@ -54,7 +56,7 @@ function TabNavigator() {
             ),
           }}
         />
-      
+
       </TopTab.Navigator>
     </View>
   );
@@ -92,6 +94,13 @@ export default function Index() {
         options={{
           title: "Đánh giá của bạn",
           headerTitleAlign: "center",
+        }}
+      />
+      <Stack.Screen
+        name="ChatBot"
+        component={ChatBot}
+        options={{
+          header: () => <ChatHeader />,
         }}
       />
     </Stack.Navigator>
