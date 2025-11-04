@@ -189,11 +189,6 @@ const ChatBot: React.FC = () => {
   const [keyboardOffset, setKeyboardOffset] = useState(0);
   const insets = useSafeAreaInsets();
 
-  // Nếu chưa đăng nhập
-  if (!user) {
-    return <NoUserLogin />;
-  }
-
   // Gợi ý mặc định
   const suggestions = useMemo(
     () => [
@@ -263,6 +258,11 @@ const ChatBot: React.FC = () => {
     return "Cảm ơn bạn! Mình đã nhận được câu hỏi, đây là phản hồi mô phỏng.";
   }, []);
 
+  // Nếu chưa đăng nhập
+  if (!user) {
+    return <NoUserLogin />;
+  }
+
   const handleSend = useCallback(
     (text: string) => {
       const userMsg: Message = {
@@ -310,6 +310,7 @@ const ChatBot: React.FC = () => {
   );
 
   const flatData = useMemo(() => [...messages].reverse(), [messages]);
+
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['bottom']}>

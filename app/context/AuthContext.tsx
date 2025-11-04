@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getToken } from "@react-native-firebase/messaging";
+import ToastCustom from "@/utils/CustomToast";
 
 
 interface AuthContextType {
@@ -94,6 +95,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(null);
       setAccessToken(null);
       setRefreshToken(null);
+      ToastCustom.success('Đăng xuất thành công!', 'Bạn đã đăng xuất khỏi EZPark.');
     } catch (e) {
       console.error("Error clearing storage:", e);
     }

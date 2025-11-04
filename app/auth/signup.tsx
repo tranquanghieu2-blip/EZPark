@@ -19,6 +19,7 @@ import {
   View
 } from "react-native";
 import { InputRow } from "@/components/InputRow";
+import ToastCustom from "@/utils/CustomToast";
 
 export default function SignUp() {
   const navigation = useNavigation<any>();
@@ -39,6 +40,8 @@ export default function SignUp() {
   const passwordValid = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z\d]).{10,}$/.test(password);
   const confirmValid = confirm === password && confirm.length > 0;
 
+  const isFormInvalid = !emailValid || !nameValid || !passwordValid || !confirmValid;
+
   const handleSignUp = async () => {
     if (!emailValid) return alert("Email không hợp lệ");
     if (!nameValid) return alert("Tên không hợp lệ");
@@ -49,9 +52,10 @@ export default function SignUp() {
     try {
       const res = await execute(email, password, name);
       console.log("Đăng ký thành công:", res);
+      ToastCustom.success('Đăng ký thành công!', 'Vui lòng xác nhận OTP được gửi đến email của bạn.');
       navigation.navigate("verify-otp", { email, password, name, flowType: "signup" });
-    } catch (err) {
-      setShowFailModal(true);
+    } catch (err : any) {
+      ToastCustom.error('Đăng ký thất bại!', err.message || 'Vui lòng kiểm tra lại thông tin đăng ký.');
     }
 
   };
@@ -125,8 +129,10 @@ export default function SignUp() {
       <View className="h-[50px] mb-3 mt-5">
         <GradientButton
           onPress={handleSignUp}
-          disabled={loading}
-          className="py-3 px-5 rounded-lg items-center justify-center h-full"
+          disabled={loading || isFormInvalid}
+          className={`py-3 px-5 rounded-lg items-center justify-center h-full ${
+              isFormInvalid ? 'opacity-70' : 'opacity-100'
+            }`}
         >
           {loading ? (
             <ActivityIndicator color="#fff" />

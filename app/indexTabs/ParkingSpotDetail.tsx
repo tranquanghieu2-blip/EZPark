@@ -133,10 +133,11 @@ const ParkingSpotDetail = () => {
 
   const [isToggling, setIsToggling] = useState(false);
 
-  // Nếu chưa đăng nhập
+      // Nếu chưa đăng nhập
   if (!user) {
     return <NoUserLogin />;
   }
+
 
   // === Gọi API đánh giá của người dùng ===
   const fetchMyFeedback = useCallback(() => {

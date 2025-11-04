@@ -21,6 +21,7 @@ import {
 } from 'react-native';
 import { useEffect } from 'react';
 import { Linking } from 'react-native';
+import ToastCustom from '@/utils/CustomToast';
 
 export default function Login() {
   const navigation = useNavigation<any>();
@@ -66,6 +67,9 @@ export default function Login() {
     password,
   );
 
+  const isFormInvalid = !emailValid || !passwordValid;
+
+
   const handleLogin = async () => {
     if (!emailValid) return alert('Email không hợp lệ');
     if (!passwordValid) return alert('Mật khẩu phải >= 9 ký tự, có chữ và số');
@@ -76,11 +80,13 @@ export default function Login() {
 
       if (res?.user && res?.accessToken) {
         await saveAuth(res.user, res.accessToken, res.refreshToken);
+        navigation.navigate('(tabs)' as never);
+        ToastCustom.success('Đăng nhập thành công!', 'Bạn đã đăng nhập vào EZPark.');
       } else {
         throw new Error('Dữ liệu đăng nhập không hợp lệ');
       }
     } catch (err) {
-      setShowFailModal(true);
+      ToastCustom.error('Đăng nhập thất bại!', 'Vui lòng kiểm tra lại thông tin đăng nhập.');
     }
   };
 
@@ -141,8 +147,10 @@ export default function Login() {
         <View className="h-[50px] mb-3 mt-5">
           <GradientButton
             onPress={handleLogin}
-            disabled={loading}
-            className="py-3 px-5 rounded-lg items-center justify-center h-full"
+            disabled={isFormInvalid || loading}
+            className={`py-3 px-5 rounded-lg items-center justify-center h-full ${
+              isFormInvalid ? 'opacity-70' : 'opacity-100'
+            }`}
           >
             {loading ? (
               <ActivityIndicator color="#fff" />

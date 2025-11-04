@@ -100,6 +100,7 @@ const ParkingSpot = () => {
   const [selectedRouteId, setSelectedRouteId] = useState<number | null>(null);
   const [showDropdown, setShowDropdown] = useState(false);
   const [showInstructionModal, setShowInstructionModal] = useState(false);
+  // const { user } = useAuth();
 
   // lưu điểm đích và vị trí cuối cùng để tính lại route
   const [destination, setDestination] = useState<{
@@ -328,37 +329,37 @@ const ParkingSpot = () => {
     });
   }, [userLocation, destination]);
 
-  if (user) {
-    // Chỉ có API check single
-    useEffect(() => {
-      if (!parkingSpots?.length) return;
+  // Chỉ có API check single
+  useEffect(() => {
+    if (!user) return;
+    if (!parkingSpots?.length) return;
 
-      const checkAllFavorites = async () => {
-        try {
-          const favoritePromises = parkingSpots.map(spot =>
-            checkFavoriteParkingSpot(spot.parking_spot_id)
-              .then(result => ({ spotId: spot.parking_spot_id, isFavorite: result.isFavorite }))
-              .catch(() => ({ spotId: spot.parking_spot_id, isFavorite: false }))
-          );
+    const checkAllFavorites = async () => {
+      try {
+        const favoritePromises = parkingSpots.map(spot =>
+          checkFavoriteParkingSpot(spot.parking_spot_id)
+            .then(result => ({ spotId: spot.parking_spot_id, isFavorite: result.isFavorite }))
+            .catch(() => ({ spotId: spot.parking_spot_id, isFavorite: false }))
+        );
 
-          const favoriteResults = await Promise.all(favoritePromises);
+        const favoriteResults = await Promise.all(favoritePromises);
 
-          const favoriteSet = new Set<number>();
-          favoriteResults.forEach(result => {
-            if (result.isFavorite) {
-              favoriteSet.add(result.spotId);
-            }
-          });
+        const favoriteSet = new Set<number>();
+        favoriteResults.forEach(result => {
+          if (result.isFavorite) {
+            favoriteSet.add(result.spotId);
+          }
+        });
 
-          setFavoriteSpots(favoriteSet);
-        } catch (error) {
-          console.error('Error checking all favorites:', error);
-        }
-      };
+        setFavoriteSpots(favoriteSet);
+      } catch (error) {
+        console.error('Error checking all favorites:', error);
+      }
+    };
 
-      checkAllFavorites();
-    }, [parkingSpots]);
-  }
+    checkAllFavorites();
+  }, [parkingSpots]);
+
 
 
 

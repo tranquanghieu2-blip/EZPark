@@ -25,11 +25,22 @@ const Favourite = () => {
   const [favorites, setFavorites] = useState<any[]>([]);
   const [loading, setLoading] = useState(true); // lần đầu load
   const [refreshing, setRefreshing] = useState(false); // khi kéo để reload
+  // Load lại khi màn hình được focus
+  useFocusEffect(
+    useCallback(() => {
+      if (user) {
+        fetchFavorites();
+      }
+    }, [user])
+  );
+
 
   // Nếu chưa đăng nhập
   if (!user) {
     return <NoUserLogin />;
   }
+
+
 
   const typeLabel: Record<'parking hub' | 'on street parking', string> = {
     'parking hub': 'Bãi đỗ xe tập trung',
@@ -49,18 +60,14 @@ const Favourite = () => {
     }
   };
 
-  // Load lại khi màn hình được focus
-  useFocusEffect(
-    useCallback(() => {
-      fetchFavorites();
-    }, []),
-  );
 
   // Khi người dùng kéo để reload
   const onRefresh = () => {
     setRefreshing(true);
     fetchFavorites(false);
   };
+
+
 
   return (
     <SafeAreaView className="flex-1 bg-white px-4">
