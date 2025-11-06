@@ -818,10 +818,11 @@ const ParkingSpot = () => {
 
       {/* Modal cho Parking Spot Detail */}
       <ParkingSpotDetailModal
+        key={`${selectedId}-${showParkingDetail ? 'open' : 'closed'}`} // 👈 ép render lại khi mở lại modal
         visible={showParkingDetail}
         onClose={() => setShowParkingDetail(false)}
         loading={parkingSpotDetailLoad}
-        error={parkingSpotsErrorr}
+        error={parkingSpotsError}
         detail={parkingSpotDetail}
         showInstructionModal={showInstructionModal}
         showDropdown={showDropdown}

@@ -50,7 +50,7 @@ const ParkingSpotDetailModal: React.FC<Props> = ({
   onSetShowInstructionModal, // ← Destructure callbacks
   onSetShowDropdown,
 }) => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const [distance, setDistance] = useState<string | null>(null);
   const [distanceLoading, setDistanceLoading] = useState(false);
 
@@ -58,9 +58,6 @@ const ParkingSpotDetailModal: React.FC<Props> = ({
   const [instructions, setInstructions] = useState<
     { instruction: string; distance?: number; duration?: number }[]
   >([]);
-
-
-
 
   useEffect(() => {
     if (detail && currentLocation) {
@@ -160,7 +157,13 @@ const ParkingSpotDetailModal: React.FC<Props> = ({
                   </View>
                 </View>
 
-                <Pressable>
+                <Pressable
+                  onPress={() => {
+                    navigation.navigate('ParkingSpotDetail', {
+                      spotId: detail,
+                    });
+                  }}
+                >
                   <Text className="text-blue-500 underline mt-3 text-center">
                     Xem chi tiết
                   </Text>
