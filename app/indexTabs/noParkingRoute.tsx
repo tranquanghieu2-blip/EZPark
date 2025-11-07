@@ -1,5 +1,14 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Image, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Image,
+  StyleSheet,
+  Text,
+  View,
+  Pressable,
+  Modal,
+  Vibration,
+} from 'react-native';
 import MapboxGL from '@rnmapbox/maps';
 // ================= Components =================
 import CircleButton from '@/components/CircleButton';
@@ -62,6 +71,7 @@ const NoParkingRoute = () => {
     latitude: number;
     longitude: number;
   } | null>(null);
+
   // ================== REF ==================
   const mapRef = useRef<MapboxGL.MapView>(null);
   const cameraRef = useRef<MapboxGL.Camera>(null);
@@ -179,15 +189,19 @@ const NoParkingRoute = () => {
 
   // ================== USER LOCATION & CẢNH BÁO ==================
   const [showWarning, setShowWarning] = useState(false);
+  const [showBanner, setShowBanner] = useState(false);
+  const [showBadge, setShowBadge] = useState(false);
+  const [showModal, setShowModal] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const pulseAnim = useRef(new Animated.Value(1)).current;
 
-  // ⚡ Kết nối hook theo dõi tuyến cấm
+  // Kết nối hook theo dõi tuyến cấm
   useForbiddenRouteWatcher({
     userLocation: location,
     onEnterZone: route => {
       setRoutes(route);
-      console.log("Tên tuyến: ", route.street)
-      console.log('🚫 Vào tuyến cấm:', route.no_parking_route_id);
+      console.log('Tên tuyến: ', route.street);
+      console.log('Vào tuyến cấm:', route.no_parking_route_id);
       setShowWarning(true);
     },
     onExitZone: () => {
@@ -196,24 +210,56 @@ const NoParkingRoute = () => {
     },
   });
 
-  // Hiệu ứng fade mượt
+  // Khi vừa vào tuyến cấm → hiển thị banner
+  useEffect(() => {
+    if (!routes) {
+      setShowBanner(false);
+      setShowBadge(false);
+      setShowModal(false);
+      return;
+    }
+
+    // Khi có tuyến mới → hiện banner
+    Vibration.vibrate(300);
+    setShowBanner(true);
+    setShowBadge(false);
+
+    // Ẩn banner sau 5s → hiện badge
+    const timer = setTimeout(() => {
+      setShowBanner(false);
+      setShowBadge(true);
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [routes]);
+
+  // Hiệu ứng fade banner
   useEffect(() => {
     Animated.timing(fadeAnim, {
-      toValue: showWarning ? 1 : 0,
-      duration: 700,
+      toValue: showBanner ? 1 : 0,
+      duration: 600,
       useNativeDriver: true,
     }).start();
-  }, [showWarning]);
+  }, [showBanner]);
 
-  // Tạo hiệu ứng fade banner
+  // Hiệu ứng pulse badge
   useEffect(() => {
-    Animated.timing(fadeAnim, {
-      toValue: showWarning ? 1 : 0,
-      duration: 700,
-      useNativeDriver: true,
-    }).start();
-  }, [showWarning]);
-
+    if (!showBadge) return;
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1.2,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+      ]),
+    ).start();
+  }, [showBadge]);
   // ====== HÀM KIỂM TRA NGƯỜI DÙNG CÓ Ở GẦN TUYẾN CẤM KHÔNG ======
   function isNearForbiddenRoute(
     userLoc: { latitude: number; longitude: number },
@@ -306,16 +352,14 @@ const NoParkingRoute = () => {
         ref={mapRef}
         style={styles.map}
         styleURL={MapboxGL.StyleURL.Street}
-        // onMapIdle={(feature) => {
-        //   console.log("Map is idle", feature);
-        //   handleRegionChange(feature);
-        // }}
-        // onRegionDidChange={onRegionDidChange}
-        zoomEnabled
-        scrollEnabled
-        pitchEnabled
-        rotateEnabled
-        compassEnabled
+        onRegionDidChange={onRegionDidChange}
+        scaleBarEnabled={false}
+        attributionEnabled={false}
+        compassEnabled={false}
+        logoEnabled={false}
+        zoomEnabled={true}
+        scrollEnabled={true}
+        pitchEnabled={false}
       >
         {/* Camera */}
         <MapboxGL.Camera
@@ -403,21 +447,6 @@ const NoParkingRoute = () => {
             </MapboxGL.ShapeSource>
           );
         })}
-
-        {/* Marker đèn giao thông */}
-        {/* {signals?.map((s, i) => (
-          <MapboxGL.PointAnnotation
-            key={`signal-${s.id ?? i}`}
-            id={`signal-${s.id ?? i}`}
-            coordinate={[s.lon, s.lat]}
-          >
-            <Image
-              source={icons.trafficLights}
-              style={{ width: 30, height: 30 }}
-              resizeMode="contain"
-            />
-          </MapboxGL.PointAnnotation>
-        ))} */}
       </MapboxGL.MapView>
 
       {/* ================= LOADING + ERROR ================= */}
@@ -440,62 +469,123 @@ const NoParkingRoute = () => {
         route={selectedRoute}
         onClose={() => setSelectedRoute(null)}
       />
-      {/* ================== BANNER CẢNH BÁO TUYẾN CẤM ================== */}
-      {showWarning && (
+      {/* ===== Banner lớn ===== */}
+      {showBanner && (
         <Animated.View
           style={{
             position: 'absolute',
-            width: '80%',
-            height: 50,
             top: 75,
-            right: 10,
+            right: 15,
+            alignSelf: 'center',
+            width: '85%',
             backgroundColor: Colors.warning,
-            borderRadius: 6,
+            borderRadius: 8,
             flexDirection: 'row',
             alignItems: 'center',
-            shadowColor: '#000',
-            shadowOpacity: 0.3,
-            shadowOffset: { width: 0, height: 2 },
-            shadowRadius: 3,
+            padding: 10,
             opacity: fadeAnim,
-            zIndex: 50,
+            zIndex: 999,
+            shadowOpacity: 0.4,
+            shadowOffset: { width: 0, height: 2 },
+            shadowRadius: 4,
           }}
         >
           <Image
             source={icons.iconParkingSpot}
-            style={{
-              width: 24,
-              height: 24,
-              marginRight: 0,
-              marginLeft: 5,
-            }}
+            style={{ width: 24, height: 24, marginRight: 10 }}
             resizeMode="contain"
           />
           <View style={{ flex: 1 }}>
-            {/* ← Wrap text trong View flex */}
-            <Text
-              style={{
-                color: '#fff',
-                fontWeight: 'bold',
-                fontSize: 14,
-                flexWrap: 'wrap',
-              }}
-            >
-              Bạn đang đi vào tuyến đường cấm đỗ xe!
+            <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 14 }}>
+              🚫 Bạn đang đi vào tuyến đường cấm đỗ xe!
             </Text>
-            <Text
-              style={{
-                color: '#fff',
-                fontSize: 16,
-                marginTop: 2,
-                fontWeight: 'bold',
-              }}
-            >
+            <Text style={{ color: '#fff', fontSize: 16, fontWeight: 'bold' }}>
               {routes?.street}
             </Text>
           </View>
         </Animated.View>
       )}
+
+      {/* ===== Badge nhỏ ===== */}
+      {showBadge && (
+        <Animated.View
+          style={{
+            position: 'absolute',
+            top: 80,
+            right: 15,
+            backgroundColor: Colors.warning,
+            borderRadius: 24,
+            width: 46,
+            height: 46,
+            justifyContent: 'center',
+            alignItems: 'center',
+            transform: [{ scale: pulseAnim }],
+            zIndex: 999,
+            elevation: 5,
+          }}
+        >
+          <Pressable onPress={() => setShowModal(true)}>
+            <IconQuestion color="white" size={24} />
+          </Pressable>
+        </Animated.View>
+      )}
+
+      {/* ===== Modal chi tiết ===== */}
+      <Modal visible={showModal} transparent animationType="fade">
+        <View
+          style={{
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: '#0007',
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: 'white',
+              padding: 20,
+              borderRadius: 12,
+              width: '80%',
+            }}
+          >
+            <Text
+              style={{
+                fontWeight: 'bold',
+                fontSize: 18,
+                color: Colors.warning,
+              }}
+            >
+              🚫 Bạn đang di chuyển trên tuyến cấm đỗ
+            </Text>
+            <Text 
+            style={{ 
+              marginTop: 8, 
+              fontWeight: '600' 
+              }}>
+              {routes?.street}
+            </Text>
+            {/* <Text>Thời gian: {routes?.time_range}</Text> */}
+            <Pressable
+              style={{
+                backgroundColor: '#eee',
+                marginTop: 16,
+                padding: 10,
+                paddingHorizontal: 35,
+                borderRadius: 6,
+              }}
+              onPress={() => setShowModal(false)}
+            >
+              <Text style={{
+                textAlign: 'center',
+                fontWeight: '500',
+                fontSize: 16,
+              }}>
+                Đã hiểu
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
