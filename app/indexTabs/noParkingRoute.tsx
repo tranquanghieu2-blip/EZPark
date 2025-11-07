@@ -98,8 +98,9 @@ const NoParkingRoute = () => {
                 route.location_begin,
                 route.location_end,
               );
-              if (routeData?.geometry) {
-                const geometry = routeData.geometry;
+             
+              if (routeData[0]?.geometry) {
+                const geometry = routeData[0].geometry;
                 await updateNoParkingRouteGeometry(
                   route.no_parking_route_id,
                   geometry,
@@ -425,6 +426,8 @@ const NoParkingRoute = () => {
             lat,
           ]);
 
+          const isSelected =
+            selectedRoute?.no_parking_route_id === route.no_parking_route_id;
           return (
             <MapboxGL.ShapeSource
               key={`route-${route.no_parking_route_id}`}
@@ -440,8 +443,10 @@ const NoParkingRoute = () => {
                 id={`line-${route.no_parking_route_id}`}
                 style={{
                   lineColor: style.strokeColor,
-                  lineWidth: style.strokeWidth,
+                  
                   lineCap: 'round',
+                  lineWidth: isSelected ? 6 : 4, // Tăng độ dày
+                  lineOpacity: isSelected ? 0.9 : 0.8, //  Làm nổi bật hơn
                 }}
               />
             </MapboxGL.ShapeSource>

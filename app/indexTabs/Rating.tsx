@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import {
   View,
   Text,
@@ -77,6 +77,7 @@ const Rating = () => {
   const [loading, setLoading] = useState(false);
   const [loadingDelete, setLoadingDelete] = useState(false);
   const [isChanged, setIsChanged] = useState(false);
+  const [isDisableSend, setIsDisableSend] = useState(false);
 
   // Theo dõi thay đổi ratings hoặc comment
   React.useEffect(() => {
@@ -87,6 +88,11 @@ const Rating = () => {
       comment !== (myFeedback?.comment || "");
     setIsChanged(changed);
   }, [ratings, comment, myFeedback]);
+
+  useEffect(() => {
+     const hasAnyRating = Object.values(ratings).every((v) => v > 0);
+     setIsDisableSend(!hasAnyRating);
+  }, [ratings]);
 
   // ========================== API CALL ==========================
   // Dựng payload chung
@@ -334,9 +340,10 @@ const Rating = () => {
           </View>
         ) : (
           <GradientButton
-            className="mt-4 py-3 bg-blue-500 rounded-xl items-center justify-center h-[45px]"
-            onPress={() => setShowConfirmCreate(true)}
-            disabled={loading}
+            className={`mt-4 py-3 rounded-xl items-center justify-center h-[45px] ${isDisableSend ? "opacity-70" : "opacity-100"
+              }`}
+            onPress={() => !isDisableSend && setShowConfirmCreate(true)}
+            disabled={loading || isDisableSend}
           >
             <Text className="text-white font-semibold text-base">
               {loading ? (

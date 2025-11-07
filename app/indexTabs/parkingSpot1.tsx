@@ -63,21 +63,16 @@ import haversine from 'haversine-distance';
 import { debounce, map } from 'lodash';
 import { useAuth } from '../context/AuthContext';
 import { useParkingSpotDetail } from '@/hooks/useParkingSpotDetail';
+import { images } from '@/constants/images';
 
 // ================= Component =================
 const ParkingSpot = () => {
   const { user } = useAuth();
   const location = useSmartMapboxLocation(10);
-  // const location= {latitude: 16.0611987, longitude: 108.2191217}
-  // console.log("Location: ", location)
-  // const fcmToken = messaging().getToken();
-  // console.log('FCM Token:', fcmToken);
-  // const deviceId = DeviceInfo.getUniqueId();
-  // console.log('Device ID:', deviceId);
   console.log('Render Parking Spot');
   const shapeSourceRef = useRef<MapboxGL.ShapeSource>(null);
   const cameraRef = useRef<MapboxGL.Camera>(null);
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const mapRef = useRef<MapboxGL.MapView>(null);
   const [region, setRegion] = useState(daNangRegion);
   const [userLocation, setUserLocation] = useState<{
@@ -478,10 +473,13 @@ const ParkingSpot = () => {
         )}
 
         <CircleButton
-          icon={<IconRain size={20} color={Colors.blue_button} />}
+          icon={
+            <Image source={images.chatbot} style={{ width: 35, height: 25 }} />
+          }
           bgColor="#fff"
-          onPress={() => setShowReport(true)}
+          onPress={() => navigation.navigate('ChatBot')}
         />
+
         <CircleButton
           icon={<IconQuestion size={20} color={Colors.blue_button} />}
           bgColor="#fff"
@@ -936,16 +934,6 @@ const ParkingSpot = () => {
         }}
       />
 
-      {/* Modal cho Flood Report */}
-      <FloodReportModal
-        visible={showReport}
-        onClose={() => setShowReport(false)}
-        onSubmit={() => {
-          console.log('Đã gửi báo cáo');
-          setShowReport(false);
-        }}
-      />
-
       {/* Modal cho Route Confirmation */}
       {selectedRoute && (
         <ConfirmParkingRoutesModal
@@ -953,6 +941,7 @@ const ParkingSpot = () => {
           onClose={() => {
             setSelectedRoute(null);
             setShowRouteConfirm(false);
+            setSelectedRouteId(null);
           }}
         />
       )}

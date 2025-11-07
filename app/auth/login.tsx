@@ -22,6 +22,7 @@ import {
 import { useEffect } from 'react';
 import { Linking } from 'react-native';
 import ToastCustom from '@/utils/CustomToast';
+import { DISABLED_OPACITY } from '@/utils/ui';
 
 export default function Login() {
   const navigation = useNavigation<any>();
@@ -149,7 +150,7 @@ export default function Login() {
             onPress={handleLogin}
             disabled={isFormInvalid || loading}
             className={`py-3 px-5 rounded-lg items-center justify-center h-full ${
-              isFormInvalid ? 'opacity-70' : 'opacity-100'
+              isFormInvalid ? `opacity-${DISABLED_OPACITY}` : 'opacity-100'
             }`}
           >
             {loading ? (

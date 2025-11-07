@@ -10,7 +10,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import GradientWrapper from "@/components/GradientWrapper";
 import GradientButton from "@/components/GradientButton";
-import { IconStar } from "@/components/Icons";
+import { IconClose, IconStar } from "@/components/Icons";
 import Colors from "@/constants/colors";
 
 interface FilterModalProps {
@@ -44,32 +44,15 @@ const FilterModal: React.FC<FilterModalProps> = ({ visible, onClose, onConfirm }
         <View className="flex-1 bg-black/40 items-center justify-center">
           <TouchableWithoutFeedback>
             <SafeAreaView className="bg-white w-4/5 rounded-xl p-7">
+              <Pressable          
+                onPress={onClose}
+                
+                className="w-8 h-8 items-center justify-center rounded-full bg-gray-200 self-end"
+              >
+                <IconClose size={20} color="black" />
+              </Pressable>
               {/* Title */}
               <Text className="text-xl font-semibold text-center mb-4">Bộ lọc</Text>
-
-              {/* Criteria buttons */}
-              {/* <View className="flex-row justify-center mb-4">
-                {["Gần đây"].map((item) => {
-                  const selected = criteria.includes(item);
-                  return (
-                    <TouchableOpacity
-                      key={item}
-                      onPress={() => toggleCriteria(item)}
-                      className="mx-1 rounded-full overflow-hidden"
-                    >
-                      {selected ? (
-                        <GradientWrapper style="px-6 py-3 rounded-full">
-                          <Text className="text-white font-medium">{item}</Text>
-                        </GradientWrapper>
-                      ) : (
-                        <View className="px-6 py-3 rounded-full bg-gray-100">
-                          <Text className="text-black">{item}</Text>
-                        </View>
-                      )}
-                    </TouchableOpacity>
-                  );
-                })}
-              </View> */}
 
               {/** Average rating radio buttons */}
               <View className="mb-4">
