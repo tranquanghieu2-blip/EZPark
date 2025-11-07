@@ -89,7 +89,7 @@ const Favourite = () => {
               className="py-4 border-b border-gray-200"
               onPress={() => {
                 const spotId = item.parking_spot_id ?? item.id ?? item.spot_id;
-                mapEvents.emit(EVENT_OPEN_SPOT, spotId);
+                mapEvents.emit(EVENT_OPEN_SPOT, spotId);             
                 navigation.navigate('index');
               }}
             >

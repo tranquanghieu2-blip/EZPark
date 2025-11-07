@@ -3,6 +3,7 @@ import {
   IconParking,
   IconParkingSpotType,
   IconsMap,
+  IconStar,
 } from '@/components/Icons';
 import Colors from '@/constants/colors';
 import { getRoutes } from '@/service/routingService';
@@ -23,7 +24,7 @@ interface Props {
   onClose: () => void;
   loading: boolean;
   error: Error | null;
-  detail: ParkingSpotDetail | null;
+  detail: ParkingSpotDetailWithStats | null;
   showInstructionModal: boolean;
   showDropdown: boolean;
   currentLocation?: { latitude: number; longitude: number } | null;
@@ -118,7 +119,7 @@ const ParkingSpotDetailModal: React.FC<Props> = ({
               <Text>Lỗi: {error.message}</Text>
             ) : detail ? (
               <View>
-                <Text className="font-semibold text-xl text-center mb-4">
+                <Text className="font-semibold text-xl text-center mb-2">
                   {detail.name}
                 </Text>
                 {/* Distance */}
@@ -141,6 +142,21 @@ const ParkingSpotDetailModal: React.FC<Props> = ({
                   )}
                 </View>
 
+                <View className="flex-row items-center gap-1 justify-center mt-3">
+                  {detail.statistics ? (
+                    <>
+                      <Text className="text-sm font-medium text-gray-700">
+                        {detail.statistics.avgRating.toFixed(1)}
+                      </Text>
+                      {/* <RatingStars value={detail.statistics.avgRating} size={16} /> */}
+                      <IconStar size={16} color={Colors.star} />
+                      <Text className="text-sm text-gray-500">({detail.statistics.totalReviews})</Text>
+                    </>
+                  ) : (
+                    <ActivityIndicator size="small" />
+                  )}
+                </View>
+
                 {/* Info */}
                 <View className="mt-3 flex gap-2 w-4/5">
                   <View className="flex-row items-center gap-3">
@@ -160,7 +176,7 @@ const ParkingSpotDetailModal: React.FC<Props> = ({
                 <Pressable
                   onPress={() => {
                     navigation.navigate('ParkingSpotDetail', {
-                      spotId: detail,
+                      spot: detail, from: "ParkingSpotModal"
                     });
                   }}
                 >

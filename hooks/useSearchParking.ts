@@ -29,7 +29,7 @@ export const useSearchParking = () => {
     try {
       setLoading(true);
 
-      // 1️⃣ Gọi API tìm kiếm
+      // Gọi API tìm kiếm
       const data = await searchParkingSpot({
         nameParking: query,
         latitude: coords.latitude,
@@ -41,7 +41,7 @@ export const useSearchParking = () => {
         avgRating: selectedRating,
       });
 
-      // 2️⃣ Tính khoảng cách
+      // Tính khoảng cách
       const enriched = data.map((item: SearchParkingSpot) => ({
         ...item,
         distance: calculateDistance(
@@ -52,7 +52,7 @@ export const useSearchParking = () => {
         ),
       }));
 
-      // 3️⃣ Gọi thống kê feedback song song
+      // Gọi thống kê feedback song song
       const enrichedWithStats = await Promise.all(
         enriched.map(async (spot) => {
           try {
@@ -64,7 +64,7 @@ export const useSearchParking = () => {
         })
       );
 
-      // 4️⃣ Cập nhật state
+      // Cập nhật state
       if (reset) {
         setSpots(enrichedWithStats);
         setOffset(limit);
