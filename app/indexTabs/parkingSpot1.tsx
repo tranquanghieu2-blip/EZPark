@@ -34,9 +34,10 @@ import ParkingSpotDetailModal from '../../modals/ParkingSpotModal';
 import ConfirmParkingRoutesModal from '../../modals/ConfirmParkingRoutes';
 // ================= Custom hooks =================
 import { useScheduleTimeTriggers } from '@/hooks/useScheduleTimeTriggers';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import useFetch from '../../hooks/useFetch';
 import { useSmartMapboxLocation } from '@/hooks/usePeriodicMapboxLocation';
+
 
 // ================= Services =================
 import {
@@ -55,12 +56,13 @@ import messaging from '@react-native-firebase/messaging';
 
 import { Point } from 'geojson';
 import DeviceInfo from 'react-native-device-info';
-import { mapEvents, EVENT_OPEN_SPOT } from '@/utils/eventEmitter';
+import { mapEvents, EVENT_OPEN_SPOT, EVENT_FAVORITE_CHANGED, EVENT_USER_LOGOUT } from '@/utils/eventEmitter';
 
 import { getRoutes } from '@/service/routingService';
 import haversine from 'haversine-distance';
-import { debounce } from 'lodash';
+import { debounce, map } from 'lodash';
 import { useAuth } from '../context/AuthContext';
+import { useParkingSpotDetail } from '@/hooks/useParkingSpotDetail';
 
 // ================= Component =================
 const ParkingSpot = () => {
@@ -100,6 +102,7 @@ const ParkingSpot = () => {
   const [selectedRouteId, setSelectedRouteId] = useState<number | null>(null);
   const [showDropdown, setShowDropdown] = useState(false);
   const [showInstructionModal, setShowInstructionModal] = useState(false);
+  const [changedFavorites, setChangedFavorites] = useState<Set<number>>(new Set());
   // const { user } = useAuth();
 
   // lưu điểm đích và vị trí cuối cùng để tính lại route
@@ -114,6 +117,26 @@ const ParkingSpot = () => {
 
   const [isManualControl, setIsManualControl] = useState(false);
   const [favoriteSpots, setFavoriteSpots] = useState<Set<number>>(new Set());
+
+  useEffect(() => {
+    const handleUserLogout = () => {
+      console.log("User has logged out — resetting ParkingSpot state");
+
+      // Xoá các dữ liệu chỉ dành cho user
+      setFavoriteSpots(new Set());
+      setChangedFavorites(new Set());
+      setSelectedId(null);
+      setShowParkingDetail(false);
+
+    };
+
+    mapEvents.on(EVENT_USER_LOGOUT, handleUserLogout);
+
+    return () => {
+      mapEvents.off(EVENT_USER_LOGOUT, handleUserLogout);
+    };
+  }, [navigation]);
+
 
   useEffect(() => {
     const handleOpenSpot = (spotId: number) => {
@@ -238,18 +261,26 @@ const ParkingSpot = () => {
   } = useFetch<ParkingSpot[]>(fetchParkingSpots);
 
   // === Fetch parking spot detail ===
-  const fetchDetail = useCallback(() => {
-    if (selectedId == null) return Promise.reject(new Error('No selectedId'));
-    return fetchParkingSpotDetail(selectedId);
+  const {
+    spot: parkingSpotDetail,
+    loading: parkingSpotDetailLoad,
+    fetchParkingSpotDetailWithStats
+  } = useParkingSpotDetail();
+
+  // Hàm fetch chi tiết khi selectedId thay đổi
+  const fetchDetail = useCallback(async () => {
+    if (selectedId == null || userLocation == null) return;
+    await fetchParkingSpotDetailWithStats(selectedId, userLocation);
+  }, [selectedId, userLocation]);
+
+  // Tự động gọi khi selectedId thay đổi
+  useEffect(() => {
+    if (selectedId != null) {
+      fetchDetail();
+    }
   }, [selectedId]);
 
-  const {
-    data: parkingSpotDetail,
-    loading: parkingSpotDetailLoad,
-    error: parkingSpotsErrorr,
-  } = useFetch<ParkingSpotDetail>(selectedId ? fetchDetail : null, true, [
-    selectedId,
-  ]);
+
 
   // === Fetch no-parking routes ===
   const { data: noParkingRoutes } =
@@ -329,7 +360,21 @@ const ParkingSpot = () => {
     });
   }, [userLocation, destination]);
 
-  // Chỉ có API check single
+  // Check favorite spots 
+  useEffect(() => {
+    if (!user) return;
+
+    const handleFavoriteChange = (spotId: number) => {
+      setChangedFavorites(prev => new Set([...prev, spotId]));
+    };
+
+    mapEvents.on(EVENT_FAVORITE_CHANGED, handleFavoriteChange);
+    return () => {
+      mapEvents.off(EVENT_FAVORITE_CHANGED, handleFavoriteChange);
+    };
+  }, []);
+
+
   useEffect(() => {
     if (!user) return;
     if (!parkingSpots?.length) return;
@@ -358,9 +403,54 @@ const ParkingSpot = () => {
     };
 
     checkAllFavorites();
-  }, [parkingSpots]);
+  }, [parkingSpots, user]);
 
+  useFocusEffect(
+    useCallback(() => {
+      console.log("ParkingSpot screen focused");
+      // Fetch danh sách bãi đỗ
+      fetchParkingSpots();
+      // Fetch chi tiết bãi đỗ nếu có selectedId và userLocation
+      if (selectedId && userLocation) {
+        fetchParkingSpotDetailWithStats(selectedId, userLocation);
+      }
 
+      // Chỉ refresh các favorites bị thay đổi
+      if (user && changedFavorites.size > 0) {
+        const refreshChangedFavorites = async () => {
+          try {
+            const updates = await Promise.all(
+              Array.from(changedFavorites).map((spotId) =>
+                checkFavoriteParkingSpot(spotId)
+                  .then(result => ({ spotId, isFavorite: result.isFavorite }))
+                  .catch(() => ({ spotId, isFavorite: false }))
+              )
+            );
+
+            // Clone Set hiện tại
+            const updatedSet = new Set(favoriteSpots);
+
+            // Cập nhật từng spot bị thay đổi
+            updates.forEach(({ spotId, isFavorite }) => {
+              if (isFavorite) updatedSet.add(spotId);
+              else updatedSet.delete(spotId);
+            });
+
+            setFavoriteSpots(updatedSet);
+            setChangedFavorites(new Set());
+
+            console.log("Refreshed changed favorites:", updates.map(u => u.spotId));
+          } catch (err) {
+            console.error("Error refreshing changed favorites:", err);
+          }
+        };
+
+        refreshChangedFavorites();
+      }
+
+      // Không cần cleanup ở đây
+    }, [selectedId, userLocation, user, changedFavorites, favoriteSpots])
+  );
 
 
   return (
@@ -818,7 +908,7 @@ const ParkingSpot = () => {
 
       {/* Modal cho Parking Spot Detail */}
       <ParkingSpotDetailModal
-        key={`${selectedId}-${showParkingDetail ? 'open' : 'closed'}`} // 👈 ép render lại khi mở lại modal
+        key={`${selectedId}-${showParkingDetail ? 'open' : 'closed'}`} // ép render lại khi mở lại modal
         visible={showParkingDetail}
         onClose={() => setShowParkingDetail(false)}
         loading={parkingSpotDetailLoad}

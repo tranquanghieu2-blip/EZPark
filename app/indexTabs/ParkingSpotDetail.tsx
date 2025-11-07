@@ -37,12 +37,16 @@ import { FlatList } from 'react-native-gesture-handler';
 import GradientButton from '@/components/GradientButton';
 import ToastCustom from '@/utils/CustomToast';
 import NoUserLogin from '@/components/NoUserLogin';
+import { DEFAULT_TAB_BAR_STYLE } from '@/utils/tabBarStyle';
+import { EVENT_FAVORITE_CHANGED, mapEvents } from '@/utils/eventEmitter';
 
 // ================= Type định nghĩa =================
 type RootStackParamList = {
+  parkingSpot1: undefined;
   SearchParkingSpot: undefined;
-  ParkingSpotDetail: { spot: SearchParkingSpot };
+  ParkingSpotDetail: { spot: SearchParkingSpot | ParkingSpotDetailWithStats, from?: string };
 };
+
 
 type RatingsMap = { 1: number; 2: number; 3: number; 4: number; 5: number };
 
@@ -133,11 +137,18 @@ const ParkingSpotDetail = () => {
 
   const [isToggling, setIsToggling] = useState(false);
 
-      // Nếu chưa đăng nhập
-  if (!user) {
-    return <NoUserLogin />;
-  }
-
+  // Ẩn tab bar
+  useEffect(() => {
+    navigation.getParent()?.setOptions({ tabBarStyle: { display: "none" } });
+    return () => {
+      // Chỉ khôi phục tab bar nếu quay lại từ ParkingSpotModal
+      if (route.params?.from === "ParkingSpotModal") {
+        navigation
+          .getParent()
+          ?.setOptions({ tabBarStyle: DEFAULT_TAB_BAR_STYLE });
+      }
+    };
+  }, [navigation]);
 
   // === Gọi API đánh giá của người dùng ===
   const fetchMyFeedback = useCallback(() => {
@@ -159,7 +170,7 @@ const ParkingSpotDetail = () => {
   useEffect(() => {
     console.log('checkFavorite:', spot?.parking_spot_id, favoriteId);
 
-    if (!spot?.parking_spot_id) return;
+    if (!spot?.parking_spot_id || !user) return;
 
     const checkFavoriteStatus = async () => {
       setFavoriteLoading(true);
@@ -191,6 +202,7 @@ const ParkingSpotDetail = () => {
         setIsFavorite(true);
 
         const added = await addFavoriteParkingSpot(spot.parking_spot_id);
+        mapEvents.emit(EVENT_FAVORITE_CHANGED, spot.parking_spot_id);
         setFavoriteId(added.favorite_id);
         ToastCustom.success(
           'Đã thêm vào yêu thích',
@@ -203,6 +215,7 @@ const ParkingSpotDetail = () => {
           setFavoriteId(null);
 
           await removeFavoriteParkingSpot(favoriteId);
+          mapEvents.emit(EVENT_FAVORITE_CHANGED, spot.parking_spot_id);
           ToastCustom.info(
             'Đã bỏ yêu thích',
             `${spot.name} đã được gỡ khỏi danh sách`,
@@ -233,7 +246,7 @@ const ParkingSpotDetail = () => {
   console.log(feedbacks);
 
   useEffect(() => {
-    if (!spot?.parking_spot_id) return;
+    if (!spot?.parking_spot_id || !user) return;
 
     // Chỉ chạy khi myFeedback đã load xong
     if (myFeedbackLoading === false) {
@@ -255,17 +268,23 @@ const ParkingSpotDetail = () => {
   };
 
   // ==== Thống kê feedback ====
+  const fetchStatistics = useCallback(async () => {
+    if (!spot?.parking_spot_id) {
+      throw new Error('Thiếu parking_spot_id');
+    }
+    return getFeedbackStatistic(spot.parking_spot_id);
+  }, [spot?.parking_spot_id]);
+
+  // Luôn gọi useFetch với callback hợp lệ — không để null
   const {
     data: statistics,
     loading: statisticsLoading,
     error: statisticsError,
     refetch: refetchStatistics,
   } = useFetch<FeedbackStatistics>(
-    spot?.parking_spot_id
-      ? () => getFeedbackStatistic(spot.parking_spot_id)
-      : null,
-    true,
-    [spot?.parking_spot_id],
+    fetchStatistics,
+    !!spot?.parking_spot_id, // chỉ bật khi có ID
+    [spot?.parking_spot_id]
   );
 
   const MOCK_RATINGS: RatingsMap = {
@@ -281,6 +300,12 @@ const ParkingSpotDetail = () => {
 
   // ==== Tính toán trung bình mock data ====
   const totalReviews = Object.values(MOCK_RATINGS).reduce((s, v) => s + v, 0);
+
+  // Nếu chưa đăng nhập
+  if (!user) {
+    return <NoUserLogin />;
+  }
+
 
   return (
     <View className="flex-1 bg-white">

@@ -1,8 +1,7 @@
-// src/context/AuthContext.tsx
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { getToken } from "@react-native-firebase/messaging";
 import ToastCustom from "@/utils/CustomToast";
+import { EVENT_USER_LOGOUT, mapEvents } from "@/utils/eventEmitter";
 
 
 interface AuthContextType {
@@ -13,7 +12,7 @@ interface AuthContextType {
   login: (userData: User|null, token: string, refreshToken: string) => Promise<void>;
   logout: () => Promise<void>;
   updateAccessToken: (token: string) => Promise<void>;
-  updateUser: (updatedUser: User) => Promise<void>; // 👈 thêm dòng này
+  updateUser: (updatedUser: User) => Promise<void>; 
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -24,7 +23,7 @@ const AuthContext = createContext<AuthContextType>({
   login: async () => {},
   logout: async () => {},
   updateAccessToken: async () => {},
-  updateUser: async () => {}, // 👈 thêm dòng này
+  updateUser: async () => {}, 
 });
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
@@ -33,7 +32,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [refreshToken, setRefreshToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // 🔹 Load dữ liệu khi app khởi động
+  // Load dữ liệu khi app khởi động
   useEffect(() => {
     const loadAuth = async () => {
       try {
@@ -88,20 +87,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 };
 
 
-  // 🔹 Logout: Xóa toàn bộ dữ liệu
+  // Logout: Xóa toàn bộ dữ liệu
   const logout = async () => {
     try {
       await AsyncStorage.multiRemove(["user", "accessToken", "refreshToken"]);
       setUser(null);
       setAccessToken(null);
       setRefreshToken(null);
+      mapEvents.emit(EVENT_USER_LOGOUT);
       ToastCustom.success('Đăng xuất thành công!', 'Bạn đã đăng xuất khỏi EZPark.');
     } catch (e) {
       console.error("Error clearing storage:", e);
     }
   };
 
-  // 🔹 Khi refresh token thành công → cập nhật lại accessToken
+  // Khi refresh token thành công → cập nhật lại accessToken
   const updateAccessToken = async (token: string) => {
     try {
       await AsyncStorage.setItem("accessToken", token);
@@ -111,7 +111,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // 🔹 Cập nhật thông tin user
+  // Cập nhật thông tin user
   const updateUser = async (updatedUser: User) => {
     try {
       await AsyncStorage.setItem("user", JSON.stringify(updatedUser));

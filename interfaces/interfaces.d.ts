@@ -73,10 +73,10 @@ interface Feedback {
 interface FeedbackStatistics {
   totalReviews: number;
   avgRating: number;
-  avgFriendlinessRating: number;
-  avgSecurityRating: number;
-  avgSpaceRating: number;
-  ratingDistribution: {
+  avgFriendlinessRating?: number;
+  avgSecurityRating?: number;
+  avgSpaceRating?: number;
+  ratingDistribution?: {
     fiveStar: number;
     fourStar: number;
     threeStar: number;
@@ -86,7 +86,12 @@ interface FeedbackStatistics {
 }
 
 type SearchParkingSpotWithStats = SearchParkingSpot & {
-  statistics: FeedbackStatistic;
+  statistics: FeedbackStatistics;
+};
+
+type ParkingSpotDetailWithStats = ParkingSpotDetail & {
+  distance?: number;
+  statistics: FeedbackStatistics;
 };
 
 interface ListFeedback {
