@@ -39,7 +39,7 @@ export const IconClock = (props: any) => (
 );
 
 export const IconParking = (props: any) => (
-  <FontAwesome5 name="parking" iconStyle="solid" {...props} />
+  <FontAwesome5 name="th-large" iconStyle="solid" {...props} />
 );
 
 export const IconParkingSpotType = (props: any) => (
@@ -162,3 +162,10 @@ export const IconMicro = (props: any) => (
   <FontAwesome5 name="microphone" iconStyle="solid" {...props} />
 );
 
+export const IconCar = (props: any) => (
+  <FontAwesome5 name="car" iconStyle="solid" {...props} />
+);
+
+export const IconClose = (props: any) => (
+  <MaterialIcons name="close" iconStyle="solid" {...props} />
+);

@@ -1,0 +1,1 @@
+export const DISABLED_OPACITY = 70;

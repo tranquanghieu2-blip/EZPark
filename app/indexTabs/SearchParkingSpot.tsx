@@ -51,7 +51,7 @@ const SearchParkingSpot = () => {
   }, [navigation]);
 
   const [query, setQuery] = useState("");
-  const debouncedQuery = useDebounce(query, 500);
+  const debouncedQuery = useDebounce(query.trim(), 500);
   const [showModal, setShowModal] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
 
@@ -59,6 +59,7 @@ const SearchParkingSpot = () => {
 
   const [loadingMore, setLoadingMore] = useState(false);
   const [loadingReset, setLoadingReset] = useState(false);
+  const [isDisableFilter, setIsDisableFilter] = useState(false);
 
   const [filters, setFilters] = useState<{
     parkingType?: string;
@@ -83,6 +84,12 @@ const SearchParkingSpot = () => {
   // ===============================
   useEffect(() => {
     if (!location) return;
+    if (debouncedQuery === "") {
+      resetSearch();
+      setIsDisableFilter(true);
+      return;
+    }
+    setIsDisableFilter(false);
     fetchSpots(
       debouncedQuery,
       true, // reset = true
@@ -147,9 +154,8 @@ const SearchParkingSpot = () => {
         {/* Search + Filter */}
         <View className="flex-row w-full items-center gap-2">
           <View
-            className={`flex-1 rounded-lg h-[45px] ${
-              isFocused ? "border-2 border-red-500" : "border border-gray-300"
-            }`}
+            className={`flex-1 rounded-lg h-[45px] ${isFocused ? "border-2 border-red-500" : "border border-gray-300"
+              }`}
           >
             <TextInput
               className="px-3 bg-gray-100 text-base rounded-lg h-full"
@@ -161,11 +167,17 @@ const SearchParkingSpot = () => {
             />
           </View>
 
-          <TouchableOpacity onPress={() => setShowModal(true)} className="w-[45px] h-[45px] rounded-xl overflow-hidden">
+          <TouchableOpacity
+            onPress={() => !isDisableFilter && setShowModal(true)}
+            disabled={isDisableFilter}
+            className={`w-[45px] h-[45px] rounded-xl overflow-hidden ${isDisableFilter ? "opacity-60" : "opacity-100"
+              }`}
+          >
             <ImageBackground source={images.bottomNavItem} className="w-full h-full justify-center items-center">
               <IconFilter size={22} color="#fff" />
             </ImageBackground>
           </TouchableOpacity>
+
         </View>
 
         {/* Danh sách */}

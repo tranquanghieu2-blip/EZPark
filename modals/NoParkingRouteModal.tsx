@@ -126,33 +126,48 @@ const NoParkingRouteModal: React.FC<Props> = ({ route, onClose }) => {
 
                             {/* Thông tin chi tiết */}
                             <View className="mt-3 gap-2 w-4/5">
-                                <View className="flex-row items-center gap-3">
-                                    <IconSideParking size={24} color={Colors.blue_button} />
-                                    <Text>Bên cấm: {route ? typeSide[route.side] : ""}</Text>
+                                {/* Bên cấm */}
+                                <View className="flex-row items-start gap-2">
+                                    <View className="w-[30px] items-center">
+                                        <IconSideParking size={24} color={Colors.blue_button} />
+                                    </View>
+                                    <Text className="flex-1">Bên cấm: {route ? typeSide[route.side] : ""}</Text>
                                 </View>
 
-                                <View className="flex-row items-center gap-3">
-                                    <IconClock size={24} color={Colors.blue_button} />
-                                    <View className="flex-row items-center gap-1 w-[70%]">
-                                        <Text>Thời gian cấm:</Text>
-                                        <Text className="w-full">
-                                            {route.time_range
-                                                .map((r) => `${r.start.slice(0, 5)} - ${r.end.slice(0, 5)}`)
+                                {/* Thời gian cấm */}
+                                <View className="flex-row items-start gap-2">
+                                    <View className="w-[30px] items-center">
+                                        <IconClock size={24} color={Colors.blue_button} />
+                                    </View>
+                                    <View className="flex-1 flex-row flex-wrap">
+                                        <Text>Thời gian cấm: </Text>
+                                        <Text className="flex-shrink">
+                                            {route?.time_range
+                                                ?.map((r) => `${r.start.slice(0, 5)} - ${r.end.slice(0, 5)}`)
                                                 .join(", ")}
                                         </Text>
                                     </View>
                                 </View>
 
-                                <View className="flex-row items-center gap-3">
-                                    <IconCalendar size={24} color={Colors.blue_button} />
-                                    <Text>Ngày cấm: {formatDaysRestricted(route.days_restricted)}</Text>
+                                {/* Ngày cấm */}
+                                <View className="flex-row items-start gap-2">
+                                    <View className="w-[30px] items-center">
+                                        <IconCalendar size={24} color={Colors.blue_button} />
+                                    </View>
+                                    <Text className="flex-1">
+                                        Ngày cấm: {formatDaysRestricted(route.days_restricted)}
+                                    </Text>
                                 </View>
 
-                                <View className="flex-row items-center gap-3">
-                                    <IconNote size={24} color={Colors.blue_button} />
-                                    <Text>Mô tả: {route.description || "Không có"}</Text>
+                                {/* Mô tả */}
+                                <View className="flex-row items-start gap-2">
+                                    <View className="w-[30px] items-center">
+                                        <IconNote size={24} color={Colors.blue_button} />
+                                    </View>
+                                    <Text className="flex-1">Mô tả: {route.description || "Không có"}</Text>
                                 </View>
                             </View>
+
                         </View>
                     ) : null}
 
@@ -160,9 +175,9 @@ const NoParkingRouteModal: React.FC<Props> = ({ route, onClose }) => {
                     {/* Nút đóng */}
                     <Pressable
                         onPress={onClose}
-                        className="bg-blue-500 w-full h-[40px] mt-4 rounded-xl self-center justify-center items-center"
+                        className="bg-gray-300 w-full h-[40px] mt-4 rounded-xl self-center justify-center items-center"
                     >
-                        <Text className="text-white text-center font-semibold">Đóng</Text>
+                        <Text className="text-black text-center font-semibold">Đóng</Text>
                     </Pressable>
                 </View>
             </View>

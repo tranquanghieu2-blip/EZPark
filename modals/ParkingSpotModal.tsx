@@ -1,4 +1,5 @@
 import {
+  IconCar,
   IconFavorite,
   IconParking,
   IconParkingSpotType,
@@ -159,19 +160,31 @@ const ParkingSpotDetailModal: React.FC<Props> = ({
 
                 {/* Info */}
                 <View className="mt-3 flex gap-2 w-4/5">
-                  <View className="flex-row items-center gap-3">
-                    <IconsMap size={24} color={Colors.blue_button} />
-                    <Text>{detail.address}</Text>
+                  {/* Địa chỉ */}
+                  <View className="flex-row items-center gap-2">
+                    <View className="w-[30px] items-center">
+                      <IconsMap size={24} color={Colors.blue_button} />
+                    </View>
+                    <Text className="flex-1">{detail.address}</Text>
                   </View>
-                  <View className="flex-row items-center gap-3">
-                    <IconParking size={24} color={Colors.blue_button} />
-                    <Text>Tổng số chỗ: {detail.capacity}</Text>
+
+                  {/* Số chỗ */}
+                  <View className="flex-row items-center gap-2">
+                    <View className="w-[30px] items-center">
+                      <IconCar size={24} color={Colors.blue_button} />
+                    </View>
+                    <Text className="flex-1">Tổng số chỗ: {detail.capacity}</Text>
                   </View>
-                  <View className="flex-row items-center gap-3">
-                    <IconParkingSpotType size={24} color={Colors.blue_button} />
-                    <Text>Loại: {typeLabel[detail.type]}</Text>
+
+                  {/* Loại bãi đỗ */}
+                  <View className="flex-row items-center gap-2">
+                    <View className="w-[30px] items-center">
+                      <IconParkingSpotType size={24} color={Colors.blue_button} />
+                    </View>
+                    <Text className="flex-1">Loại: {typeLabel[detail.type]}</Text>
                   </View>
                 </View>
+
 
                 <Pressable
                   onPress={() => {
