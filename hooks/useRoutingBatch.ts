@@ -1,25 +1,25 @@
-import { useEffect, useState } from "react";
-import { getRoutes } from "@/service/routingService";
+// import { useEffect, useState } from "react";
+// import { getRoutes } from "@/service/routingService";
 
-export function useRoutingBatch(routes: NoParkingRoute[] | null) {
-  const [results, setResults] = useState<(any | null)[]>([]);
-  const [loading, setLoading] = useState(false);
+// export function useRoutingBatch(routes: NoParkingRoute[] | null) {
+//   const [results, setResults] = useState<(any | null)[]>([]);
+//   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (!routes || routes.length === 0) return;
+//   useEffect(() => {
+//     if (!routes || routes.length === 0) return;
 
-    setLoading(true);
+//     setLoading(true);
 
-    Promise.all(
-      routes.map((r) => {
-        const start: [number, number] = [r.location_begin[0], r.location_begin[1]];
-        const end: [number, number] = [r.location_end[0], r.location_end[1]];
-        return getRoutes(start, end);
-      })
-    )
-      .then(setResults)
-      .finally(() => setLoading(false));
-  }, [routes]);
+//     Promise.all(
+//       routes.map((r) => {
+//         const start: [number, number] = [r.location_begin[0], r.location_begin[1]];
+//         const end: [number, number] = [r.location_end[0], r.location_end[1]];
+//         return getRoutes(start, end);
+//       })
+//     )
+//       .then(setResults)
+//       .finally(() => setLoading(false));
+//   }, [routes]);
 
-  return { results, loading };
-}
+//   return { results, loading };
+// }
