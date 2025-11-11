@@ -39,6 +39,18 @@ interface ParkingSpotDetail {
   longitude: number;
 }
 
+interface PredictionForParkingSpot {
+  parking_spot_id: number;
+  name: string;
+  address: string;
+  predicted_for: string; // ISO date string
+  prediction: {
+    availability_percentage: string;
+    is_holiday: boolean;
+    calculated_at: string; // ISO date string
+  }
+}
+
 interface SearchParkingSpot {
   parking_spot_id: number;
   name: string;
@@ -93,6 +105,7 @@ type SearchParkingSpotWithStats = SearchParkingSpot & {
 type ParkingSpotDetailWithStats = ParkingSpotDetail & {
   distance: number | null;
   statistics: FeedbackStatistics;
+  predictionData?: PredictionForParkingSpot;
 };
 
 interface ListFeedback {

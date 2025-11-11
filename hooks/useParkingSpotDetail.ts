@@ -2,6 +2,7 @@ import { useState } from "react";
 import {
   getFeedbackStatistic,
   fetchParkingSpotDetail,
+  fetchPredictionForParkingSpot,
 } from "@/service/api";
 import { calculateDistance } from "@/utils/distance";
 
@@ -20,10 +21,10 @@ export const useParkingSpotDetail = () => {
       setLoading(true);
       setError(null);
 
-      // 1️⃣ Lấy chi tiết bãi xe
+      // Lấy chi tiết bãi xe
       const data = await fetchParkingSpotDetail(parking_spot_id);
 
-      // 2️⃣ Lấy thống kê feedback
+      // Lấy thống kê feedback
       let statistics;
       try {
         statistics = await getFeedbackStatistic(parking_spot_id);
@@ -31,7 +32,15 @@ export const useParkingSpotDetail = () => {
         statistics = { avgRating: 0, totalReviews: 0 };
       }
 
-      // 3️⃣ Tính khoảng cách (có async)
+      // Lấy dữ liệu dự đoán (nếu có)
+      let predictionData;
+      try {
+        predictionData = await fetchPredictionForParkingSpot(parking_spot_id, new Date());
+      } catch {
+        predictionData = undefined;
+      }
+
+      // Tính khoảng cách (có async)
       let distance: number | null = null;
       if (userLocation && data.latitude && data.longitude) {
         distance = await calculateDistance(
@@ -42,11 +51,12 @@ export const useParkingSpotDetail = () => {
         );
       }
 
-      // 4️⃣ Gộp dữ liệu
+      // Gộp dữ liệu
       const enrichedData: ParkingSpotDetailWithStats = {
         ...data,
         distance, // có thể là null nếu không tính được
         statistics,
+        predictionData,
       };
 
       setSpot(enrichedData);

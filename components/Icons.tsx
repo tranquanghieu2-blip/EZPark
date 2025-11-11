@@ -169,3 +169,7 @@ export const IconCar = (props: any) => (
 export const IconClose = (props: any) => (
   <MaterialIcons name="close" iconStyle="solid" {...props} />
 );
+
+export const IconPredict = (props: any) => (
+  <FontAwesome5 name="hourglass-half" iconStyle="solid" {...props} />
+);

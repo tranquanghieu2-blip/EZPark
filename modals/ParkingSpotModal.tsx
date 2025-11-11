@@ -3,6 +3,7 @@ import {
   IconFavorite,
   IconParking,
   IconParkingSpotType,
+  IconPredict,
   IconsMap,
   IconStar,
 } from '@/components/Icons';
@@ -142,6 +143,15 @@ const ParkingSpotDetailModal: React.FC<Props> = ({
                     </View>
                     <Text className="flex-1">Loại: {typeLabel[detail.type]}</Text>
                   </View>
+
+                  {detail.predictionData && (
+                    <View className="flex-row items-center gap-2">
+                      <View className="w-[30px] items-center">
+                        <IconPredict size={24} color={Colors.blue_button} />
+                      </View>
+                      <Text className="flex-1">Dự đoán còn {detail.predictionData.prediction.availability_percentage} chỗ trống</Text>
+                    </View>
+                  )}
                 </View>
 
 
