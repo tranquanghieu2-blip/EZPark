@@ -12,7 +12,7 @@ export const useParkingSpotDetail = () => {
 
   const fetchParkingSpotDetailWithStats = async (
     parking_spot_id: number,
-    userLocation?: { latitude: number; longitude: number } // <-- thêm ? để tùy chọn
+    userLocation?: { latitude: number; longitude: number } // <-- tùy chọn
   ) => {
     if (!parking_spot_id) return;
 
@@ -20,10 +20,10 @@ export const useParkingSpotDetail = () => {
       setLoading(true);
       setError(null);
 
-      // Gọi API lấy chi tiết bãi xe
+      // 1️⃣ Lấy chi tiết bãi xe
       const data = await fetchParkingSpotDetail(parking_spot_id);
 
-      // Gọi API thống kê feedback
+      // 2️⃣ Lấy thống kê feedback
       let statistics;
       try {
         statistics = await getFeedbackStatistic(parking_spot_id);
@@ -31,10 +31,10 @@ export const useParkingSpotDetail = () => {
         statistics = { avgRating: 0, totalReviews: 0 };
       }
 
-      // Tính khoảng cách nếu có tọa độ người dùng
-      let distance: number | undefined = undefined;
+      // 3️⃣ Tính khoảng cách (có async)
+      let distance: number | null = null;
       if (userLocation && data.latitude && data.longitude) {
-        distance = calculateDistance(
+        distance = await calculateDistance(
           userLocation.latitude,
           userLocation.longitude,
           data.latitude,
@@ -42,16 +42,14 @@ export const useParkingSpotDetail = () => {
         );
       }
 
-      // Kết hợp dữ liệu
+      // 4️⃣ Gộp dữ liệu
       const enrichedData: ParkingSpotDetailWithStats = {
         ...data,
-        distance,
+        distance, // có thể là null nếu không tính được
         statistics,
       };
 
-      // Cập nhật state
       setSpot(enrichedData);
-
     } catch (err: any) {
       console.error("Fetch parking spot detail error:", err);
       setError(err.message || "Failed to fetch parking spot detail");

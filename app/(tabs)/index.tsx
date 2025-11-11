@@ -25,7 +25,7 @@ const CustomTabLabel = ({ title, focused }: { title: string; focused: boolean })
 
 function TabNavigator() {
   return (
-    <View className="flex-1 bg-white pt-6">
+    <View className="flex-1 bg-white pt-2">
       <TopTab.Navigator
         screenOptions={{
           tabBarIndicatorStyle: { backgroundColor: colors.blue_button },

@@ -5,6 +5,7 @@ import {
   Image,
   ImageBackground,
   Keyboard,
+  Pressable,
   Text,
   TextInput,
   TouchableOpacity,
@@ -60,6 +61,7 @@ const SearchParkingSpot = () => {
   const [loadingMore, setLoadingMore] = useState(false);
   const [loadingReset, setLoadingReset] = useState(false);
   const [isDisableFilter, setIsDisableFilter] = useState(false);
+  const [isLocationReady, setIsLocationReady] = useState(false);
 
   const [filters, setFilters] = useState<{
     parkingType?: string;
@@ -83,10 +85,17 @@ const SearchParkingSpot = () => {
   // Fetch mỗi khi query / filters / location thay đổi
   // ===============================
   useEffect(() => {
-    if (!location) return;
-    if (debouncedQuery === "") {
-      resetSearch();
+    if (location) {
+      console.log("📍 Đã có location:", location);
+      setIsLocationReady(true);
+    }
+  }, [location]);
+
+  useEffect(() => {
+    console.log("Render useEffect SearchParkingSpot - fetchSpots");
+    if (!location || debouncedQuery === "") {
       setIsDisableFilter(true);
+      if (debouncedQuery === "") resetSearch();
       return;
     }
     setIsDisableFilter(false);
@@ -147,161 +156,167 @@ const SearchParkingSpot = () => {
       }
     }, [debouncedQuery, filters, location])
   );
+  if (!isLocationReady) {
+    return (
+      <View className="flex-1 justify-center items-center bg-white">
+        <ActivityIndicator size="large" />
+        <Text className="mt-2 text-gray-500">Đang lấy vị trí của bạn...</Text>
+      </View>
+    );
+  }
   // ===============================
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <SafeAreaView className="flex-1 bg-white px-4">
-        {/* Search + Filter */}
-        <View className="flex-row w-full items-center gap-2">
-          <View
-            className={`flex-1 rounded-lg h-[45px] ${isFocused ? "border-2 border-red-500" : "border border-gray-300"
-              }`}
-          >
-            <TextInput
-              className="px-3 bg-gray-100 text-base rounded-lg h-full"
-              placeholder="Nhập tên bãi đỗ hoặc địa chỉ..."
-              value={query}
-              onChangeText={setQuery}
-              onFocus={() => setIsFocused(true)}
-              onBlur={() => setIsFocused(false)}
-            />
-          </View>
-
-          <TouchableOpacity
-            onPress={() => !isDisableFilter && setShowModal(true)}
-            disabled={isDisableFilter}
-            className={`w-[45px] h-[45px] rounded-xl overflow-hidden ${isDisableFilter ? "opacity-60" : "opacity-100"
-              }`}
-          >
-            <ImageBackground source={images.bottomNavItem} className="w-full h-full justify-center items-center">
-              <IconFilter size={22} color="#fff" />
-            </ImageBackground>
-          </TouchableOpacity>
-
+    <View className="flex-1 bg-white px-4 pt-4">
+      {/* Search + Filter */}
+      <View className="flex-row w-full items-center gap-2">
+        <View
+          className={`flex-1 rounded-lg h-[45px] ${isFocused ? "border-2 border-red-500" : "border border-gray-300"
+            }`}
+        >
+          <TextInput
+            className="px-3 bg-gray-100 text-base rounded-lg h-full"
+            placeholder="Nhập tên bãi đỗ hoặc địa chỉ..."
+            value={query}
+            onChangeText={setQuery}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
+          />
         </View>
 
-        {/* Danh sách */}
-        {loading && spots.length === 0 ? (
-          <View className="flex-1 justify-center items-center mt-10">
-            <ActivityIndicator size="large" />
-          </View>
-        ) : (
-          <FlatList
-            className="mt-4"
-            data={spots}
-            keyExtractor={(item) => item.parking_spot_id.toString()}
-            contentContainerStyle={{ flexGrow: 1 }}
-            keyboardShouldPersistTaps="handled"
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                className="py-4 border-b border-gray-200"
-                onPress={() => navigation.navigate("ParkingSpotDetail", { spot: item })}
-              >
-                <View className="flex">
-                  <View className="mb-1">
-                    <Text className="text-lg font-bold text-gray-900">{item.name}</Text>
-                    <Text className="text-sm text-gray-600">{item.address}</Text>
+        <Pressable
+          onPress={() => !isDisableFilter && setShowModal(true)}
+          disabled={isDisableFilter}
+          className={`w-[45px] h-[45px] rounded-xl overflow-hidden ${isDisableFilter ? "opacity-60" : "opacity-100"
+            }`}
+        >
+          <ImageBackground source={images.bottomNavItem} className="w-full h-full justify-center items-center">
+            <IconFilter size={22} color="#fff" />
+          </ImageBackground>
+        </Pressable>
+
+      </View>
+
+      {/* Danh sách */}
+      {loading && spots.length === 0 ? (
+        <View className="flex-1 justify-center items-center mt-10">
+          <ActivityIndicator size="large" />
+        </View>
+      ) : (
+        <FlatList
+          className="mt-4"
+          data={spots}
+          keyExtractor={(item) => item.parking_spot_id.toString()}
+          contentContainerStyle={{ flexGrow: 1 }}
+          keyboardShouldPersistTaps="handled"
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              className="py-4 border-b border-gray-200 w-full"
+              onPress={() => navigation.navigate("ParkingSpotDetail", { spot: item })}
+            >
+              <View className="flex">
+                <View className="mb-1">
+                  <Text className="text-lg font-bold text-gray-900">{item.name}</Text>
+                  <Text className="text-sm text-gray-600">{item.address}</Text>
+                </View>
+
+                <View className="flex-row items-center mt-1 flex-wrap gap-2">
+                  <View className="flex-row items-center">
+                    <IconDistance size={20} color={Colors.blue_button} />
+                    <Text className="ml-1 text-sm text-gray-500">{item.distance?.toFixed(2)} km</Text>
                   </View>
 
-                  <View className="flex-row items-center mt-1">
-                    <View className="flex-row items-center">
-                      <IconDistance size={20} color={Colors.blue_button} />
-                      <Text className="ml-1 text-sm text-gray-500">{item.distance?.toFixed(2)} km</Text>
-                    </View>
+                  <View className="w-[2px] h-4 bg-gray-300 mx-2 rounded-full" />
 
-                    <View className="w-[2px] h-4 bg-gray-300 mx-4 rounded-full" />
+                  <View className="flex-row items-center gap-1">
+                    {item.statistics ? (
+                      <>
+                        <Text className="text-sm font-medium text-gray-700">
+                          {item.statistics.avgRating.toFixed(1)}
+                        </Text>
+                        <RatingStars value={item.statistics.avgRating} size={16} />
+                        <Text className="text-sm text-gray-500">({item.statistics.totalReviews})</Text>
+                      </>
+                    ) : (
+                      <ActivityIndicator size="small" />
+                    )}
+                  </View>
 
-                    <View className="flex-row items-center gap-1">
-                      {item.statistics ? (
-                        <>
-                          <Text className="text-sm font-medium text-gray-700">
-                            {item.statistics.avgRating.toFixed(1)}
-                          </Text>
-                          <RatingStars value={item.statistics.avgRating} size={16} />
-                          <Text className="text-sm text-gray-500">({item.statistics.totalReviews})</Text>
-                        </>
-                      ) : (
-                        <ActivityIndicator size="small" />
-                      )}
-                    </View>
+                  <View className="w-[2px] h-4 bg-gray-300 mx-2 rounded-full" />
 
-                    <View className="w-[2px] h-4 bg-gray-300 mx-4 rounded-full" />
-
-                    <View className="flex-row items-center">
-                      <IconParkingSpotType size={20} color={Colors.blue_button} />
-                      <Text className="ml-1 text-sm text-gray-500">
-                        {typeLabel[item.type as keyof typeof typeLabel] ?? "Không xác định"}
-                      </Text>
-                    </View>
+                  <View className="flex-row items-center">
+                    <IconParkingSpotType size={20} color={Colors.blue_button} />
+                    <Text className="ml-1 text-sm text-gray-500">
+                      {typeLabel[item.type as keyof typeof typeLabel] ?? "Không xác định"}
+                    </Text>
                   </View>
                 </View>
-              </TouchableOpacity>
-            )}
-            ListEmptyComponent={
-              <View className="flex-1 justify-center items-center mt-20">
-                <Image source={images.noData} style={{ width: 150, height: 150, resizeMode: "contain" }} />
-                <Text className="mt-3 text-lg text-gray-500 text-center">Không có dữ liệu</Text>
               </View>
-            }
-            ListHeaderComponent={
-              spots.length > 0 ? (
-                <View className="flex-row justify-between mb-2">
-                  <Text className="font-semibold text-xl text-gray-900">Danh sách bãi đỗ xe</Text>
-                  <Text className="text-sm text-gray-500 mt-1">{spots.length} bãi đỗ được tìm thấy</Text>
-                </View>
-              ) : null
-            }
-            ListFooterComponent={
-              spots.length > 0 ? (
-                <View className="mt-4 pb-6">
-                  {spots.length > 5 &&
-                    (loadingReset ? (
+            </TouchableOpacity>
+          )}
+          ListEmptyComponent={
+            <View className="flex-1 justify-center items-center mt-20">
+              <Image source={images.noData} style={{ width: 150, height: 150, resizeMode: "contain" }} />
+              <Text className="mt-3 text-lg text-gray-500 text-center">Không có dữ liệu</Text>
+            </View>
+          }
+          ListHeaderComponent={
+            spots.length > 0 ? (
+              <View className="flex-row justify-between mb-1 flex-wrap items-center gap-2">
+                <Text className="font-semibold text-xl text-gray-900">Danh sách bãi đỗ xe</Text>
+                <Text className="text-sm text-gray-500 mt-1">{spots.length} bãi đỗ được tìm thấy</Text>
+              </View>
+            ) : null
+          }
+          ListFooterComponent={
+            spots.length > 0 ? (
+              <View className="mt-4 pb-6">
+                {spots.length > 5 &&
+                  (loadingReset ? (
+                    <ActivityIndicator />
+                  ) : (
+                    <TouchableOpacity
+                      className="mb-3 bg-gray-200 rounded-lg h-[45px] justify-center items-center"
+                      onPress={handleReset}
+                      disabled={loadingReset}
+                    >
+                      <Text className="text-black font-medium">Rút gọn</Text>
+                    </TouchableOpacity>
+                  ))}
+
+                {hasMore && (
+                  <View className="h-[45px] justify-center">
+                    {loadingMore ? (
                       <ActivityIndicator />
                     ) : (
-                      <TouchableOpacity
-                        className="mb-3 bg-gray-200 rounded-lg h-[45px] justify-center items-center"
-                        onPress={handleReset}
-                        disabled={loadingReset}
+                      <GradientButton
+                        className="py-3 bg-blue-500 rounded-lg h-full items-center justify-center"
+                        onPress={handleLoadMore}
+                        disabled={loadingMore}
                       >
-                        <Text className="text-black font-medium">Rút gọn</Text>
-                      </TouchableOpacity>
-                    ))}
-
-                  {hasMore && (
-                    <View className="h-[45px] justify-center">
-                      {loadingMore ? (
-                        <ActivityIndicator />
-                      ) : (
-                        <GradientButton
-                          className="py-3 bg-blue-500 rounded-lg h-full items-center justify-center"
-                          onPress={handleLoadMore}
-                          disabled={loadingMore}
-                        >
-                          <Text className="text-white font-semibold">Hiện thêm</Text>
-                        </GradientButton>
-                      )}
-                    </View>
-                  )}
-                </View>
-              ) : null
-            }
-          />
-        )}
-
-        {/* Modal filter */}
-        <FilterModal
-          visible={showModal}
-          onClose={() => setShowModal(false)}
-          onConfirm={(selectedFilters) => {
-            setFilters({
-              parkingType: selectedFilters.parkingType || undefined,
-              selectedRating: selectedFilters.selectedRating ?? null,
-            });
-            setShowModal(false);
-          }}
+                        <Text className="text-white font-semibold">Hiện thêm</Text>
+                      </GradientButton>
+                    )}
+                  </View>
+                )}
+              </View>
+            ) : null
+          }
         />
-      </SafeAreaView>
-    </TouchableWithoutFeedback>
+      )}
+
+      {/* Modal filter */}
+      <FilterModal
+        visible={showModal}
+        onClose={() => setShowModal(false)}
+        onConfirm={(selectedFilters) => {
+          setFilters({
+            parkingType: selectedFilters.parkingType || undefined,
+            selectedRating: selectedFilters.selectedRating ?? null,
+          });
+          setShowModal(false);
+        }}
+      />
+    </View>
   );
 };
 

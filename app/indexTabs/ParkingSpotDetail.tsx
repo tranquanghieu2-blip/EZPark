@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Image,
   ActivityIndicator,
+  Linking,
 } from 'react-native';
 import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -18,6 +19,8 @@ import {
   IconParkingSpotType,
   IconFavorite,
   IconNoFavorite,
+  IconParking,
+  IconCar,
 } from '@/components/Icons';
 import Colors from '@/constants/colors';
 import { images } from '@/constants/images';
@@ -136,6 +139,12 @@ const ParkingSpotDetail = () => {
   const [favoriteLoading, setFavoriteLoading] = useState(false);
 
   const [isToggling, setIsToggling] = useState(false);
+  const openGoogleMaps = (latitude: number, longitude: number) => {
+    const url = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`;
+    Linking.openURL(url).catch(err =>
+      console.error('Không thể mở Google Maps:', err),
+    );
+  };
 
   // Ẩn tab bar
   useEffect(() => {
@@ -344,7 +353,7 @@ const ParkingSpotDetail = () => {
 
           <Text className="text-base text-gray-600">{spot.address}</Text>
 
-          <View className="flex-row items-center mt-1 flex-wrap">
+          <View className="flex-row items-center mt-1 flex-wrap gap-2">
             {/* Khoảng cách */}
             <View className="flex-row items-center">
               <IconDistance size={20} color={Colors.blue_button} />
@@ -353,7 +362,7 @@ const ParkingSpotDetail = () => {
               </Text>
             </View>
 
-            <View className="w-[2px] h-4 bg-gray-300 mx-4 rounded-full" />
+            <View className="w-[2px] h-4 bg-gray-300 mx-2 rounded-full" />
 
             {/* Đánh giá sao */}
             <View className="flex-row items-center gap-1">
@@ -369,7 +378,7 @@ const ParkingSpotDetail = () => {
               </Text>
             </View>
 
-            <View className="w-[2px] h-4 bg-gray-300 mx-4 rounded-full" />
+            <View className="w-[2px] h-4 bg-gray-300 mx-2 rounded-full" />
 
             {/* Loại bãi */}
             <View className="flex-row items-center">
@@ -378,10 +387,25 @@ const ParkingSpotDetail = () => {
                 {typeLabel[spot.type]}
               </Text>
             </View>
+
+            <View className="w-[2px] h-4 bg-gray-300 mx-2 rounded-full" />
+
+            {/* Tổng số chỗ */}
+            <View className="flex-row items-center">
+              <IconCar size={20} color={Colors.blue_button} />
+              <Text className="ml-1 text-sm text-gray-500">
+                Tổng số chỗ: {spot.capacity}
+              </Text>
+            </View>
           </View>
 
           {/* Nút chỉ đường */}
-          <Pressable className="bg-blue-500 active:bg-blue-600 px-4 py-3 rounded-xl items-center justify-center mt-4">
+          <Pressable className="bg-blue-600 active:bg-blue-700 px-4 py-3 rounded-xl items-center justify-center mt-4"
+            onPress={() => {
+              if (spot.latitude && spot.longitude) {
+                openGoogleMaps(spot.latitude, spot.longitude);
+              }
+            }}>
             <Text className="text-white font-semibold text-base">
               Chỉ đường
             </Text>

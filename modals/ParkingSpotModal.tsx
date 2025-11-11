@@ -54,38 +54,6 @@ const ParkingSpotDetailModal: React.FC<Props> = ({
 }) => {
   const navigation = useNavigation<any>();
   const [distance, setDistance] = useState<string | null>(null);
-  const [distanceLoading, setDistanceLoading] = useState(false);
-
-  // Modal chỉ dẫn turn-by-turn
-  const [instructions, setInstructions] = useState<
-    { instruction: string; distance?: number; duration?: number }[]
-  >([]);
-
-  useEffect(() => {
-    if (detail && currentLocation) {
-      setDistanceLoading(true);
-      setDistance(null);
-      getRoutes(
-        [currentLocation.longitude, currentLocation.latitude],
-        [detail.longitude, detail.latitude],
-      )
-        .then(routes => {
-          if (routes && routes.length > 0) {
-            const mainRoute = routes[0];
-            const distanceKm = (mainRoute.distance / 1000).toFixed(2);
-            setDistance(`${distanceKm} km`);
-          }
-        })
-        .catch(err => {
-          console.error('Route error:', err);
-          setDistance(null);
-        })
-        .finally(() => setDistanceLoading(false));
-    } else {
-      setDistance(null);
-      setDistanceLoading(false);
-    }
-  }, [detail, currentLocation]);
 
   const formatMeters = (m?: number) => {
     if (!m) return '';
@@ -125,22 +93,13 @@ const ParkingSpotDetailModal: React.FC<Props> = ({
                 </Text>
                 {/* Distance */}
                 <View className="w-fit self-center">
-                  {distanceLoading ? (
-                    <View className="bg-gray-200 px-4 py-1 rounded-full mt-2 flex-row items-center justify-center min-w-[80px]">
-                      <ActivityIndicator
-                        size="small"
-                        color={Colors.blue_button}
-                      />
-                    </View>
-                  ) : distance ? (
-                    <Text className="text-base text-center bg-gray-200 w-fit px-4 py-1 rounded-full mt-2">
-                      {distance}
-                    </Text>
-                  ) : (
-                    <Text className="text-base text-center bg-gray-200 w-fit px-4 py-1 rounded-full mt-2 text-gray-500">
-                      Không xác định
-                    </Text>
-                  )}
+
+                  <Text className="text-base text-center bg-gray-200 w-fit px-4 py-1 rounded-full mt-2">
+                    {detail.distance !== null
+                      ? `${detail.distance} km`
+                      : 'Khoảng cách không xác định'}
+                  </Text>
+
                 </View>
 
                 <View className="flex-row items-center gap-1 justify-center mt-3">
@@ -159,7 +118,7 @@ const ParkingSpotDetailModal: React.FC<Props> = ({
                 </View>
 
                 {/* Info */}
-                <View className="mt-3 flex gap-2 w-4/5">
+                <View className="mt-3 flex gap-2">
                   {/* Địa chỉ */}
                   <View className="flex-row items-center gap-2">
                     <View className="w-[30px] items-center">
@@ -188,12 +147,13 @@ const ParkingSpotDetailModal: React.FC<Props> = ({
 
                 <Pressable
                   onPress={() => {
+                    onClose();
                     navigation.navigate('ParkingSpotDetail', {
                       spot: detail, from: "ParkingSpotModal"
                     });
                   }}
                 >
-                  <Text className="text-blue-500 underline mt-3 text-center">
+                  <Text className="text-blue-600 underline mt-3 text-center">
                     Xem chi tiết
                   </Text>
                 </Pressable>
@@ -254,7 +214,7 @@ const ParkingSpotDetailModal: React.FC<Props> = ({
                     openGoogleMaps(detail.latitude, detail.longitude);
                   }
                 }}
-                className="bg-blue-500 active:bg-blue-600 flex-1 h-[40px] px-4 py-2 mt-4 rounded-xl self-center justify-center items-center"
+                className="bg-blue-600 active:bg-blue-700 flex-1 h-[40px] px-4 py-2 mt-4 rounded-xl self-center justify-center items-center"
               >
                 <Text className="text-white text-center font-semibold">
                   Chỉ đường
@@ -292,35 +252,7 @@ const ParkingSpotDetailModal: React.FC<Props> = ({
         </View>
       )}
 
-      {/* Modal chỉ dẫn nhỏ ở góc trái */}
-      {showInstructionModal && (
-        <View className="absolute top-[160px] left-3 w-[250px] max-h-[300px] bg-white rounded-xl shadow-lg p-3 border border-gray-200 z-50">
-          <ScrollView showsVerticalScrollIndicator={false}>
-            {instructions.length > 0 ? (
-              instructions.map((step, i) => (
-                <View key={i} className="mb-2">
-                  <Text className="font-medium text-gray-800">
-                    {i + 1}. {step.instruction}
-                  </Text>
-                  <Text className="text-xs text-gray-500 ">
-                    {formatMeters(step.distance)} -{' '}
-                    {formatDuration(step.duration)}
-                  </Text>
-                </View>
-              ))
-            ) : (
-              <Text className="text-gray-500">Không có chỉ dẫn.</Text>
-            )}
-          </ScrollView>
 
-          <Pressable
-            onPress={() => onSetShowInstructionModal?.(false)}
-            className="mt-3 bg-blue-500 py-1.5 rounded-lg active:bg-blue-600"
-          >
-            <Text className="text-white text-center font-semibold">Đóng</Text>
-          </Pressable>
-        </View>
-      )}
     </>
   );
 };
