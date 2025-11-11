@@ -190,7 +190,7 @@ const ChatBot: React.FC = () => {
   const insets = useSafeAreaInsets();
   const inputRef = useRef<View>(null);
 
-    // Log vị trí & chiều cao bàn phím
+  // Log vị trí & chiều cao bàn phím
   useEffect(() => {
     const showSub = Keyboard.addListener("keyboardDidShow", (e) => {
       inputRef.current?.measure((fx, fy, width, height, px, py) => {
@@ -283,11 +283,6 @@ const ChatBot: React.FC = () => {
     return "Cảm ơn bạn! Mình đã nhận được câu hỏi, đây là phản hồi mô phỏng.";
   }, []);
 
-  // Nếu chưa đăng nhập
-  if (!user) {
-    return <NoUserLogin />;
-  }
-
   const handleSend = useCallback(
     (text: string) => {
       const userMsg: Message = {
@@ -336,6 +331,10 @@ const ChatBot: React.FC = () => {
 
   const flatData = useMemo(() => [...messages].reverse(), [messages]);
 
+  // Nếu chưa đăng nhập
+  if (!user) {
+    return <NoUserLogin />;
+  }
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['bottom']}>
