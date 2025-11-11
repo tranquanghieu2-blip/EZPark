@@ -10,6 +10,7 @@ import { DEFAULT_TAB_BAR_STYLE } from "@/utils/tabBarStyle";
 import Index from "./index";
 import Favourite from "./favourite";
 import ProfileStack from "./profilePages/profileStack";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -41,51 +42,54 @@ const TabIcon = ({ focused, icon: Icon, title }: any) => {
 
 const _Layout = () => {
   return (
-    <Tab.Navigator
-      screenOptions={
-        {
-          headerShown: false, // 👈 thêm dòng này để ẩn chữ "index"
-          tabBarShowLabel: false,
-          animation: "shift",
-          tabBarItemStyle: {
-            display: "flex",
-            width: "100%",
-            height: "100%",
-            justifyContent: "center",
-            alignItems: "center",
-          },
-          tabBarStyle: DEFAULT_TAB_BAR_STYLE
+    <SafeAreaView className="flex-1" edges={["bottom"]}>
+      <Tab.Navigator
+        screenOptions={
+          {
+            headerShown: false,
+            tabBarShowLabel: false,
+            animation: "shift",
+            tabBarItemStyle: {
+              display: "flex",
+              width: "100%",
+              height: "100%",
+              justifyContent: "center",
+              alignItems: "center",
+            },
+            tabBarStyle: DEFAULT_TAB_BAR_STYLE
+          }
         }
-      }
-    >
-      <Tab.Screen
-        name="index"
-        component={Index}
-        options={{
-          tabBarIcon: ({ focused }) => (
-            <TabIcon focused={focused} icon={IconsMap} title="Bản đồ" />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="favourite"
-        component={Favourite}
-        options={{
-          tabBarIcon: ({ focused }) => (
-            <TabIcon focused={focused} icon={IconsHeart} title="Yêu thích" />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="profile"
-        component={ProfileStack}
-        options={{
-          tabBarIcon: ({ focused }) => (
-            <TabIcon focused={focused} icon={IconsPerson} title="Tài khoản" />
-          ),
-        }}
-      />
-    </Tab.Navigator>
+      >
+        <Tab.Screen
+          name="index"
+          component={Index}
+          options={{
+            tabBarIcon: ({ focused }) => (
+              <TabIcon focused={focused} icon={IconsMap} title="Bản đồ" />
+            ),
+          }}
+        />
+        <Tab.Screen
+          name="favourite"
+          component={Favourite}
+          options={{
+            tabBarIcon: ({ focused }) => (
+              <TabIcon focused={focused} icon={IconsHeart} title="Yêu thích" />
+            ),
+          }}
+        />
+        <Tab.Screen
+          name="profile"
+          component={ProfileStack}
+          options={{
+            tabBarIcon: ({ focused }) => (
+              <TabIcon focused={focused} icon={IconsPerson} title="Tài khoản" />
+            ),
+          }}
+        />
+      </Tab.Navigator>
+    </SafeAreaView>
+    
   );
 };
 
