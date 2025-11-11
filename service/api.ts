@@ -511,3 +511,30 @@ export const resetPassword = async (
     throw error;
   }
 };
+
+export const fetchPredictionForParkingSpot = async (
+  parking_spot_id: number,
+  day_predict: Date
+): Promise<PredictionForParkingSpot> => {
+  try {
+    console.log('Fetching prediction for parking spot ID:', parking_spot_id, 'for day:', day_predict);
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}/predictions/parking-spot?parking_spot_id=${parking_spot_id}&day_predict=${day_predict}`,
+      {
+        method: 'GET',
+        headers: API_CONFIG.headers,
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error(
+        `Error fetching parking spot prediction: ${response.statusText}`,
+      );
+    }
+    const data = await response.json();
+    return data.data;
+  } catch (error: any) {
+    console.error('Fetch error:', error.message || error);
+    throw error;
+  }
+};
