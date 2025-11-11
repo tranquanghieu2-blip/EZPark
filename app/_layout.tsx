@@ -15,16 +15,37 @@ import messaging from '@react-native-firebase/messaging';
 import '../global.css';
 import { Toast } from 'toastify-react-native';
 import { ToastCustomView } from '@/components/ToastCustomView';
+import { EVENT_USER_LOGOUT, mapEvents, EVENT_USER_LOGIN } from '@/utils/eventEmitter';
+import { useNavigation } from '@react-navigation/native';
 
 const Stack = createNativeStackNavigator();
 
 function AppNavigator() {
   const { user, loading, updateAccessToken } = useAuth();
+  const navigation = useNavigation<any>();
 
   // Đăng ký callback cập nhật accessToken từ apiClient
   useEffect(() => {
     setAccessTokenUpdater(updateAccessToken);
   }, [updateAccessToken]);
+
+  // Lắng nghe sự kiện đăng nhập để chuyển hướng
+    useEffect(() => {
+    const handler = () => {
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "(tabs)" }],
+      });
+    };
+
+    mapEvents.addListener(EVENT_USER_LOGIN, handler);
+
+    return () => {
+      mapEvents.removeListener(EVENT_USER_LOGIN, handler);
+    };
+  }, [navigation]);
+
+
 
   if (loading) {
     return (
@@ -41,14 +62,8 @@ function AppNavigator() {
         gestureEnabled: false, // Tắt vuốt ngang
       }}
     >
-      {/* {user ? ( */}
-        {/* // 🔹 Nếu đã đăng nhập -> vào màn hình chính */}
-        <Stack.Screen name="(tabs)" component={_Layout} />
-        <Stack.Screen name="auth" component={AuthLayout} />
-       {/* ) : ( */}
-        {/* // 🔹 Nếu chưa đăng nhập -> vào auth layout */}
-        {/* <Stack.Screen name="auth" component={AuthLayout} /> */}
-      {/* )} */}
+      <Stack.Screen name="(tabs)" component={_Layout} />
+      <Stack.Screen name="auth" component={AuthLayout} />
     </Stack.Navigator>
   );
 }
@@ -86,13 +101,13 @@ export default function RootLayout() {
 
       {/* ToastManager toàn cục */}
       <ToastManager config={{
-          success: (props: any) => <ToastCustomView {...props} />,
-          error: (props: any) => <ToastCustomView {...props} />,
-          warning: (props: any) => <ToastCustomView {...props} />,
-          info: (props: any) => <ToastCustomView {...props} />,
-        }} />
+        success: (props: any) => <ToastCustomView {...props} />,
+        error: (props: any) => <ToastCustomView {...props} />,
+        warning: (props: any) => <ToastCustomView {...props} />,
+        info: (props: any) => <ToastCustomView {...props} />,
+      }} />
 
-      
+
     </AuthProvider>
   );
 }

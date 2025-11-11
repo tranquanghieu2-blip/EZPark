@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import ToastCustom from "@/utils/CustomToast";
-import { EVENT_USER_LOGOUT, mapEvents } from "@/utils/eventEmitter";
+import { EVENT_USER_LOGIN, EVENT_USER_LOGOUT, mapEvents } from "@/utils/eventEmitter";
 
 
 interface AuthContextType {
@@ -52,22 +52,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     loadAuth();
   }, []);
 
-  // 🔹 Login: Lưu thông tin người dùng + token
-  // const login = async (userData: User, token: string, refresh: string) => {
-  //   // console.log("token:",token)
-  //   try {
-  //     await AsyncStorage.multiSet([
-  //       ["user", JSON.stringify(userData)],
-  //       ["accessToken", token],
-  //       ["refreshToken", refresh],
-  //     ]);
-  //     setUser(userData);
-  //     setAccessToken(token);
-  //     setRefreshToken(refresh);
-  //   } catch (e) {
-  //     console.error("Error saving user:", e);
-  //   }
-  // };
   const login = async (userData: User | null, token: string, refresh: string) => {
   try {
     if (userData) {
@@ -81,6 +65,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     ]);
     setAccessToken(token);
     setRefreshToken(refresh);
+    mapEvents.emit(EVENT_USER_LOGIN);
   } catch (e) {
     console.error("Error saving user:", e);
   }

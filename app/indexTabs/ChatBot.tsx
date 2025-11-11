@@ -237,7 +237,7 @@ const ChatBot: React.FC = () => {
     const showSub = Keyboard.addListener("keyboardDidShow", (e) => {
       const height = e.endCoordinates.height;
       console.log("Keyboard height:", height);
-      setKeyboardOffset(height * 0.3 + 15);
+      setKeyboardOffset(height * 0.4);
     });
 
     const hideSub = Keyboard.addListener("keyboardDidHide", () => {
