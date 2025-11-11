@@ -11,6 +11,7 @@ import SearchParkingSpot from "../indexTabs/SearchParkingSpot";
 import ParkingSpotDetail from "../indexTabs/ParkingSpotDetail";
 import Rating from "../indexTabs/Rating";
 import ChatBot from "../indexTabs/ChatBot";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const Stack = createStackNavigator();
 const TopTab = createMaterialTopTabNavigator();
@@ -25,7 +26,7 @@ const CustomTabLabel = ({ title, focused }: { title: string; focused: boolean })
 
 function TabNavigator() {
   return (
-    <View className="flex-1 bg-white pt-2">
+    <SafeAreaView className="flex-1 bg-white" edges={["top"]}>
       <TopTab.Navigator
         screenOptions={{
           tabBarIndicatorStyle: { backgroundColor: colors.blue_button },
@@ -58,7 +59,7 @@ function TabNavigator() {
         />
 
       </TopTab.Navigator>
-    </View>
+    </SafeAreaView>
   );
 }
 

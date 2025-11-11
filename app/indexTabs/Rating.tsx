@@ -23,6 +23,7 @@ import { createFeedback, updateFeedback, deleteFeedback } from "@/service/api";
 import { useNavigation } from "@react-navigation/native";
 import Colors from "@/constants/colors";
 import ToastCustom from "@/utils/CustomToast";
+import { useDebounce } from "@/hooks/useDebounce";
 
 // ========================== TYPES ==========================
 type RootStackParamList = {
@@ -70,6 +71,7 @@ const Rating = () => {
     security: myFeedback?.security_rating || 0,
   });
   const [comment, setComment] = useState(myFeedback?.comment || "");
+  const debouncedComment = useDebounce(comment, 500);
   const [isFocused, setIsFocused] = useState(false);
   const [showConfirmCreate, setShowConfirmCreate] = useState(false);
   const [showConfirmUpdate, setShowConfirmUpdate] = useState(false);
@@ -85,13 +87,14 @@ const Rating = () => {
       ratings.convenience !== (myFeedback?.friendliness_rating || 0) ||
       ratings.space !== (myFeedback?.space_rating || 0) ||
       ratings.security !== (myFeedback?.security_rating || 0) ||
-      comment !== (myFeedback?.comment || "");
+      debouncedComment !== (myFeedback?.comment || "");
+
     setIsChanged(changed);
-  }, [ratings, comment, myFeedback]);
+  }, [ratings, debouncedComment, myFeedback]);
 
   useEffect(() => {
-     const hasAnyRating = Object.values(ratings).every((v) => v > 0);
-     setIsDisableSend(!hasAnyRating);
+    const hasAnyRating = Object.values(ratings).every((v) => v > 0);
+    setIsDisableSend(!hasAnyRating);
   }, [ratings]);
 
   // ========================== API CALL ==========================
@@ -101,7 +104,7 @@ const Rating = () => {
     friendliness_rating: ratings.convenience,
     space_rating: ratings.space,
     security_rating: ratings.security,
-    comment,
+    comment: debouncedComment,
   });
 
   // Validate trước khi gửi
@@ -235,9 +238,9 @@ const Rating = () => {
           {ratingItems.map((item) => (
             <View
               key={item.id}
-              className="flex-row items-center justify-between py-3 rounded-xl"
+              className="flex-row items-center justify-between py-3 rounded-xl flex-wrap gap-2"
             >
-              <Text className="text-sm font-medium text-gray-800 w-[120px]">
+              <Text className="text-sm font-medium text-gray-800 flex-1">
                 {item.label}
               </Text>
 

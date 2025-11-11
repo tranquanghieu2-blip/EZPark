@@ -603,7 +603,7 @@ const ParkingSpotDetail = () => {
 
         {/* ==== Danh sách các đánh giá khác ==== */}
         {listFeedbackLoading && feedbacks.length === 0 ? (
-          <View className="flex-1 justify-center items-center mt-10">
+          <View className="flex-1 justify-center items-center mt-5">
             <ActivityIndicator size="small" color={Colors.blue_button} />
           </View>
         ) : (
@@ -701,7 +701,7 @@ const ParkingSpotDetail = () => {
               </View>
             )}
             ListEmptyComponent={
-              <View className="flex-1 justify-center items-center mt-5">
+              <View className="flex-1 justify-center items-center">
                 <Image
                   source={images.noData}
                   style={{ width: 100, height: 100, resizeMode: 'contain' }}
