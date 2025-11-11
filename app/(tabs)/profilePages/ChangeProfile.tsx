@@ -159,7 +159,7 @@ const ChangeProfile = () => {
           <GradientButton
             onPress={handleSave}
             disabled={loading || !canSave}
-            className={`py-3 px-5 rounded-lg items-center justify-center h-full ${canSave ? `opacity-${DISABLED_OPACITY}` : 'opacity-100'}`}
+            className={`py-3 px-5 rounded-lg items-center justify-center h-full ${!canSave ? `opacity-${DISABLED_OPACITY}` : 'opacity-100'}`}
           >
             {loading ? (
               <ActivityIndicator color="#fff" />

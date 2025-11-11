@@ -43,9 +43,10 @@ interface SearchParkingSpot {
   parking_spot_id: number;
   name: string;
   address: string;
+  capacity: number;
   latitude: number;
   longitude: number;
-  distance?: number;
+  distance: number | null; // khoảng cách tính bằng km, có thể null nếu chưa tính
   type: "parking hub" | "on street parking";
 }
 
@@ -90,7 +91,7 @@ type SearchParkingSpotWithStats = SearchParkingSpot & {
 };
 
 type ParkingSpotDetailWithStats = ParkingSpotDetail & {
-  distance?: number;
+  distance: number | null;
   statistics: FeedbackStatistics;
 };
 

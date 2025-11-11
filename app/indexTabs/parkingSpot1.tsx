@@ -835,7 +835,12 @@ const ParkingSpot = () => {
                   'favoriteIcon', // Hiển thị icon yêu thích
                   'parkingIcon', // Ngược lại hiển thị icon parking bình thường
                 ],
-                iconSize: 0.6,
+                iconSize: [
+                  'case',
+                  ['==', ['get', 'isFavorite'], true],
+                  0.9, // icon lớn hơn nếu là favorite
+                  0.7  // mặc định nhỏ hơn
+                ],
                 iconAllowOverlap: true,
                 symbolSortKey: 10,
               }}

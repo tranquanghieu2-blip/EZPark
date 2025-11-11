@@ -59,7 +59,7 @@ export const IconNote = (props: any) => (
 );
 
 export const IconLine = (props: any) => (
-  <FontAwesome5 name="chart-line" iconStyle="solid" {...props} />
+  <MaterialDesignIcons name="chart-timeline-variant" iconStyle="solid" {...props} />
 );
 
 export const IconSearchLocation = (props: any) => (

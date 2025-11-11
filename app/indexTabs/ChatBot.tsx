@@ -28,6 +28,7 @@ import { IconMicro } from "@/components/Icons";
 import Colors from "@/constants/colors";
 import { useAuth } from "../context/AuthContext";
 import NoUserLogin from "@/components/NoUserLogin";
+import { ScrollView } from "react-native-gesture-handler";
 
 /* -------------------------------------------------
    Kiểu dữ liệu tin nhắn
@@ -186,8 +187,6 @@ const ChatBot: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [sending, setSending] = useState(false);
   const flatRef = useRef<FlatList<Message>>(null);
-  const [keyboardOffset, setKeyboardOffset] = useState(0);
-  const insets = useSafeAreaInsets();
 
   // Gợi ý mặc định
   const suggestions = useMemo(
@@ -209,21 +208,6 @@ const ChatBot: React.FC = () => {
     };
   }, [navigation]);
 
-  useEffect(() => {
-    const showSub = Keyboard.addListener("keyboardDidShow", (e) => {
-      const height = e.endCoordinates.height;
-      setKeyboardOffset(height * 0.35); // hoặc 1.0 nếu muốn trượt cao hơn một chút
-    });
-
-    const hideSub = Keyboard.addListener("keyboardDidHide", () => {
-      setKeyboardOffset(0);
-    });
-
-    return () => {
-      showSub.remove();
-      hideSub.remove();
-    };
-  }, []);
 
   // helper
   const uid = useCallback(
@@ -257,11 +241,6 @@ const ChatBot: React.FC = () => {
     }
     return "Cảm ơn bạn! Mình đã nhận được câu hỏi, đây là phản hồi mô phỏng.";
   }, []);
-
-  // Nếu chưa đăng nhập
-  if (!user) {
-    return <NoUserLogin />;
-  }
 
   const handleSend = useCallback(
     (text: string) => {
@@ -310,56 +289,50 @@ const ChatBot: React.FC = () => {
   );
 
   const flatData = useMemo(() => [...messages].reverse(), [messages]);
-
+    // Nếu chưa đăng nhập
+  if (!user) {
+    return <NoUserLogin />;
+  }
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['bottom']}>
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios"
-          ? keyboardOffset + insets.bottom
-          : keyboardOffset}
-      >
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <View className="flex-1">
+      <View className="flex-1">
 
-            {/* Body */}
-            <View className="flex-1 bg-white">
-              {messages.length === 0 ? (
-                <View className="flex-1">
-                  <ChatSuggestions
-                    suggestions={suggestions}
-                    onSelect={handleSelectSuggestion}
-                  />
-
-                </View>
-              ) : (
-                <FlatList
-                  ref={flatRef}
-                  data={flatData}
-                  keyExtractor={(item) => item.id}
-                  renderItem={renderItem}
-                  inverted
-                  contentContainerStyle={{
-                    padding: 12,
-                    paddingBottom: 24,
-                  }}
-                  showsVerticalScrollIndicator={false}
-                  keyboardShouldPersistTaps="handled"
-                  removeClippedSubviews
-                  initialNumToRender={20}
-                  maxToRenderPerBatch={20}
-                  windowSize={21}
+        {/* Body */}
+        <View className="flex-1 bg-white">
+          {messages.length === 0 ? (
+            <View className="flex-1">
+              <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+                <ChatSuggestions
+                  suggestions={suggestions}
+                  onSelect={handleSelectSuggestion}
                 />
-              )}
+              </ScrollView>
             </View>
+          ) : (
+            <FlatList
+              ref={flatRef}
+              data={flatData}
+              keyExtractor={(item) => item.id}
+              renderItem={renderItem}
+              inverted
+              contentContainerStyle={{
+                padding: 12,
+                paddingBottom: 24,
+              }}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              removeClippedSubviews
+              initialNumToRender={20}
+              maxToRenderPerBatch={20}
+              windowSize={21}
+            />
+          )}
+        </View>
 
-            {/* Input */}
-            <ChatInput onSend={handleSend} sending={sending} />
-          </View>
-        </TouchableWithoutFeedback>
-      </KeyboardAvoidingView>
+        {/* Input */}
+        <ChatInput onSend={handleSend} sending={sending} />
+      </View>
     </SafeAreaView>
   );
 };
