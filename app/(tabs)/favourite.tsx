@@ -71,7 +71,7 @@ const Favourite = () => {
 
   return (
     <SafeAreaView className="flex-1 bg-white px-4">
-      <Text className="text-2xl font-bold text-gray-900 mt-4">
+      <Text className="text-2xl font-bold text-gray-900 mt-4 mb-4">
         Danh sách yêu thích
       </Text>
 

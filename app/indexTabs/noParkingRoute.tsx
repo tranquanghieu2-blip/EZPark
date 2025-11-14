@@ -426,8 +426,7 @@ const NoParkingRoute = () => {
             lat,
           ]);
 
-          const isSelected =
-            selectedRoute?.no_parking_route_id === route.no_parking_route_id;
+          const isSelected = selectedRoute?.no_parking_route_id === route.no_parking_route_id;
           return (
             <MapboxGL.ShapeSource
               key={`route-${route.no_parking_route_id}`}
@@ -437,7 +436,22 @@ const NoParkingRoute = () => {
                 geometry: { type: 'LineString', coordinates: coords },
                 properties: {},
               }}
-              onPress={() => setSelectedRoute(route)}
+              onPress={() => {
+                setSelectedRoute(route);
+                
+                // Sử dụng 'route' thay vì 'selectedRoute'
+                if (route?.route?.coordinates?.length) {
+                  const coords = route.route.coordinates;
+                  const midIndex = Math.floor(coords.length / 2);
+                  const [lon, lat] = coords[midIndex]; // Lấy điểm giữa tuyến
+
+                  cameraRef.current?.setCamera({
+                    centerCoordinate: [lon, lat],
+                    zoomLevel: 14, // ← Tăng zoom level để thấy rõ hơn
+                    animationDuration: 700,
+                  });
+                }
+              }}
             >
               <MapboxGL.LineLayer
                 id={`line-${route.no_parking_route_id}`}
