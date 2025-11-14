@@ -125,3 +125,43 @@ interface getListFavoriteParkingSpots {
   type: "parking hub" | "on street parking";
   created_at: string;
 };
+
+interface ChatMessage {
+  log_id: string;
+  user_query: string;
+  llm_response: string;
+  created_at: string;
+  intent?: string;
+  search_method?: string;
+};
+
+interface SessionInfo {
+  first_message_at: string;
+  last_activity_at: string;
+  message_count: number;
+  is_expired: boolean;
+  hours_since_activity: number;
+};
+
+interface HistoryChat {
+  session_id: number;
+  session_info: SessionInfo;
+  messages: ChatMessage[];
+};
+
+interface ResponseFromChatbot {
+  session_id: number;
+  session_status: string;
+  query: string;
+  response: string;
+  parking_spots: ParkingSpot[];
+  no_parking_routes: NoParkingRoute[];
+  timestamp: string;
+}
+
+type Message = {
+  id: string;
+  from: "user" | "bot";
+  text: string;
+  time: string; // thêm thời gian gửi
+};

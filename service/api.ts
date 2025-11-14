@@ -1,3 +1,4 @@
+
 import api from '@/service/apiClient';
 import { normalizeFilePath } from '@/utils/normalizeFilePath';
 import { UserLocation } from '@rnmapbox/maps';
@@ -535,6 +536,59 @@ export const fetchPredictionForParkingSpot = async (
     return data.data;
   } catch (error: any) {
     console.error('Fetch error:', error.message || error);
+    throw error;
+  }
+};
+
+export const fetchHistoryChat = async (session_id?: string): Promise<HistoryChat> => {
+  try {
+    const url = session_id
+      ? `${API_CONFIG.BASE_URL}/chat/history/${session_id}`
+      : `${API_CONFIG.BASE_URL}/chat/history`;
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: API_CONFIG.headers,
+    });
+
+    if (!response.ok) {
+      throw new Error(`Error fetching chat history: ${response.statusText}`);
+    }
+
+    const json = await response.json();
+    return json?.data ?? json; // fallback nếu backend không có .data
+  } catch (error: any) {
+    console.error('Fetch history chat error:', error.message || error);
+    throw error;
+  }
+};
+
+
+export const postChatMessage = async (
+  query: string,
+  session_id?: string
+): Promise<ResponseFromChatbot> => {
+  try {
+    const body: Record<string, any> = { query };
+    if (session_id) body.session_id = session_id;
+
+    const response = await fetch(`${API_CONFIG.BASE_URL}/chat`, {
+      method: 'POST',
+      headers: {
+        ...API_CONFIG.headers,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Error posting chat message: ${response.statusText}`);
+    }
+
+    const json = await response.json();
+    return json?.data ?? json;
+  } catch (error: any) {
+    console.error('Post chat message error:', error.message || error);
     throw error;
   }
 };

@@ -8,29 +8,35 @@ interface AuthContextType {
   user: User | null;
   accessToken: string | null;
   refreshToken: string | null;
+  sessionID: string | null;
   loading: boolean;
   login: (userData: User|null, token: string, refreshToken: string) => Promise<void>;
   logout: () => Promise<void>;
   updateAccessToken: (token: string) => Promise<void>;
   updateUser: (updatedUser: User) => Promise<void>; 
+  updateSessionID: (sessionID: string | null) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   accessToken: null,
   refreshToken: null,
+  sessionID: null,
   loading: true,
   login: async () => {},
   logout: async () => {},
   updateAccessToken: async () => {},
   updateUser: async () => {}, 
+  updateSessionID: async () => {},
 });
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [refreshToken, setRefreshToken] = useState<string | null>(null);
+  const [sessionID, setSessionID] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  
 
   // Load dữ liệu khi app khởi động
   useEffect(() => {
@@ -39,10 +45,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const storedUser = await AsyncStorage.getItem("user");
         const storedAccessToken = await AsyncStorage.getItem("accessToken");
         const storedRefreshToken = await AsyncStorage.getItem("refreshToken");
+        const storedSessionID = await AsyncStorage.getItem("sessionID");
 
         if (storedUser) setUser(JSON.parse(storedUser));
         if (storedAccessToken) setAccessToken(storedAccessToken);
         if (storedRefreshToken) setRefreshToken(storedRefreshToken);
+        if (storedSessionID) setSessionID(storedSessionID);
       } catch (e) {
         console.error("Error loading user", e);
       } finally {
@@ -107,9 +115,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  // Cập nhật sessionID
+  const updateSessionID = async (newSessionID: string | null) => {
+    try {
+      if (newSessionID) {
+        await AsyncStorage.setItem("sessionID", newSessionID);
+      } else {
+        await AsyncStorage.removeItem("sessionID");
+      }
+      setSessionID(newSessionID);
+    } catch (e) {
+      console.error("Error updating session ID:", e);
+    }
+  };
+
   return (
     <AuthContext.Provider
-      value={{ user, accessToken, refreshToken, loading, login, logout, updateAccessToken, updateUser }}
+      value={{ user, accessToken, refreshToken, sessionID, loading, login, logout, updateAccessToken, updateUser, updateSessionID }}
     >
       {children}
     </AuthContext.Provider>
