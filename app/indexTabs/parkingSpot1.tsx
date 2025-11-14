@@ -38,7 +38,6 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import useFetch from '../../hooks/useFetch';
 import { useSmartMapboxLocation } from '@/hooks/usePeriodicMapboxLocation';
 
-
 // ================= Services =================
 import {
   fetchNoParkingRoutes,
@@ -56,7 +55,12 @@ import messaging from '@react-native-firebase/messaging';
 
 import { Point } from 'geojson';
 import DeviceInfo from 'react-native-device-info';
-import { mapEvents, EVENT_OPEN_SPOT, EVENT_FAVORITE_CHANGED, EVENT_USER_LOGOUT } from '@/utils/eventEmitter';
+import {
+  mapEvents,
+  EVENT_OPEN_SPOT,
+  EVENT_FAVORITE_CHANGED,
+  EVENT_USER_LOGOUT,
+} from '@/utils/eventEmitter';
 
 import { getRoutes } from '@/service/routingService';
 import haversine from 'haversine-distance';
@@ -97,7 +101,9 @@ const ParkingSpot = () => {
   const [selectedRouteId, setSelectedRouteId] = useState<number | null>(null);
   const [showDropdown, setShowDropdown] = useState(false);
   const [showInstructionModal, setShowInstructionModal] = useState(false);
-  const [changedFavorites, setChangedFavorites] = useState<Set<number>>(new Set());
+  const [changedFavorites, setChangedFavorites] = useState<Set<number>>(
+    new Set(),
+  );
   // const { user } = useAuth();
 
   // lưu điểm đích và vị trí cuối cùng để tính lại route
@@ -115,14 +121,13 @@ const ParkingSpot = () => {
 
   useEffect(() => {
     const handleUserLogout = () => {
-      console.log("User has logged out — resetting ParkingSpot state");
+      console.log('User has logged out — resetting ParkingSpot state');
 
       // Xoá các dữ liệu chỉ dành cho user
       setFavoriteSpots(new Set());
       setChangedFavorites(new Set());
       setSelectedId(null);
       setShowParkingDetail(false);
-
     };
 
     mapEvents.on(EVENT_USER_LOGOUT, handleUserLogout);
@@ -131,7 +136,6 @@ const ParkingSpot = () => {
       mapEvents.off(EVENT_USER_LOGOUT, handleUserLogout);
     };
   }, [navigation]);
-
 
   useEffect(() => {
     const handleOpenSpot = (spotId: number) => {
@@ -259,7 +263,7 @@ const ParkingSpot = () => {
   const {
     spot: parkingSpotDetail,
     loading: parkingSpotDetailLoad,
-    fetchParkingSpotDetailWithStats
+    fetchParkingSpotDetailWithStats,
   } = useParkingSpotDetail();
 
   // Hàm fetch chi tiết khi selectedId thay đổi
@@ -274,8 +278,6 @@ const ParkingSpot = () => {
       fetchDetail();
     }
   }, [selectedId]);
-
-
 
   // === Fetch no-parking routes ===
   const { data: noParkingRoutes } =
@@ -355,7 +357,7 @@ const ParkingSpot = () => {
     });
   }, [userLocation, destination]);
 
-  // Check favorite spots 
+  // Check favorite spots
   useEffect(() => {
     if (!user) return;
 
@@ -369,7 +371,6 @@ const ParkingSpot = () => {
     };
   }, []);
 
-
   useEffect(() => {
     if (!user) return;
     if (!parkingSpots?.length) return;
@@ -378,8 +379,11 @@ const ParkingSpot = () => {
       try {
         const favoritePromises = parkingSpots.map(spot =>
           checkFavoriteParkingSpot(spot.parking_spot_id)
-            .then(result => ({ spotId: spot.parking_spot_id, isFavorite: result.isFavorite }))
-            .catch(() => ({ spotId: spot.parking_spot_id, isFavorite: false }))
+            .then(result => ({
+              spotId: spot.parking_spot_id,
+              isFavorite: result.isFavorite,
+            }))
+            .catch(() => ({ spotId: spot.parking_spot_id, isFavorite: false })),
         );
 
         const favoriteResults = await Promise.all(favoritePromises);
@@ -402,7 +406,7 @@ const ParkingSpot = () => {
 
   useFocusEffect(
     useCallback(() => {
-      console.log("ParkingSpot screen focused");
+      console.log('ParkingSpot screen focused');
       // Fetch danh sách bãi đỗ
       fetchParkingSpots();
       // Fetch chi tiết bãi đỗ nếu có selectedId và userLocation
@@ -415,11 +419,11 @@ const ParkingSpot = () => {
         const refreshChangedFavorites = async () => {
           try {
             const updates = await Promise.all(
-              Array.from(changedFavorites).map((spotId) =>
+              Array.from(changedFavorites).map(spotId =>
                 checkFavoriteParkingSpot(spotId)
                   .then(result => ({ spotId, isFavorite: result.isFavorite }))
-                  .catch(() => ({ spotId, isFavorite: false }))
-              )
+                  .catch(() => ({ spotId, isFavorite: false })),
+              ),
             );
 
             // Clone Set hiện tại
@@ -434,9 +438,12 @@ const ParkingSpot = () => {
             setFavoriteSpots(updatedSet);
             setChangedFavorites(new Set());
 
-            console.log("Refreshed changed favorites:", updates.map(u => u.spotId));
+            console.log(
+              'Refreshed changed favorites:',
+              updates.map(u => u.spotId),
+            );
           } catch (err) {
-            console.error("Error refreshing changed favorites:", err);
+            console.error('Error refreshing changed favorites:', err);
           }
         };
 
@@ -444,9 +451,8 @@ const ParkingSpot = () => {
       }
 
       // Không cần cleanup ở đây
-    }, [selectedId, userLocation, user, changedFavorites, favoriteSpots])
+    }, [selectedId, userLocation, user, changedFavorites, favoriteSpots]),
   );
-
 
   return (
     <View style={styles.container}>
@@ -712,6 +718,18 @@ const ParkingSpot = () => {
                   setSelectedRoute(selectedRoute);
                   setShowRouteConfirm(true);
                   setSelectedRouteId(routeId);
+                  // Di chuyển camera đến vị trí bãi đỗ
+                  if (selectedRoute?.route?.coordinates?.length) {
+                    const coords = selectedRoute.route.coordinates;
+                    const midIndex = Math.floor(coords.length / 2);
+                    const [lon, lat] = coords[midIndex]; // Lấy điểm giữa tuyến
+
+                    cameraRef.current?.setCamera({
+                      centerCoordinate: [lon, lat],
+                      zoomLevel: 14,
+                      animationDuration: 700,
+                    });
+                  }
                 }
               }}
             >
@@ -813,6 +831,18 @@ const ParkingSpot = () => {
                 const spotData = feature.properties;
                 setSelectedId(spotData.id);
                 setShowParkingDetail(true);
+                // Di chuyển camera đến vị trí bãi đỗ
+                if (
+                  cameraRef.current &&
+                  spotData.longitude &&
+                  spotData.latitude
+                ) {
+                  cameraRef.current.setCamera({
+                    centerCoordinate: [spotData.longitude, spotData.latitude],
+                    zoomLevel: 14,
+                    animationDuration: 700,
+                  });
+                }
               }
             }}
           >
@@ -839,7 +869,7 @@ const ParkingSpot = () => {
                   'case',
                   ['==', ['get', 'isFavorite'], true],
                   0.9, // icon lớn hơn nếu là favorite
-                  0.7  // mặc định nhỏ hơn
+                  0.7, // mặc định nhỏ hơn
                 ],
                 iconAllowOverlap: true,
                 symbolSortKey: 10,
