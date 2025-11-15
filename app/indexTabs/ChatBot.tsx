@@ -44,12 +44,12 @@ const ChatBot: React.FC = () => {
         return;
       }
       setSessionID(storedSession);
-      
+
 
       const history = await fetchHistoryChat(storedSession);
       console.log("Session expired", history?.session_info?.is_expired);
       if (history?.session_info?.is_expired) {
-        
+
         await AsyncStorage.removeItem("sessionID");
         setSessionID(null);
       } else {
@@ -158,39 +158,39 @@ const ChatBot: React.FC = () => {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={Platform.OS === "ios" ? insets.bottom : 104}
       >
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <View className="flex-1 bg-white">
-            {loading ? (
-              <View className="flex-1 justify-center items-center">
-                <ActivityIndicator size="large" color="#007AFF" />
-                <Text className="text-gray-500 mt-3">Đang tải hội thoại...</Text>
-              </View>
-            ) : messages.length === 0 && !botTyping ? (
-              <ChatSuggestions suggestions={suggestions} onSelect={handleSend} />
-            ) : (
-              <>
-                <FlatList
-                  ref={flatRef}
-                  data={flatData}
-                  keyExtractor={(item) => item.log_id}
-                  renderItem={renderItem}
-                  inverted
-                  contentContainerStyle={{ padding: 12, paddingBottom: 80 }}
-                  showsVerticalScrollIndicator={false}
-                />
 
-                {botTyping && (
-                  <View className="px-4 pb-4">
-                    <BotTypingBubble />
-                  </View>
-                )}
-              </>
-            )}
+        <View className="flex-1 bg-white">
+          {loading ? (
+            <View className="flex-1 justify-center items-center">
+              <ActivityIndicator size="large" color="#007AFF" />
+              <Text className="text-gray-500 mt-3">Đang tải hội thoại...</Text>
+            </View>
+          ) : messages.length === 0 && !botTyping ? (
+            <ChatSuggestions suggestions={suggestions} onSelect={handleSend} />
+          ) : (
+            <>
+              <FlatList
+                ref={flatRef}
+                data={flatData}
+                keyExtractor={(item) => item.log_id}
+                renderItem={renderItem}
+                inverted
+                contentContainerStyle={{ padding: 12, paddingBottom: 80 }}
+                showsVerticalScrollIndicator={false}
+              />
 
-            {/* Input */}
-            <ChatInput onSend={handleSend} sending={sending} />
-          </View>
-        </TouchableWithoutFeedback>
+              {botTyping && (
+                <View className="px-4 pb-4">
+                  <BotTypingBubble />
+                </View>
+              )}
+            </>
+          )}
+
+          {/* Input */}
+          <ChatInput onSend={handleSend} sending={sending} />
+        </View>
+
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

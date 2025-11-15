@@ -108,6 +108,17 @@ type ParkingSpotDetailWithStats = ParkingSpotDetail & {
   predictionData?: PredictionForParkingSpot;
 };
 
+interface SearchNoParkingRoute {
+  no_parking_route_id: number;
+  street: string;
+  description: string;
+  time_range: TimeRange[];
+  side: "both" | "odd" | "even";
+  type: "no parking" | "no stopping" | "alternate days";
+  days_restricted: string[];
+  distance?: number;
+}
+
 interface ListFeedback {
   feedbacks: Feedback[];
   hasMore?: boolean;

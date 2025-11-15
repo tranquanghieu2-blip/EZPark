@@ -12,6 +12,7 @@ import ParkingSpotDetail from "../indexTabs/ParkingSpotDetail";
 import Rating from "../indexTabs/Rating";
 import ChatBot from "../indexTabs/ChatBot";
 import { SafeAreaView } from "react-native-safe-area-context";
+import SearchNoParkingRoute from "../indexTabs/SearchNoParkingRoute";
 
 const Stack = createStackNavigator();
 const TopTab = createMaterialTopTabNavigator();
@@ -102,6 +103,14 @@ export default function Index() {
         component={ChatBot}
         options={{
           header: () => <ChatHeader />,
+        }}
+      />
+      <Stack.Screen
+        name="SearchNoParkingRoute"
+        component={SearchNoParkingRoute}
+        options={{
+          title: "Tìm kiếm tuyến đường cấm đỗ xe",
+          headerTitleAlign: "center",
         }}
       />
     </Stack.Navigator>

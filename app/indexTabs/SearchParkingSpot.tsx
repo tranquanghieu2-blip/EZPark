@@ -208,6 +208,7 @@ const SearchParkingSpot = () => {
           keyExtractor={(item) => item.parking_spot_id.toString()}
           contentContainerStyle={{ flexGrow: 1 }}
           keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
           renderItem={({ item }) => (
             <TouchableOpacity
               className="py-4 border-b border-gray-200 w-full"
