@@ -592,3 +592,34 @@ export const postChatMessage = async (
     throw error;
   }
 };
+
+export const searchNoParkingRoute = async ({
+  street,
+  latitude,
+  longitude,
+  page = 1,
+  limit = 5,
+  offset = 0,
+}: {
+  street: string;
+  latitude: number;
+  longitude: number;
+  page?: number;
+  limit?: number;
+  offset?: number;
+}): Promise<SearchNoParkingRoute[]> => {
+  const url = `${API_CONFIG.BASE_URL}/no-parking-routes/search?street=${street}&lat=${latitude}&lng=${longitude}&page=${page}&limit=${limit}&offset=${offset}`;
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers: API_CONFIG.headers,
+  });
+
+  if (!response.ok) {
+    throw new Error(`Error fetching parking spots: ${response.statusText}`);
+  }
+
+  const json = await response.json();
+  return json.data;                   
+};
+

@@ -35,7 +35,7 @@ import { isDayRestricted, isWithinTimeRange } from '@/utils/validation';
 import { HelpModalNoParkingRoute } from '@/modals/HelpModal';
 import NoParkingRouteModal from '@/modals/NoParkingRouteModal';
 import { images } from '@/constants/images';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import haversine from 'haversine-distance';
 import { Animated } from 'react-native';
 import { useForbiddenRouteWatcher } from '@/hooks/useForbiddenRouteWatcher';
@@ -46,6 +46,8 @@ const NoParkingRoute = () => {
   const location = useSmartMapboxLocation();
   console.log('Render No Parking Route');
   const navigation = useNavigation<any>();
+  const routeNav = useRoute<any>();
+
 
   // ================== STATE ==================
   const [center, setCenter] = useState<{ latitude: number; longitude: number }>(
@@ -84,6 +86,34 @@ const NoParkingRoute = () => {
     error: noParkingRoutesError,
   } = useFetch<NoParkingRoute[]>(fetchNoParkingRoutes);
 
+  useEffect(() => {
+    const id = routeNav?.params?.selectedNoParkingRouteId;
+    if (!id || !routesWithGeometry) return;
+
+    const found = routesWithGeometry.find(r => r.no_parking_route_id === id);
+    if (!found) return;
+
+    // 1. Set selected route để mở modal
+    setSelectedRoute(found);
+
+    // 2. Zoom gần vào tuyến (lấy midpoint)
+    if (found?.route?.coordinates?.length) {
+      const mid = Math.floor(found.route.coordinates.length / 2);
+      const [lon, lat] = found.route.coordinates[mid];
+
+      cameraRef.current?.setCamera({
+        centerCoordinate: [lon, lat],
+        zoomLevel: 16,
+        animationDuration: 800,
+      });
+    }
+
+    // 3. Clear param để không trigger lại khi re-render
+    navigation.setParams({ selectedNoParkingRouteId: undefined });
+
+  }, [routeNav?.params?.selectedNoParkingRouteId, routesWithGeometry]);
+
+
   // ================== GEOMETRY ==================
   useEffect(() => {
     if (!noParkingRoutes) return;
@@ -98,7 +128,7 @@ const NoParkingRoute = () => {
                 route.location_begin,
                 route.location_end,
               );
-             
+
               if (routeData[0]?.geometry) {
                 const geometry = routeData[0].geometry;
                 await updateNoParkingRouteGeometry(
@@ -308,7 +338,8 @@ const NoParkingRoute = () => {
   return (
     <View style={styles.container}>
       {/* Thanh tìm kiếm */}
-      <SearchBar placeholder="Tìm bãi đỗ xe..." />
+      <SearchBar placeholder="Tìm tuyến cấm đỗ xe..."
+        onPress={() => navigation.navigate('SearchNoParkingRoute' as never)} />
 
       {/* Nút chức năng */}
       <View className="absolute right-4 bottom-10 z-20 flex-col space-y-4 gap-2">
@@ -438,7 +469,7 @@ const NoParkingRoute = () => {
               }}
               onPress={() => {
                 setSelectedRoute(route);
-                
+
                 // Sử dụng 'route' thay vì 'selectedRoute'
                 if (route?.route?.coordinates?.length) {
                   const coords = route.route.coordinates;
@@ -457,7 +488,7 @@ const NoParkingRoute = () => {
                 id={`line-${route.no_parking_route_id}`}
                 style={{
                   lineColor: style.strokeColor,
-                  
+
                   lineCap: 'round',
                   lineWidth: isSelected ? 6 : 4, // Tăng độ dày
                   lineOpacity: isSelected ? 0.9 : 0.8, //  Làm nổi bật hơn
@@ -576,10 +607,10 @@ const NoParkingRoute = () => {
             >
               🚫 Bạn đang di chuyển trên tuyến cấm đỗ
             </Text>
-            <Text 
-            style={{ 
-              marginTop: 8, 
-              fontWeight: '600' 
+            <Text
+              style={{
+                marginTop: 8,
+                fontWeight: '600'
               }}>
               {routes?.street}
             </Text>
