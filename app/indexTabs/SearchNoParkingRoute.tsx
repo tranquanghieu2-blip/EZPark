@@ -190,11 +190,26 @@ const SearchNoParkingRoute = () => {
                         <TouchableOpacity
                             className="py-4 border-b border-gray-200 w-full"
                             onPress={() => {
-                                navigation.navigate("Tabs", {
-                                    screen: "NoParkingRoute",
-                                    params: { selectedNoParkingRouteId: item.no_parking_route_id },
+                                navigation.reset({
+                                    index: 0,
+                                    routes: [
+                                        {
+                                            name: "Tabs",
+                                            state: {
+                                                routes: [
+                                                    {
+                                                        name: "NoParkingRoute",
+                                                        params: {
+                                                            selectedNoParkingRouteId: item.no_parking_route_id,
+                                                        },
+                                                    },
+                                                ],
+                                            },
+                                        },
+                                    ],
                                 });
                             }}
+
                         >
                             <View className="flex">
                                 <View className="mb-1">
