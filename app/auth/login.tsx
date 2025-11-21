@@ -22,7 +22,7 @@ import {
 import { useEffect } from 'react';
 import { Linking } from 'react-native';
 import ToastCustom from '@/utils/CustomToast';
-import { DISABLED_OPACITY } from '@/utils/ui';
+import { DISABLED_OPACITY, maxLengthEmail, maxLengthPassword } from '@/utils/ui';
 
 export default function Login() {
   const navigation = useNavigation<any>();
@@ -130,6 +130,7 @@ export default function Login() {
           onChangeText={setEmail}
           valid={emailValid}
           errorMsg="Email không hợp lệ"
+          maxLength={maxLengthEmail}
         />
 
         <InputRow
@@ -142,6 +143,7 @@ export default function Login() {
           toggle={() => setShowPassword(!showPassword)}
           valid={passwordValid}
           errorMsg="Mật khẩu phải ≥ 9 ký tự, có chữ và số"
+          maxLength={maxLengthPassword}
         />
 
         {/* Nút đăng nhập */}

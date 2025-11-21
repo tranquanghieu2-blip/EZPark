@@ -23,6 +23,8 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { useSearchParking } from "@/hooks/useSearchParking";
 import { DEFAULT_TAB_BAR_STYLE } from "@/utils/tabBarStyle";
 import { useSmartMapboxLocation } from "@/hooks/usePeriodicMapboxLocation";
+import { max } from "lodash";
+import { maxLengthSearch } from "@/utils/ui";
 
 const RatingStars = ({ value, size = 16 }: { value: number; size?: number }) => {
   const stars = [];
@@ -159,7 +161,7 @@ const SearchParkingSpot = () => {
   if (!isLocationReady) {
     return (
       <View className="flex-1 justify-center items-center bg-white">
-        <ActivityIndicator size="large" />
+        <ActivityIndicator size="large"  color={Colors.primary}/>
         <Text className="mt-2 text-gray-500">Đang lấy vị trí của bạn...</Text>
       </View>
     );
@@ -180,6 +182,7 @@ const SearchParkingSpot = () => {
             onChangeText={setQuery}
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
+            maxLength={maxLengthSearch}
           />
         </View>
 
@@ -199,7 +202,7 @@ const SearchParkingSpot = () => {
       {/* Danh sách */}
       {loading && spots.length === 0 ? (
         <View className="flex-1 justify-center items-center mt-10">
-          <ActivityIndicator size="large" />
+          <ActivityIndicator size="large" color={Colors.primary} />
         </View>
       ) : (
         <FlatList
@@ -238,7 +241,7 @@ const SearchParkingSpot = () => {
                         <Text className="text-sm text-gray-500">({item.statistics.totalReviews})</Text>
                       </>
                     ) : (
-                      <ActivityIndicator size="small" />
+                      <ActivityIndicator size="small" color={Colors.primary} />
                     )}
                   </View>
 
