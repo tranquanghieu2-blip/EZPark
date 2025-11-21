@@ -176,6 +176,7 @@ const ParkingSpotDetail = () => {
     spot?.parking_spot_id,
   ]);
 
+  // === Xử lý yêu thích bãi đỗ ===
   useEffect(() => {
     console.log('checkFavorite:', spot?.parking_spot_id, favoriteId);
 
@@ -255,13 +256,14 @@ const ParkingSpotDetail = () => {
   console.log(feedbacks);
 
   useEffect(() => {
-    if (!spot?.parking_spot_id || !user) return;
+    if (!spot?.parking_spot_id) return;
 
     // Chỉ chạy khi myFeedback đã load xong
-    if (myFeedbackLoading === false) {
+    if (user && !myFeedbackLoading) {
       const limit = myFeedback ? 4 : 5;
       fetchFeedbacks(spot.parking_spot_id, true, limit);
     }
+    fetchFeedbacks(spot.parking_spot_id, true, 5);
   }, [spot?.parking_spot_id, myFeedbackLoading]);
 
   const handleLoadMore = async () => {
@@ -311,9 +313,9 @@ const ParkingSpotDetail = () => {
   const totalReviews = Object.values(MOCK_RATINGS).reduce((s, v) => s + v, 0);
 
   // Nếu chưa đăng nhập
-  if (!user) {
-    return <NoUserLogin />;
-  }
+  // if (!user) {
+  //   return <NoUserLogin />;
+  // }
 
 
   return (
@@ -470,133 +472,122 @@ const ParkingSpotDetail = () => {
             {/* {hasFeedback && <CustomMenu onUpdate={handleUpdate} onDelete={handleDelete} />} */}
           </View>
 
-          {myFeedbackLoading && (
-            <View className="flex-row items-center justify-center mt-4">
-              <ActivityIndicator size="small" color={Colors.blue_button} />
-              <Text className="ml-2 text-gray-600">
-                Đang tải đánh giá của bạn...
-              </Text>
-            </View>
-          )}
-
-          {myFeedbackError && !myFeedbackLoading && (
-            <View className="mt-3 p-3 bg-red-50 rounded-xl">
-              <Text className="text-red-600 font-medium mb-2">
-                ⚠️ {myFeedbackError.message || 'Không thể tải đánh giá.'}
-              </Text>
-              <TouchableOpacity
-                onPress={refetchFeedback}
-                className="self-start"
-              >
-                <Text className="text-blue-600 underline">Thử lại</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-
-          {!myFeedbackLoading && !myFeedbackError && (
+          {!user ? (
+            <Text className="text-sm text-gray-500 mt-1">
+              Vui lòng đăng nhập để xem và gửi đánh giá của bạn.
+            </Text>
+          ) : (
             <>
-              <View className="flex-row items-center mt-4">
-                {/* Avatar */}
-                <View className="w-14 h-14 rounded-full overflow-hidden border border-gray-300">
-                  {user?.avatar ? (
-                    <Image
-                      source={{ uri: user.avatar }}
-                      className="w-full h-full"
-                      resizeMode="cover"
-                    />
-                  ) : (
-                    <View className="w-14 h-14 rounded-full bg-gray-300 items-center justify-center">
-                      {user?.name ? (
-                        <Text className="text-2xl font-bold text-white text-center">
-                          {user.name[0].toUpperCase()}
-                        </Text>
-                      ) : (
+              {myFeedbackLoading && (
+                <View className="flex-row items-center justify-center mt-4">
+                  <ActivityIndicator size="small" color={Colors.blue_button} />
+                  <Text className="ml-2 text-gray-600">Đang tải đánh giá của bạn...</Text>
+                </View>
+              )}
+
+              {myFeedbackError && !myFeedbackLoading && (
+                <View className="mt-3 p-3 bg-red-50 rounded-xl">
+                  <Text className="text-red-600 font-medium mb-2">
+                    ⚠️ {myFeedbackError.message || 'Không thể tải đánh giá.'}
+                  </Text>
+                  <TouchableOpacity onPress={refetchFeedback} className="self-start">
+                    <Text className="text-blue-600 underline">Thử lại</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+
+              {!myFeedbackLoading && !myFeedbackError && (
+                <>
+                  <View className="flex-row items-center mt-4">
+                    {/* Avatar */}
+                    <View className="w-14 h-14 rounded-full overflow-hidden border border-gray-300">
+                      {user?.avatar ? (
                         <Image
-                          source={images.avatar}
+                          source={{ uri: user.avatar }}
                           className="w-full h-full"
                           resizeMode="cover"
                         />
+                      ) : (
+                        <View className="w-14 h-14 rounded-full bg-gray-300 items-center justify-center">
+                          {user?.name ? (
+                            <Text className="text-2xl font-bold text-white text-center">
+                              {user.name[0].toUpperCase()}
+                            </Text>
+                          ) : (
+                            <Image
+                              source={images.avatar}
+                              className="w-full h-full"
+                              resizeMode="cover"
+                            />
+                          )}
+                        </View>
                       )}
                     </View>
-                  )}
-                </View>
 
-                <View className="flex-row ml-4">
-                  {[1, 2, 3, 4, 5].map(star => {
-                    const diff = rating - star;
+                    {/* Stars */}
+                    <View className="flex-row ml-4">
+                      {[1, 2, 3, 4, 5].map(star => {
+                        const diff = rating - star;
 
-                    //  logic xác định loại sao
-                    const isFull = diff >= 0;
-                    const isHalf = diff > -1 && diff < 0;
-                    const isEmpty = diff <= -1;
+                        const isFull = diff >= 0;
+                        const isHalf = diff > -1 && diff < 0;
+                        const isEmpty = diff <= -1;
 
-                    return (
-                      <TouchableOpacity
-                        key={star}
-                        onPress={() =>
-                          navigation.navigate('Rating', {
-                            spot,
-                            myFeedback,
-                            user,
-                            onGoBack: () => {
-                              refetchFeedback();
-                              refetchStatistics();
-                            },
-                          })
-                        }
-                        activeOpacity={0.7}
-                      >
-                        {isFull ? (
-                          <IconStar
-                            size={40}
-                            color={Colors.star}
-                            style={{ marginHorizontal: 4 }}
-                          />
-                        ) : isHalf ? (
-                          <IconStarHalf
-                            size={40}
-                            color={Colors.star}
-                            style={{ marginHorizontal: 4 }}
-                          />
-                        ) : (
-                          <IconStarNo
-                            size={40}
-                            color={Colors.star_no}
-                            style={{ marginHorizontal: 4 }}
-                          />
-                        )}
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-              </View>
+                        return (
+                          <TouchableOpacity
+                            key={star}
+                            onPress={() =>
+                              navigation.navigate('Rating', {
+                                spot,
+                                myFeedback,
+                                user,
+                                onGoBack: () => {
+                                  refetchFeedback();
+                                  refetchStatistics();
+                                },
+                              })
+                            }
+                            activeOpacity={0.7}
+                          >
+                            {isFull ? (
+                              <IconStar size={40} color={Colors.star} style={{ marginHorizontal: 4 }} />
+                            ) : isHalf ? (
+                              <IconStarHalf size={40} color={Colors.star} style={{ marginHorizontal: 4 }} />
+                            ) : (
+                              <IconStarNo size={40} color={Colors.star_no} style={{ marginHorizontal: 4 }} />
+                            )}
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  </View>
 
-              {hasFeedback ? (
-                <View className="mt-3">
-                  {myFeedback.comment ? (
-                    <Text className="text-black text-base">
-                      {myFeedback.comment}
-                    </Text>
+                  {/* Feedback */}
+                  {hasFeedback ? (
+                    <View className="mt-3">
+                      {myFeedback.comment ? (
+                        <Text className="text-black text-base">{myFeedback.comment}</Text>
+                      ) : (
+                        <Text className="text-gray-500 italic">Bạn chưa thêm bình luận.</Text>
+                      )}
+                      <Text className="text-gray-500 text-xs mt-1">
+                        Cập nhật lần cuối: {new Date(myFeedback.updated_at).toLocaleString('vi-VN')}
+                      </Text>
+                    </View>
                   ) : (
-                    <Text className="text-gray-500 italic">
-                      Bạn chưa thêm bình luận.
-                    </Text>
+                    <View className="mt-3">
+                      <Text className="text-gray-500 italic">
+                        Bạn chưa đánh giá bãi này. Hãy nhấn vào ngôi sao để gửi đánh giá đầu tiên!
+                      </Text>
+                    </View>
                   )}
-                  <Text className="text-gray-500 text-xs mt-1">
-                    Cập nhật lần cuối:{' '}
-                    {new Date(myFeedback.updated_at).toLocaleString('vi-VN')}
-                  </Text>
-                </View>
-              ) : (
-                <View className="mt-3">
-                  <Text className="text-gray-500 italic">
-                    Bạn chưa đánh giá bãi này. Hãy nhấn vào ngôi sao để gửi đánh
-                    giá đầu tiên!
-                  </Text>
-                </View>
+                </>
               )}
             </>
           )}
+
+
+
 
           <View className="h-[1px] bg-gray-300 w-full mt-4" />
         </View>

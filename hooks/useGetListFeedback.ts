@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { getListFeedback } from "@/service/api";
+import { getListFeedback, getListFeedbackWithoutAccessToken } from "@/service/api";
+import { useAuth } from "@/app/context/AuthContext";
 
 
 export const useGetListFeedback = () => {
@@ -7,6 +8,7 @@ export const useGetListFeedback = () => {
   const [loading, setLoading] = useState(false);
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(true);
+  const { user } = useAuth();
 
   /**
    * Fetch danh sách feedback
@@ -27,7 +29,12 @@ export const useGetListFeedback = () => {
       // Nếu reset thì bắt đầu lại từ 0
       const currentOffset = reset ? 0 : offset;
 
-      const data = await getListFeedback(parkingSpotId, limit, currentOffset);
+      let data;
+      if (!user) {
+        console.log('Fetching feedback without access token for parking spot ID:', parkingSpotId);
+        data = await getListFeedbackWithoutAccessToken(parkingSpotId, limit, currentOffset);
+      }
+      data = await getListFeedback(parkingSpotId, limit, currentOffset);
 
       if (reset) {
         setFeedbacks(data.feedbacks);

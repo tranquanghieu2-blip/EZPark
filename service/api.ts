@@ -272,7 +272,7 @@ export const getMyFeedback = async (parking_spot_id: number) => {
   }
 };
 
-// 🟦 Lấy danh sách feedback (có phân trang)
+//  Lấy danh sách feedback (có phân trang)
 export const getListFeedback = async (
   parkingSpotId: number,
   limit = 5,
@@ -285,6 +285,34 @@ export const getListFeedback = async (
     return response.data.data;
   } catch (error) {
     handleApiError('fetching feedback list', error);
+    throw error;
+  }
+};
+
+export const getListFeedbackWithoutAccessToken = async (
+  parkingSpotId: number,
+  limit = 5,
+  offset = 0,
+): Promise<ListFeedback> => {
+  try {
+    console.log('Fetching feedback without access token for parking spot ID:', parkingSpotId);
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}/feedbacks/all/${parkingSpotId}?limit=${limit}&offset=${offset}`,
+      {
+        method: 'GET',
+        headers: API_CONFIG.headers,
+      },
+    );
+    if (!response.ok) {
+      throw new Error(
+        `Error fetching feedback list: ${response.statusText}`,
+      );
+    }
+    const res = await response.json();
+    return res.data;
+  }
+  catch (error) {
+    console.error('Fetch error:', error);
     throw error;
   }
 };
@@ -622,4 +650,5 @@ export const searchNoParkingRoute = async ({
   const json = await response.json();
   return json.data;                   
 };
+
 

@@ -247,14 +247,14 @@ export function useForbiddenRouteWatcher({
           { lat, lon },
           { lat: userLocation.latitude, lon: userLocation.longitude },
         );
-        if (d <= 25) {
+        if (d <= 100) {
           nearest = route;
           break;
         }
       }
       if (nearest) break;
     }
-
+    console.log('Tuyến gần nhất:', nearest?.no_parking_route_id || 'Không có');
     if (nearest && !currentZone) {
       setCurrentZone(nearest);
       onEnterZone?.(nearest);
