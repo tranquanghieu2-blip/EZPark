@@ -10,28 +10,27 @@ import {
   Vibration,
 } from 'react-native';
 import MapboxGL from '@rnmapbox/maps';
-// ================= Components =================
+// Components
 import CircleButton from '@/components/CircleButton';
 import { IconCrosshairs, IconQuestion } from '@/components/Icons';
 import SearchBar from '@/components/SearchBar';
-// ================= Constants =================
+// Constants
 import Colors from '@/constants/colors';
 import { icons } from '@/constants/icons';
 import { DA_NANG_CENTER, DA_NANG_VIEWPORT } from '@/constants/danangMap';
-// ================= Custom hooks =================
+// Custom hooks
 import useFetch from '@/hooks/useFetch';
 import { useScheduleTimeTriggers } from '@/hooks/useScheduleTimeTriggers';
-// ================= Services =================
+// Services
 import {
   fetchNoParkingRoutes,
   updateNoParkingRouteGeometry,
 } from '@/service/api';
 import { getRoutes } from '@/service/routingService';
-// ================= Utils =================
-import { clusterPolylines } from '@/utils/clusterPolylines';
+// Utils
 import { getPolylineStyleOfRoute } from '@/utils/polylineStyle';
 import { isDayRestricted, isWithinTimeRange } from '@/utils/validation';
-// ================= Modals =================
+// Modals
 import { HelpModalNoParkingRoute } from '@/modals/HelpModal';
 import NoParkingRouteModal from '@/modals/NoParkingRouteModal';
 import { images } from '@/constants/images';
@@ -48,12 +47,12 @@ const NoParkingRoute = () => {
   const navigation = useNavigation<any>();
   const routeNav = useRoute<any>();
 
-
-  // ================== STATE ==================
+  // STATE
   const [center, setCenter] = useState<{ latitude: number; longitude: number }>(
     DA_NANG_CENTER,
   );
-  const [routes, setRoutes] = useState<NoParkingRoute | null>(null);
+  const [currentForbiddenRoute, setCurrentForbiddenRoute] =
+    useState<NoParkingRoute | null>(null);
   const [region, setRegion] = useState<{
     latitude: number;
     longitude: number;
@@ -74,11 +73,11 @@ const NoParkingRoute = () => {
     longitude: number;
   } | null>(null);
 
-  // ================== REF ==================
+  // REF
   const mapRef = useRef<MapboxGL.MapView>(null);
   const cameraRef = useRef<MapboxGL.Camera>(null);
 
-  // ================== DATA FETCH ==================
+  // DATA FETCH
 
   const {
     data: noParkingRoutes,
@@ -110,11 +109,9 @@ const NoParkingRoute = () => {
 
     // 3. Clear param để không trigger lại khi re-render
     navigation.setParams({ selectedNoParkingRouteId: undefined });
-
   }, [routeNav?.params?.selectedNoParkingRouteId, routesWithGeometry]);
 
-
-  // ================== GEOMETRY ==================
+  //= GEOMETRY=
   useEffect(() => {
     if (!noParkingRoutes) return;
 
@@ -161,7 +158,7 @@ const NoParkingRoute = () => {
     enrichGeometry();
   }, [noParkingRoutes]);
 
-  // ================== TIME TRIGGER ==================
+  //= TIME TRIGGER=
   const [, forceUpdate] = useState(0);
   const triggerUpdate = useCallback(() => forceUpdate(x => x + 1), []);
   useScheduleTimeTriggers(noParkingRoutes, triggerUpdate, 'forbidden');
@@ -169,7 +166,7 @@ const NoParkingRoute = () => {
   const onRegionDidChange = async () => {
     try {
       const centerPoint = await mapRef.current?.getCenter();
-      const zoomLevel = await mapRef.current?.getZoom();
+      const   zoomLevel = await mapRef.current?.getZoom();
       const bounds = await mapRef.current?.getVisibleBounds();
       if (centerPoint && bounds) {
         const ne = bounds[0];
@@ -200,26 +197,8 @@ const NoParkingRoute = () => {
     }
   }, [location]);
 
-  const handleRegionChange = (feature: any) => {
-    const minDelta = 0.001;
-    const clamped = {
-      latitude: feature.properties.center[1],
-      longitude: feature.properties.center[0],
-      latitudeDelta: Math.max(
-        feature.properties.bounds.ne[1] - feature.properties.bounds.sw[1],
-        minDelta,
-      ),
-      longitudeDelta: Math.max(
-        feature.properties.bounds.ne[0] - feature.properties.bounds.sw[0],
-        minDelta,
-      ),
-    };
-    setRegion(clamped);
-    setZoomLevel(feature.properties.zoom);
-  };
 
-  // ================== USER LOCATION & CẢNH BÁO ==================
-  const [showWarning, setShowWarning] = useState(false);
+  //= USER LOCATION & CẢNH BÁO=
   const [showBanner, setShowBanner] = useState(false);
   const [showBadge, setShowBadge] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -227,42 +206,43 @@ const NoParkingRoute = () => {
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
   // Kết nối hook theo dõi tuyến cấm
-  useForbiddenRouteWatcher({
+  const check = useForbiddenRouteWatcher({
     userLocation: location,
     onEnterZone: route => {
-      setRoutes(route);
-      console.log('Tên tuyến: ', route.street);
-      console.log('Vào tuyến cấm:', route.no_parking_route_id);
-      setShowWarning(true);
+      setCurrentForbiddenRoute(route);
+      console.log('ĐÃ VÀO TUYẾN CẤM:', route.street);
     },
     onExitZone: () => {
-      setRoutes(null);
-      setShowWarning(false);
+      setCurrentForbiddenRoute(null);
+      console.log('ĐÃ RA KHỎI TUYẾN CẤM');
     },
   });
-
+  console.log('Check forbidden route:', check);
   // Khi vừa vào tuyến cấm → hiển thị banner
   useEffect(() => {
-    if (!routes) {
+    console.log(
+      'TUYẾN CẤM HIỆN TẠI: ',
+      currentForbiddenRoute?.street || 'Không có',
+    );
+    if (!currentForbiddenRoute) {
       setShowBanner(false);
       setShowBadge(false);
       setShowModal(false);
       return;
     }
-
     // Khi có tuyến mới → hiện banner
     Vibration.vibrate(300);
     setShowBanner(true);
     setShowBadge(false);
 
-    // Ẩn banner sau 5s → hiện badge
+    // Ẩn banner sau 7s → hiện badge
     const timer = setTimeout(() => {
       setShowBanner(false);
       setShowBadge(true);
-    }, 3000);
+    }, 7000);
 
     return () => clearTimeout(timer);
-  }, [routes]);
+  }, [currentForbiddenRoute]);
 
   // Hiệu ứng fade banner
   useEffect(() => {
@@ -291,55 +271,15 @@ const NoParkingRoute = () => {
       ]),
     ).start();
   }, [showBadge]);
-  // ====== HÀM KIỂM TRA NGƯỜI DÙNG CÓ Ở GẦN TUYẾN CẤM KHÔNG ======
-  function isNearForbiddenRoute(
-    userLoc: { latitude: number; longitude: number },
-    route: any,
-  ) {
-    if (!route.route?.coordinates) return false;
 
-    for (const [lon, lat] of route.route.coordinates) {
-      const distance = haversine(
-        { latitude: lat, longitude: lon },
-        { latitude: userLoc.latitude, longitude: userLoc.longitude },
-      );
-
-      // Nếu người dùng trong phạm vi 5m của đoạn cấm
-      if (distance <= 5) return true;
-    }
-    return false;
-  }
-
-  // ====== LẮNG NGHE THAY ĐỔI VỊ TRÍ NGƯỜI DÙNG ======
-  useEffect(() => {
-    if (!userLocation || !routesWithGeometry) return;
-    let nearForbidden = false;
-    for (const route of routesWithGeometry) {
-      // Kiểm tra ngày và giờ cấm
-      const now = new Date();
-      if (!isDayRestricted(now, route.days_restricted)) continue;
-      if (!isWithinTimeRange(now, route.time_range)) continue;
-      // Kiểm tra khoảng cách
-      if (isNearForbiddenRoute(userLocation, route)) {
-        nearForbidden = true;
-        break;
-      }
-    }
-    if (nearForbidden && !showWarning) {
-      // Nếu vừa đi vào vùng cấm, hiện banner
-      setShowWarning(true);
-    } else if (!nearForbidden && showWarning) {
-      // Nếu vừa rời khỏi vùng cấm, ẩn banner
-      setShowWarning(false);
-    }
-  }, [userLocation, routesWithGeometry]);
-
-  // ================== RENDER ==================
+  //= RENDER=
   return (
     <View style={styles.container}>
       {/* Thanh tìm kiếm */}
-      <SearchBar placeholder="Tìm tuyến cấm đỗ xe..."
-        onPress={() => navigation.navigate('SearchNoParkingRoute' as never)} />
+      <SearchBar
+        placeholder="Tìm tuyến cấm đỗ xe..."
+        onPress={() => navigation.navigate('SearchNoParkingRoute' as never)}
+      />
 
       {/* Nút chức năng */}
       <View className="absolute right-4 bottom-10 z-20 flex-col space-y-4 gap-2">
@@ -379,7 +319,7 @@ const NoParkingRoute = () => {
         onClose={() => setShowHelp(false)}
       />
 
-      {/* ================= MAP ================= */}
+      {/* MAP */}
       <MapboxGL.MapView
         ref={mapRef}
         style={styles.map}
@@ -443,7 +383,7 @@ const NoParkingRoute = () => {
           </MapboxGL.PointAnnotation>
         )}
 
-        {/* ================= ROUTES (clustered) ================= */}
+        {/* ROUTES (clustered) */}
         {routesWithGeometry?.map(route => {
           if (!route.route) return null;
 
@@ -457,7 +397,8 @@ const NoParkingRoute = () => {
             lat,
           ]);
 
-          const isSelected = selectedRoute?.no_parking_route_id === route.no_parking_route_id;
+          const isSelected =
+            selectedRoute?.no_parking_route_id === route.no_parking_route_id;
           return (
             <MapboxGL.ShapeSource
               key={`route-${route.no_parking_route_id}`}
@@ -499,7 +440,7 @@ const NoParkingRoute = () => {
         })}
       </MapboxGL.MapView>
 
-      {/* ================= LOADING + ERROR ================= */}
+      {/* LOADING + ERROR */}
       {noParkingRoutesLoad && (
         <ActivityIndicator
           size="large"
@@ -514,7 +455,7 @@ const NoParkingRoute = () => {
         </Text>
       )}
 
-      {/* ================= MODAL CHI TIẾT ================= */}
+      {/* MODAL CHI TIẾT */}
       <NoParkingRouteModal
         route={selectedRoute}
         onClose={() => setSelectedRoute(null)}
@@ -550,7 +491,8 @@ const NoParkingRoute = () => {
               🚫 Bạn đang đi vào tuyến đường cấm đỗ xe!
             </Text>
             <Text style={{ color: '#fff', fontSize: 16, fontWeight: 'bold' }}>
-              {routes?.street}
+              {/* 7. SỬA LẠI: Dùng state đã đổi tên */}
+              {currentForbiddenRoute?.street}
             </Text>
           </View>
         </Animated.View>
@@ -610,9 +552,11 @@ const NoParkingRoute = () => {
             <Text
               style={{
                 marginTop: 8,
-                fontWeight: '600'
-              }}>
-              {routes?.street}
+                fontWeight: '600',
+              }}
+            >
+              {/* 7. SỬA LẠI: Dùng state đã đổi tên */}
+              {currentForbiddenRoute?.street}
             </Text>
             {/* <Text>Thời gian: {routes?.time_range}</Text> */}
             <Pressable
@@ -625,11 +569,13 @@ const NoParkingRoute = () => {
               }}
               onPress={() => setShowModal(false)}
             >
-              <Text style={{
-                textAlign: 'center',
-                fontWeight: '500',
-                fontSize: 16,
-              }}>
+              <Text
+                style={{
+                  textAlign: 'center',
+                  fontWeight: '500',
+                  fontSize: 16,
+                }}
+              >
                 Đã hiểu
               </Text>
             </Pressable>
