@@ -18,6 +18,7 @@ import {
 import usePost from "@/hooks/usePost";
 import { updatePassword } from "@/service/api";
 import ToastCustom from "@/utils/CustomToast";
+import { maxLengthPassword } from "@/utils/ui";
 
 // ================= Type định nghĩa =================
 type RootStackParamList = {
@@ -41,6 +42,7 @@ const ChangePassword = () => {
   const [isChanged, setIsChanged] = useState(false);
   const [isSamePassword, setIsSamePassword] = useState(false);
   const [loading, setLoading] = useState<boolean>(false);
+  const maxLength = maxLengthPassword;
 
   // Kiểm tra định dạng mật khẩu
   const passwordPattern = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z\d]).{10,}$/;
@@ -113,6 +115,7 @@ const ChangePassword = () => {
             toggle={() => setShowOldPassword(!showOldPassword)}
             valid={oldPasswordValid}
             errorMsg="Mật khẩu phải ≥ 10 ký tự, có chữ, số và ký tự đặc biệt"
+            maxLength={maxLength}
           />
 
           {/* Mật khẩu mới */}
@@ -132,6 +135,7 @@ const ChangePassword = () => {
                 ? "Mật khẩu mới không được trùng với mật khẩu cũ."
                 : "Mật khẩu phải ≥ 10 ký tự, có chữ, số và ký tự đặc biệt"
             }
+            maxLength={maxLength}
           />
 
           {/* Xác nhận mật khẩu */}
@@ -148,6 +152,7 @@ const ChangePassword = () => {
             toggle={() => setShowConfirmPassword(!showConfirmPassword)}
             valid={confirmValid}
             errorMsg="Mật khẩu xác nhận không trùng khớp"
+            maxLength={maxLength}
           />
         </View>
 

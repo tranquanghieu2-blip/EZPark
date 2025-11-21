@@ -480,7 +480,7 @@ const ParkingSpotDetail = () => {
             <>
               {myFeedbackLoading && (
                 <View className="flex-row items-center justify-center mt-4">
-                  <ActivityIndicator size="small" color={Colors.blue_button} />
+                  <ActivityIndicator size="small" color={Colors.primary} />
                   <Text className="ml-2 text-gray-600">Đang tải đánh giá của bạn...</Text>
                 </View>
               )}
@@ -595,7 +595,7 @@ const ParkingSpotDetail = () => {
         {/* ==== Danh sách các đánh giá khác ==== */}
         {listFeedbackLoading && feedbacks.length === 0 ? (
           <View className="flex-1 justify-center items-center mt-5">
-            <ActivityIndicator size="small" color={Colors.blue_button} />
+            <ActivityIndicator size="small" color={Colors.primary} />
           </View>
         ) : (
           <FlatList

@@ -17,6 +17,7 @@ import { Toast } from 'toastify-react-native';
 import { ToastCustomView } from '@/components/ToastCustomView';
 import { EVENT_USER_LOGOUT, mapEvents, EVENT_USER_LOGIN } from '@/utils/eventEmitter';
 import { useNavigation } from '@react-navigation/native';
+import Colors from '@/constants/colors';
 
 const Stack = createNativeStackNavigator();
 
@@ -50,7 +51,7 @@ function AppNavigator() {
   if (loading) {
     return (
       <View className="flex-1 items-center justify-center bg-white">
-        <ActivityIndicator size="large" color="#FF6F00" />
+        <ActivityIndicator size="large" color={Colors.primary} />
       </View>
     );
   }

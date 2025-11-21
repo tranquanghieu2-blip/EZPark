@@ -151,6 +151,7 @@ const ChangeProfile = () => {
           onChangeText={setName}
           valid={nameValid}
           errorMsg="Tên không được chứa ký tự đặc biệt"
+          maxLength={50}
         />
 
         {/* Button */}

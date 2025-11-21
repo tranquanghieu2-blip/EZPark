@@ -24,6 +24,7 @@ import { useNavigation } from "@react-navigation/native";
 import Colors from "@/constants/colors";
 import ToastCustom from "@/utils/CustomToast";
 import { useDebounce } from "@/hooks/useDebounce";
+import { maxLengthReview } from "@/utils/ui";
 
 // ========================== TYPES ==========================
 type RootStackParamList = {
@@ -53,7 +54,7 @@ const ratingItems: RatingItem[] = [
   { id: "security", label: "An ninh - an toàn" },
 ];
 
-const MAX_CHAR = 200;
+const MAX_CHAR = maxLengthReview;
 
 // ========================== COMPONENT ==========================
 const Rating = () => {

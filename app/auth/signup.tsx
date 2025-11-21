@@ -20,6 +20,7 @@ import {
 } from "react-native";
 import { InputRow } from "@/components/InputRow";
 import ToastCustom from "@/utils/CustomToast";
+import { maxLengthEmail, maxLengthName, maxLengthPassword } from "@/utils/ui";
 
 export default function SignUp() {
   const navigation = useNavigation<any>();
@@ -90,6 +91,7 @@ export default function SignUp() {
         onChangeText={setEmail}
         valid={emailValid}
         errorMsg="Email không hợp lệ"
+        maxLength={maxLengthEmail}
       />
 
       <InputRow
@@ -99,6 +101,7 @@ export default function SignUp() {
         onChangeText={setName}
         valid={nameValid}
         errorMsg="Tên không được chứa ký tự đặc biệt"
+        maxLength={maxLengthName}
       />
 
       <InputRow
@@ -110,7 +113,8 @@ export default function SignUp() {
         show={showPassword}
         toggle={() => setShowPassword(!showPassword)}
         valid={passwordValid}
-        errorMsg="Mật khẩu phải ≥ 9 ký tự, có chữ và số"
+        errorMsg="Mật khẩu phải ≥ 10 ký tự, có chữ, số và ký tự đặc biệt"
+        maxLength={maxLengthPassword}
       />
 
       <InputRow
@@ -123,6 +127,7 @@ export default function SignUp() {
         toggle={() => setShowConfirm(!showConfirm)}
         valid={confirmValid}
         errorMsg="Mật khẩu xác nhận không trùng khớp"
+        maxLength={maxLengthPassword}
       />
 
       {/* Button */}

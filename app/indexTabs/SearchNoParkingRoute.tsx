@@ -17,6 +17,8 @@ import { useSmartMapboxLocation } from "@/hooks/usePeriodicMapboxLocation";
 import { useSearchNoParkingRoute } from "@/hooks/useSearchNoParkingRoute";
 import Colors from "@/constants/colors";
 import { IconCalendar, IconClock, IconDistance, IconNote, IconSideParking } from "@/components/Icons";
+import { max } from "lodash";
+import { maxLengthSearch } from "@/utils/ui";
 
 const SearchNoParkingRoute = () => {
     const navigation = useNavigation<any>();
@@ -148,7 +150,7 @@ const SearchNoParkingRoute = () => {
     if (!isLocationReady) {
         return (
             <View className="flex-1 justify-center items-center bg-white">
-                <ActivityIndicator size="large" />
+                <ActivityIndicator size="large" color={Colors.primary} />
                 <Text className="mt-2 text-gray-500">Đang lấy vị trí của bạn...</Text>
             </View>
         );
@@ -169,6 +171,7 @@ const SearchNoParkingRoute = () => {
                         onChangeText={setQuery}
                         onFocus={() => setIsFocused(true)}
                         onBlur={() => setIsFocused(false)}
+                        maxLength={maxLengthSearch}
                     />
                 </View>
             </View>
@@ -176,7 +179,7 @@ const SearchNoParkingRoute = () => {
             {/* Danh sách */}
             {loading && noParkingRoutes.length === 0 ? (
                 <View className="flex-1 justify-center items-center mt-10">
-                    <ActivityIndicator size="large" />
+                    <ActivityIndicator size="large" color={Colors.primary} />
                 </View>
             ) : (
                 <FlatList
