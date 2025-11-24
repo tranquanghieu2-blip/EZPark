@@ -1,4 +1,4 @@
-
+import { daNangBounds } from './../constants/mapBounds';
 import api from '@/service/apiClient';
 import { normalizeFilePath } from '@/utils/normalizeFilePath';
 import { UserLocation } from '@rnmapbox/maps';
@@ -192,24 +192,30 @@ export async function login(email: string, password: string) {
 }
 export async function GGLogin() {
   Linking.openURL(`${API_CONFIG.BASE_URL}/auth/google`);
-  
 }
-export const fetchMe = async (accessToken: string) => {
-  const res = await fetch(`${API_CONFIG.BASE_URL}/auth/me`, {
-    method: "GET",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json",
-    },
-  });
-  const json = await res.json();
 
-  if (!res.ok) {
-    throw new Error(json?.message || "Failed to fetch user info");
+export const fetchMe = async (tempToken: string) => {
+  try {
+    const response = await fetch(`${API_CONFIG.BASE_URL}/auth/google/exchange`, {  
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json', 
+      },
+         body: JSON.stringify({ tempToken: tempToken })
+    }); 
+
+    if (!response.ok) {
+      throw new Error(`Error fetching user info: ${response.statusText}`);
+    }
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Fetch error:', error);
+    throw error;
   }
-
-  return json.data || json;
 };
+
+
 
 
 const buildFeedbackPayload = (data: {
