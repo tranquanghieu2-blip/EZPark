@@ -15,6 +15,7 @@ import { IconPassword } from "@/components/Icons";
 import { InputRow } from "@/components/InputRow";
 import MessageModal from "@/modals/MessageModal";
 import { resetPassword } from "@/service/api";
+import { maxLengthPassword } from "@/utils/ui";
 
 // định nghĩa kiểu param
 type RootStackParamList = {
@@ -101,6 +102,7 @@ const ResetPassword = () => {
             toggle={() => setShowPassword(!showPassword)}
             valid={passwordValid}
             errorMsg="Mật khẩu phải ≥ 10 ký tự, có chữ, số và ký tự đặc biệt"
+            maxLength={maxLengthPassword}
           />
 
         
@@ -118,6 +120,7 @@ const ResetPassword = () => {
             toggle={() => setShowConfirmPassword(!showConfirmPassword)}
             valid={confirmValid}
             errorMsg="Mật khẩu xác nhận không trùng khớp"
+            maxLength={maxLengthPassword}
           />
         </View>
 

@@ -21,6 +21,8 @@ import { fetchHistoryChat, postChatMessage } from "@/service/api";
 import { useAuth } from "@/app/context/AuthContext";
 import NoUserLogin from "@/components/NoUserLogin";
 import BotTypingBubble from "@/components/BotTypingBubble";
+import Colors from "@/constants/colors";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
 const ChatBot: React.FC = () => {
   const navigation = useNavigation<any>();
@@ -157,12 +159,13 @@ const ChatBot: React.FC = () => {
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={Platform.OS === "ios" ? insets.bottom : 104}
+
       >
 
         <View className="flex-1 bg-white">
           {loading ? (
             <View className="flex-1 justify-center items-center">
-              <ActivityIndicator size="large" color="#007AFF" />
+              <ActivityIndicator size="large" color={Colors.primary} />
               <Text className="text-gray-500 mt-3">Đang tải hội thoại...</Text>
             </View>
           ) : messages.length === 0 && !botTyping ? (
