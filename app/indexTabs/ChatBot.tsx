@@ -23,6 +23,7 @@ import NoUserLogin from "@/components/NoUserLogin";
 import BotTypingBubble from "@/components/BotTypingBubble";
 import Colors from "@/constants/colors";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import useSmartMapboxLocation from "@/hooks/usePeriodicMapboxLocation";
 
 const ChatBot: React.FC = () => {
   const navigation = useNavigation<any>();
@@ -34,6 +35,9 @@ const ChatBot: React.FC = () => {
   const [sessionID, setSessionID] = useState<string | null>(null);
   const flatRef = useRef<FlatList<ChatMessage>>(null);
   const insets = useSafeAreaInsets();
+  const userLocation = useSmartMapboxLocation();
+  const lat = userLocation?.latitude ?? undefined;
+  const lon = userLocation?.longitude ?? undefined;
 
   // -------------------------------
   // Load SessionID + lịch sử chat
@@ -113,7 +117,7 @@ const ChatBot: React.FC = () => {
       setSending(true);
 
       try {
-        const response = await postChatMessage(text, sessionID ?? undefined);
+        const response = await postChatMessage(text, sessionID ?? undefined, lat, lon);
 
         // Lưu sessionID lần đầu
         if (!sessionID && response.session_id) {
