@@ -15,7 +15,7 @@ import { IconPassword } from "@/components/Icons";
 import { InputRow } from "@/components/InputRow";
 import MessageModal from "@/modals/MessageModal";
 import { resetPassword } from "@/service/api";
-import { maxLengthPassword } from "@/utils/ui";
+import { DISABLED_OPACITY, isValidPassword, maxLengthPassword } from "@/utils/ui";
 
 // định nghĩa kiểu param
 type RootStackParamList = {
@@ -43,8 +43,8 @@ const ResetPassword = () => {
   const [loading, setLoading] = useState<boolean>(false);
 
   // Kiểm tra định dạng mật khẩu
-  const passwordPattern = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z\d]).{10,}$/;
-  const passwordValid = passwordPattern.test(password);
+  
+  const passwordValid = isValidPassword(password);
   const confirmValid =
     confirmNewPassword === password && confirmNewPassword.length > 0;
 
@@ -101,7 +101,7 @@ const ResetPassword = () => {
             show={showPassword}
             toggle={() => setShowPassword(!showPassword)}
             valid={passwordValid}
-            errorMsg="Mật khẩu phải ≥ 10 ký tự, có chữ, số và ký tự đặc biệt"
+            errorMsg="Mật khẩu phải ≥ 10 ký tự, có chữ và số"
             maxLength={maxLengthPassword}
           />
 
@@ -126,11 +126,11 @@ const ResetPassword = () => {
 
         {/* ==== Nút Lưu thay đổi ==== */}
         <View className="h-[50px] mb-3 mt-5">
-          {canSave ? (
+          
             <GradientButton
               onPress={handleSave}
               disabled={loading}
-              className="py-3 px-5 rounded-lg items-center justify-center h-full"
+              className={`py-3 px-5 rounded-lg items-center justify-center h-full ${!canSave ? `opacity-${DISABLED_OPACITY}` : "opacity-100"}`}
             >
               {loading ? (
                 <ActivityIndicator color="#fff" />
@@ -140,16 +140,7 @@ const ResetPassword = () => {
                 </Text>
               )}
             </GradientButton>
-          ) : (
-            <Pressable
-              disabled
-              className="bg-gray-200 py-3 px-5 rounded-lg items-center justify-center h-full"
-            >
-              <Text className="text-center text-gray-600 font-semibold text-lg">
-                Cập nhật mật khẩu
-              </Text>
-            </Pressable>
-          )}
+          
         </View>
       </ScrollView>
 

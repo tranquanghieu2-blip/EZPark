@@ -20,7 +20,7 @@ import {
 } from "react-native";
 import { InputRow } from "@/components/InputRow";
 import ToastCustom from "@/utils/CustomToast";
-import { maxLengthEmail, maxLengthName, maxLengthPassword } from "@/utils/ui";
+import { isValidPassword, maxLengthEmail, maxLengthName, maxLengthPassword } from "@/utils/ui";
 
 export default function SignUp() {
   const navigation = useNavigation<any>();
@@ -38,7 +38,7 @@ export default function SignUp() {
   // validate logic
   const emailValid = /^\S+@\S+\.\S+$/.test(email);
   const nameValid = /^[A-Za-zÀ-ỹ]+(?:\s[A-Za-zÀ-ỹ]+)*$/.test(name);
-  const passwordValid = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z\d]).{10,}$/.test(password);
+  const passwordValid = isValidPassword(password);
   const confirmValid = confirm === password && confirm.length > 0;
 
   const isFormInvalid = !emailValid || !nameValid || !passwordValid || !confirmValid;
@@ -47,7 +47,7 @@ export default function SignUp() {
     if (!emailValid) return alert("Email không hợp lệ");
     if (!nameValid) return alert("Tên không hợp lệ");
     if (!passwordValid)
-      return alert("Mật khẩu phải >= 9 ký tự, có chữ và số");
+      return alert("Mật khẩu phải >= 10 ký tự, có chữ và số");
     if (!confirmValid) return alert("Mật khẩu xác nhận không trùng khớp");
 
     try {
@@ -55,7 +55,7 @@ export default function SignUp() {
       console.log("Đăng ký thành công:", res);
       ToastCustom.success('Đăng ký thành công!', 'Vui lòng xác nhận OTP được gửi đến email của bạn.');
       navigation.navigate("verify-otp", { email, password, name, flowType: "signup" });
-    } catch (err : any) {
+    } catch (err: any) {
       ToastCustom.error('Đăng ký thất bại!', err.message || 'Vui lòng kiểm tra lại thông tin đăng ký.');
     }
 
@@ -102,7 +102,10 @@ export default function SignUp() {
         valid={nameValid}
         errorMsg="Tên không được chứa ký tự đặc biệt"
         maxLength={maxLengthName}
+      
       />
+      {/* Bộ đếm ký tự */}
+      
 
       <InputRow
         icon={<IconPassword size={22} color="#fff" />}
@@ -113,7 +116,7 @@ export default function SignUp() {
         show={showPassword}
         toggle={() => setShowPassword(!showPassword)}
         valid={passwordValid}
-        errorMsg="Mật khẩu phải ≥ 10 ký tự, có chữ, số và ký tự đặc biệt"
+        errorMsg="Mật khẩu phải ≥ 10 ký tự, có chữ và số"
         maxLength={maxLengthPassword}
       />
 
@@ -135,8 +138,7 @@ export default function SignUp() {
         <GradientButton
           onPress={handleSignUp}
           disabled={loading || isFormInvalid}
-          className={`py-3 px-5 rounded-lg items-center justify-center h-full ${
-              isFormInvalid ? 'opacity-70' : 'opacity-100'
+          className={`py-3 px-5 rounded-lg items-center justify-center h-full ${isFormInvalid ? 'opacity-70' : 'opacity-100'
             }`}
         >
           {loading ? (

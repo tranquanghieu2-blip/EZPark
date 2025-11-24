@@ -22,7 +22,7 @@ import {
 import { useEffect } from 'react';
 import { Linking } from 'react-native';
 import ToastCustom from '@/utils/CustomToast';
-import { DISABLED_OPACITY, maxLengthEmail, maxLengthPassword  } from '@/utils/ui';
+import { DISABLED_OPACITY, maxLengthEmail, maxLengthPassword, isValidPassword  } from '@/utils/ui';
 import api from '@/service/apiClient';
 
 export default function Login() {
@@ -71,15 +71,13 @@ export default function Login() {
 
   // Validate logic
   const emailValid = /^\S+@\S+\.\S+$/.test(email);
-  const passwordValid = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z\d]).{10,}$/.test(
-    password,
-  );
+  const passwordValid = isValidPassword(password);
 
   const isFormInvalid = !emailValid || !passwordValid;
 
   const handleLogin = async () => {
     if (!emailValid) return alert('Email không hợp lệ');
-    if (!passwordValid) return alert('Mật khẩu phải >= 9 ký tự, có chữ và số');
+    if (!passwordValid) return alert('Mật khẩu phải >= 10 ký tự, có chữ và số');
 
     try {
       const res = await execute(email, password);
@@ -154,7 +152,7 @@ export default function Login() {
           show={showPassword}
           toggle={() => setShowPassword(!showPassword)}
           valid={passwordValid}
-          errorMsg="Mật khẩu phải ≥ 9 ký tự, có chữ và số"
+          errorMsg="Mật khẩu phải ≥ 10 ký tự, có chữ và số"
           maxLength={maxLengthPassword}
         />
 

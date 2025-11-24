@@ -18,7 +18,7 @@ import {
 import usePost from "@/hooks/usePost";
 import { updatePassword } from "@/service/api";
 import ToastCustom from "@/utils/CustomToast";
-import { maxLengthPassword } from "@/utils/ui";
+import { DISABLED_OPACITY, isValidPassword, maxLengthPassword } from "@/utils/ui";
 
 // ================= Type định nghĩa =================
 type RootStackParamList = {
@@ -45,9 +45,8 @@ const ChangePassword = () => {
   const maxLength = maxLengthPassword;
 
   // Kiểm tra định dạng mật khẩu
-  const passwordPattern = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z\d]).{10,}$/;
-  const oldPasswordValid = passwordPattern.test(oldPassword);
-  const newPasswordValid = passwordPattern.test(newPassword);
+  const oldPasswordValid = isValidPassword(oldPassword);
+  const newPasswordValid = isValidPassword(newPassword);
   const confirmValid =
     confirmNewPassword === newPassword && confirmNewPassword.length > 0;
 
@@ -158,11 +157,11 @@ const ChangePassword = () => {
 
         {/* ==== Nút Lưu thay đổi ==== */}
         <View className="h-[50px] mb-3 mt-5">
-          {canSave ? (
+          
             <GradientButton
               onPress={handleSave}
               disabled={loading}
-              className="py-3 px-5 rounded-lg items-center justify-center h-full"
+              className={`py-3 px-5 rounded-lg items-center justify-center h-full ${!canSave ? `opacity-${DISABLED_OPACITY}` : "opacity-100"}`}
             >
               {loading ? (
                 <ActivityIndicator color="#fff" />
@@ -172,16 +171,7 @@ const ChangePassword = () => {
                 </Text>
               )}
             </GradientButton>
-          ) : (
-            <Pressable
-              disabled
-              className="bg-gray-200 py-3 px-5 rounded-lg items-center justify-center h-full"
-            >
-              <Text className="text-center text-gray-600 font-semibold text-lg">
-                Lưu thay đổi
-              </Text>
-            </Pressable>
-          )}
+          
         </View>
       </ScrollView>
 

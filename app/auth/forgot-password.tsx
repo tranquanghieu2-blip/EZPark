@@ -18,6 +18,7 @@ import {
 } from "react-native";
 import { sendPasswordResetOtp } from "@/service/api";
 import ToastCustom from "@/utils/CustomToast";
+import { DISABLED_OPACITY } from "@/utils/ui";
 
 type RootStackParamList = {
   MainProfile: undefined;
@@ -87,11 +88,11 @@ const handleSave = async () => {
 
         {/* Button */}
         <View className="h-[50px] mb-3 mt-5">
-          {canSave ? (
+          
             <GradientButton
               onPress={handleSave}
               disabled={loading}
-              className="py-3 px-5 rounded-lg items-center justify-center h-full"
+              className={`py-3 px-5 rounded-lg items-center justify-center h-full ${!canSave ? `opacity-${DISABLED_OPACITY}` : "opacity-100"}`}
             >
               {loading ? (
                 <ActivityIndicator color="#fff" />
@@ -101,16 +102,7 @@ const handleSave = async () => {
                 </Text>
               )}
             </GradientButton>
-          ) : (
-            <Pressable
-              disabled
-              className="bg-gray-200 py-3 px-5 rounded-lg items-center justify-center h-full"
-            >
-              <Text className="text-center text-gray-600 font-semibold text-lg">
-                Lưu thay đổi
-              </Text>
-            </Pressable>
-          )}
+          
         </View>
       </ScrollView>
 
