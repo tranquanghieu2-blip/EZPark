@@ -168,7 +168,7 @@ export async function verifyOtp(email: string, otp: string) {
 
   if (!res.ok) {
     console.error('Lỗi xác thực otp:', json);
-    throw new Error(json?.msg || 'Failed to verify otp');
+    throw new Error(json?.message || 'Failed to verify otp');
   }
   return json;
 }
