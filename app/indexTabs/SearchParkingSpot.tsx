@@ -95,8 +95,8 @@ const SearchParkingSpot = () => {
 
   useEffect(() => {
     console.log("Render useEffect SearchParkingSpot - fetchSpots");
-    if (!location || debouncedQuery === "") {
-      setIsDisableFilter(true);
+    if (!location) {
+      // setIsDisableFilter(true);
       if (debouncedQuery === "") resetSearch();
       return;
     }
@@ -276,7 +276,7 @@ const SearchParkingSpot = () => {
               <View className="mt-4 pb-6">
                 {spots.length > 5 &&
                   (loadingReset ? (
-                    <ActivityIndicator />
+                    <ActivityIndicator color={Colors.primary} />
                   ) : (
                     <TouchableOpacity
                       className="mb-3 bg-gray-200 rounded-lg h-[45px] justify-center items-center"
@@ -290,7 +290,7 @@ const SearchParkingSpot = () => {
                 {hasMore && (
                   <View className="h-[45px] justify-center">
                     {loadingMore ? (
-                      <ActivityIndicator />
+                      <ActivityIndicator color={Colors.primary} />
                     ) : (
                       <GradientButton
                         className="py-3 bg-blue-500 rounded-lg h-full items-center justify-center"

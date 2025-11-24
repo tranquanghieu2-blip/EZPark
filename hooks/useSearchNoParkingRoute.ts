@@ -15,11 +15,11 @@ export const useSearchNoParkingRoute = () => {
    * @param coords - Vị trí hiện tại { latitude, longitude }
    */
   const fetchNoParkingRoutes = async (
-    query: string,
+    query?: string,
     reset = false,
     coords?: { latitude: number; longitude: number }
   ) => {
-    if (!query.trim() || !coords) return;
+    if (!coords) return;
 
     try {
       setLoading(true);
