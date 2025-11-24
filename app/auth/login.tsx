@@ -6,9 +6,9 @@ import { icons } from '@/constants/icons';
 import usePost from '@/hooks/usePost';
 import { useAuth } from '@/app/context/AuthContext';
 import MessageModal from '@/modals/MessageModal';
-import { GGLogin, login } from '@/service/api';
+import {  fetchMe, GGLogin, login } from '@/service/api';
 import { useNavigation } from '@react-navigation/native';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -19,7 +19,6 @@ import {
   Text,
   View,
 } from 'react-native';
-import { useEffect } from 'react';
 import { Linking } from 'react-native';
 import ToastCustom from '@/utils/CustomToast';
 import { DISABLED_OPACITY, maxLengthEmail, maxLengthPassword  } from '@/utils/ui';
@@ -29,37 +28,60 @@ export default function Login() {
   const navigation = useNavigation<any>();
   const { login: saveAuth } = useAuth(); // Hàm login từ AuthContext
 
+
   useEffect(() => {
+    // Lắng nghe deep link callback từ Google
     const handleDeepLink = async (event: { url: string }) => {
-      const url = event.url;
+      console.log("Full URL:", event.url);
+      
+      // Sửa lại điều kiện check URL
+      if (event.url.includes('auth/callback')) {
+        try {
+          // Parse URL để lấy tempToken
+          const urlObj = new URL(event.url);
+          const tempToken = urlObj.searchParams.get('tempToken');
+          console.log("Temp Token:", tempToken);
+          
+          if (!tempToken) {
+            throw new Error('No temp token received from Google login');
+          }
 
-      if (url.startsWith('ezpark://auth')) {
-        const params = new URLSearchParams(url.split('?')[1]);
-        const accessToken = params.get('accessToken');
-        const refreshToken = params.get('refreshToken');
-
-        if (accessToken && refreshToken) {
-          // 1. Gọi API lấy thông tin user từ BE
-          const me = await api.get('/auth/me', {
-            headers: { Authorization: `Bearer ${accessToken}` },
-          });
-          // 2. Lưu user + tokens vào context
-          await saveAuth(me.data, accessToken, refreshToken);
-          // 3. Điều hướng vào app
-          navigation.reset({
-            index: 0,
-            routes: [{ name: '(tabs)' }],
-          });
+          // Gọi handleGoogleCallback với tempToken
+          const result = await fetchMe(tempToken);
+          console.log("Result: ",result)
+          
+          // Lưu token vào AuthContext
+          if (result?.refreshToken && result?.accessToken) {
+            await saveAuth(result.user, result.accessToken, result.refreshToken ?? '');
+            navigation.navigate('(tabs)' as never);
+            ToastCustom.success(
+              'Đăng nhập Google thành công!',
+              'Chào mừng bạn đến với EZPark.'
+            );
+          }
+        } catch (error) {
+          console.error('Google login failed:', error);
+          ToastCustom.error(
+            'Đăng nhập Google thất bại!',
+            'Vui lòng thử lại.'
+          );
         }
       }
     };
 
-    const sub = Linking.addEventListener('url', handleDeepLink);
-    Linking.getInitialURL().then(url => {
-      if (url) handleDeepLink({ url });
+    // Subscribe to deep links
+    const subscription = Linking.addEventListener('url', handleDeepLink);
+
+    // Check if app was opened from a deep link
+    Linking.getInitialURL().then((url) => {
+      if (url && url.includes('auth/callback')) {
+        handleDeepLink({ url });
+      }
     });
 
-    return () => sub.remove();
+    return () => {
+      subscription.remove();
+    };
   }, []);
 
   const [email, setEmail] = useState('');
