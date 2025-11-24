@@ -22,38 +22,45 @@ import {
 import { useEffect } from 'react';
 import { Linking } from 'react-native';
 import ToastCustom from '@/utils/CustomToast';
-import { DISABLED_OPACITY, maxLengthEmail, maxLengthPassword } from '@/utils/ui';
+import { DISABLED_OPACITY, maxLengthEmail, maxLengthPassword  } from '@/utils/ui';
+import api from '@/service/apiClient';
 
 export default function Login() {
   const navigation = useNavigation<any>();
   const { login: saveAuth } = useAuth(); // Hàm login từ AuthContext
 
- useEffect(() => {
-  const handleDeepLink = async (event: { url: string }) => {
-    const url = event.url;
-    if (url.startsWith('ezpark://auth')) {
-      const params = new URLSearchParams(url.split('?')[1]);
-      const accessToken = params.get('accessToken');
-      const refreshToken = params.get('refreshToken');
+  useEffect(() => {
+    const handleDeepLink = async (event: { url: string }) => {
+      const url = event.url;
 
-      if (accessToken && refreshToken) {
-        await saveAuth(null, accessToken, refreshToken);
-        navigation.reset({
-          index: 0,
-          routes: [ { name: '(tabs)'}], // đổi tên route đúng với app bạn
-        });
+      if (url.startsWith('ezpark://auth')) {
+        const params = new URLSearchParams(url.split('?')[1]);
+        const accessToken = params.get('accessToken');
+        const refreshToken = params.get('refreshToken');
+
+        if (accessToken && refreshToken) {
+          // 1. Gọi API lấy thông tin user từ BE
+          const me = await api.get('/auth/me', {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          });
+          // 2. Lưu user + tokens vào context
+          await saveAuth(me.data, accessToken, refreshToken);
+          // 3. Điều hướng vào app
+          navigation.reset({
+            index: 0,
+            routes: [{ name: '(tabs)' }],
+          });
+        }
       }
-    }
-  };
+    };
 
-  const sub = Linking.addEventListener('url', handleDeepLink);
-  Linking.getInitialURL().then(url => {
-    if (url) handleDeepLink({ url });
-  });
+    const sub = Linking.addEventListener('url', handleDeepLink);
+    Linking.getInitialURL().then(url => {
+      if (url) handleDeepLink({ url });
+    });
 
-  return () => sub.remove();
-}, []);
-
+    return () => sub.remove();
+  }, []);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -70,7 +77,6 @@ export default function Login() {
 
   const isFormInvalid = !emailValid || !passwordValid;
 
-
   const handleLogin = async () => {
     if (!emailValid) return alert('Email không hợp lệ');
     if (!passwordValid) return alert('Mật khẩu phải >= 9 ký tự, có chữ và số');
@@ -82,12 +88,18 @@ export default function Login() {
       if (res?.user && res?.accessToken) {
         await saveAuth(res.user, res.accessToken, res.refreshToken);
         navigation.navigate('(tabs)' as never);
-        ToastCustom.success('Đăng nhập thành công!', 'Bạn đã đăng nhập vào EZPark.');
+        ToastCustom.success(
+          'Đăng nhập thành công!',
+          'Bạn đã đăng nhập vào EZPark.',
+        );
       } else {
         throw new Error('Dữ liệu đăng nhập không hợp lệ');
       }
     } catch (err) {
-      ToastCustom.error('Đăng nhập thất bại!', 'Vui lòng kiểm tra lại thông tin đăng nhập.');
+      ToastCustom.error(
+        'Đăng nhập thất bại!',
+        'Vui lòng kiểm tra lại thông tin đăng nhập.',
+      );
     }
   };
 
@@ -169,6 +181,7 @@ export default function Login() {
         <Pressable
           className="bg-gray-200 py-3 rounded-lg mb-3 h-[50px] items-center justify-center flex-row gap-2"
           onPress={() => {
+            //Linking.openURL(`${API_CONFIG.BASE_URL}/auth/google`);
             GGLogin();
           }}
         >

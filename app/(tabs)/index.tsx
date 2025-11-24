@@ -10,7 +10,7 @@ import NoParkingRoute from "../indexTabs/noParkingRoute";
 import SearchParkingSpot from "../indexTabs/SearchParkingSpot";
 import ParkingSpotDetail from "../indexTabs/ParkingSpotDetail";
 import Rating from "../indexTabs/Rating";
-import ChatBot from "../indexTabs/ChatBot";
+import ChatBot from "../indexTabs/ChatBot1";
 import { SafeAreaView } from "react-native-safe-area-context";
 import SearchNoParkingRoute from "../indexTabs/SearchNoParkingRoute";
 

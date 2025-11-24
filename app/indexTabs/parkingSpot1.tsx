@@ -72,7 +72,7 @@ import { images } from '@/constants/images';
 // ================= Component =================
 const ParkingSpot = () => {
   const { user } = useAuth();
-  const location = useSmartMapboxLocation(10);
+  const location = useSmartMapboxLocation(1);
   console.log('Render Parking Spot');
   const shapeSourceRef = useRef<MapboxGL.ShapeSource>(null);
   const cameraRef = useRef<MapboxGL.Camera>(null);
@@ -216,12 +216,16 @@ const ParkingSpot = () => {
   }, [routeCoords, cameraRef, userLocation, isManualControl]);
 
   useEffect(() => {
-    console.log('Location update???????');
+    if (!location) {
+      // GPS tắt
+      setUserLocation(null);
+      return;
+    }
+    // GPS bật
     if (
-      location &&
-      (!userLocation ||
-        location.latitude !== userLocation.latitude ||
-        location.longitude !== userLocation.longitude)
+      !userLocation ||
+      location.latitude !== userLocation.latitude ||
+      location.longitude !== userLocation.longitude
     ) {
       setUserLocation(location);
     }

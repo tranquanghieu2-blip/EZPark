@@ -1,119 +1,109 @@
-// // ================= ChatInput.tsx =================
-// import React, { useEffect, useState } from "react";
-// import { View, TextInput, TouchableOpacity, Text } from "react-native";
-// import Ionicons from "@react-native-vector-icons/ionicons";
-// import Voice, { SpeechResultsEvent } from "@react-native-voice/voice";
-// import { IconMicro } from "@/components/Icons";
-// import Colors from "@/constants/colors";
+import React, { useState } from "react";
+import { View, TextInput, TouchableOpacity, Text, ActivityIndicator } from "react-native";
+import Ionicons from "@react-native-vector-icons/ionicons";
+import { IconMicro } from "@/components/Icons"; // Giả định icon mic của bạn
+import Colors from "@/constants/colors";
+import { useSpeechToText } from "@/hooks/useSpeechToText"; // Import hook vừa tạo
 
-// interface ChatInputProps {
-//   onSend: (text: string) => void;
-//   sending: boolean;
-// }
+interface ChatInputProps {
+  onSend: (text: string) => void;
+  sending: boolean;
+}
 
-// const ChatInput: React.FC<ChatInputProps> = ({ onSend, sending }) => {
-//   const [text, setText] = useState("");
-//   const [isRecording, setIsRecording] = useState(false);
+const ChatInput: React.FC<ChatInputProps> = ({ onSend, sending }) => {
+  const [text, setText] = useState("");
 
-//   useEffect(() => {
-//     // Định nghĩa các sự kiện của Voice
-//     const onSpeechResults = (e: SpeechResultsEvent) => {
-//       if (e.value && e.value.length > 0) {
-//         const recognizedText = e.value[0];
-//         setText(recognizedText);
-//         // Tự động gửi sau khi nhận dạng xong
-//         onSend(recognizedText);
-//         setText("");
-//       }
-//     };
+  // Callback khi STT thành công -> Tự động gửi tin nhắn
+  const handleSpeechDetected = (detectedText: string) => {
+    if (detectedText) {
+        // setText(detectedText); // Hiển thị text lên input (tuỳ chọn)
+        onSend(detectedText);  // Gửi ngay lập tức cho backend chatbot
+    }
+  };
 
-//     const onSpeechEnd = () => {
-//       setIsRecording(false);
-//     };
+  // Sử dụng hook
+  const { isRecording, processing, startRecording, stopRecording } = useSpeechToText({
+    onSpeechDetected: handleSpeechDetected
+  });
 
-//     const onSpeechError = (e: any) => {
-//       console.error("Speech recognition error", e);
-//       setIsRecording(false);
-//     };
+  const handleSend = () => {
+    const trimmed = text.trim();
+    if (!trimmed) return;
+    onSend(trimmed);
+    setText("");
+  };
 
-//     // Đăng ký các listener
-//     Voice.onSpeechResults = onSpeechResults;
-//     Voice.onSpeechEnd = onSpeechEnd;
-//     Voice.onSpeechError = onSpeechError;
+  const handleMicPress = () => {
+      if (isRecording) {
+          // Nếu đang ghi mà bấm nút -> dừng thủ công
+          stopRecording();
+      } else {
+          startRecording();
+      }
+  };
 
-//     // Hủy đăng ký khi component unmount
-//     return () => {
-//       Voice.destroy().then(Voice.removeAllListeners);
-//     };
-//   }, [onSend]);
+  return (
+    <View className="border-t border-gray-200 bg-white px-3 py-2">
+        
+      {/* Hiển thị trạng thái ghi âm */}
+      {isRecording && (
+          <View className="absolute top-[-40] left-0 right-0 items-center justify-center">
+              <View className="bg-red-500 px-4 py-1 rounded-full">
+                  <Text className="text-white font-bold">Đang nghe...</Text>
+              </View>
+          </View>
+      )}
 
-//   const toggleRecording = async () => {
-//     if (isRecording) {
-//       try {
-//         await Voice.stop();
-//       } catch (e) {
-//         console.error("Error stopping recording:", e);
-//       }
-//     } else {
-//       try {
-//         // Xóa text cũ và bắt đầu ghi âm
-//         setText("");
-//         await Voice.start("vi-VN"); // Bắt đầu nhận dạng với tiếng Việt
-//         setIsRecording(true);
-//       } catch (e) {
-//         console.error("Error starting recording:", e);
-//       }
-//     }
-//   };
+      <View className="flex-row items-center">
 
-//   const handleSendText = () => {
-//     if (text.trim()) {
-//       onSend(text);
-//       setText("");
-//     }
-//   };
+                {/* Nút Micro */}
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={handleMicPress}
+          className={`ml-1 p-2 rounded-full ${isRecording ? 'bg-red-100' : ''}`}
+          accessibilityRole="button"
+          disabled={processing || sending}
+        >
+           {processing ? (
+               <ActivityIndicator size="large" color={Colors.blue_button} />
+           ) : (
+               <IconMicro 
+                size={30} 
+                color={isRecording ? "red" : Colors.blue_button} 
+               />
+           )}
+        </TouchableOpacity>
 
-//   return (
-//     <View className="border-t border-gray-200 bg-white px-3 py-2">
-//       <View className="flex-row items-center">
-//         <TextInput
-//           value={text}
-//           onChangeText={setText}
-//           placeholder={isRecording ? "Đang nghe..." : "Nhập tin nhắn..."}
-//           multiline={false}
-//           returnKeyType="send"
-//           onSubmitEditing={handleSendText}
-//           editable={!isRecording}
-//           className="flex-1 bg-gray-100 rounded-lg px-4 py-2 text-base"
-//         />
+        <TextInput
+          value={text}
+          onChangeText={setText}
+          placeholder={isRecording ? "Đang ghi âm..." : "Nhập tin nhắn..."}
+          editable={!isRecording} // Disable input khi đang ghi âm
+          multiline={false}
+          returnKeyType="send"
+          onSubmitEditing={handleSend}
+          className="flex-1 bg-gray-100 rounded-lg px-4 py-2 text-base"
+        />
+        
 
-//         <TouchableOpacity
-//           activeOpacity={0.7}
-//           onPress={toggleRecording}
-//           className="ml-1 p-2"
-//         >
-//           <IconMicro
-//             size={22}
-//             color={isRecording ? "red" : Colors.blue_button}
-//           />
-//         </TouchableOpacity>
 
-//         <TouchableOpacity
-//           activeOpacity={0.7}
-//           onPress={handleSendText}
-//           disabled={sending || isRecording}
-//           className="ml-1 p-2"
-//         >
-//           {sending ? (
-//             <Text className="text-blue-600">...</Text>
-//           ) : (
-//             <Ionicons name="send" size={22} color={Colors.blue_button} />
-//           )}
-//         </TouchableOpacity>
-//       </View>
-//     </View>
-//   );
-// };
+        {/* Nút Gửi */}
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={handleSend}
+          className="ml-1 p-2"
+          accessibilityRole="button"
+          disabled={isRecording}
+        >
+          {sending ? (
+            <Text className="text-blue-600">...</Text>
+          ) : (
+            <Ionicons name="send" size={22} color={Colors.blue_button} />
+          )}
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
 
-// export default ChatInput;
-
+export default ChatInput;
