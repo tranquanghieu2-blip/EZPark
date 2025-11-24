@@ -34,7 +34,6 @@ export default function Login() {
     const handleDeepLink = async (event: { url: string }) => {
       console.log("Full URL:", event.url);
       
-      // Sửa lại điều kiện check URL
       if (event.url.includes('auth/callback')) {
         try {
           // Parse URL để lấy tempToken
@@ -52,7 +51,7 @@ export default function Login() {
           
           // Lưu token vào AuthContext
           if (result?.refreshToken && result?.accessToken) {
-            await saveAuth(result.user, result.accessToken, result.refreshToken ?? '');
+            await saveAuth(result.user, result.accessToken, result.refreshToken);
             navigation.navigate('(tabs)' as never);
             ToastCustom.success(
               'Đăng nhập Google thành công!',
