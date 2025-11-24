@@ -273,7 +273,7 @@ const SearchNoParkingRoute = () => {
                             <View className="mt-4 pb-6">
                                 {noParkingRoutes.length > 5 &&
                                     (loadingReset ? (
-                                        <ActivityIndicator />
+                                        <ActivityIndicator color={Colors.primary}/>
                                     ) : (
                                         <TouchableOpacity
                                             className="mb-3 bg-gray-200 rounded-lg h-[45px] justify-center items-center"
@@ -287,7 +287,7 @@ const SearchNoParkingRoute = () => {
                                 {hasMore && (
                                     <View className="h-[45px] justify-center">
                                         {loadingMore ? (
-                                            <ActivityIndicator />
+                                            <ActivityIndicator color={Colors.primary} />
                                         ) : (
                                             <GradientButton
                                                 className="py-3 bg-blue-500 rounded-lg h-full items-center justify-center"

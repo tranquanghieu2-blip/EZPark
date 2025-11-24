@@ -20,6 +20,7 @@ import { launchImageLibrary, Asset } from "react-native-image-picker";
 import { updateUserProfile } from "@/service/api";
 import ToastCustom from "@/utils/CustomToast";
 import { DISABLED_OPACITY } from "@/utils/ui";
+import { DEFAULT_TAB_BAR_STYLE } from "@/utils/tabBarStyle";
 
 type RootStackParamList = {
   MainProfile: undefined;
@@ -49,6 +50,7 @@ const ChangeProfile = () => {
   const avatarChanged = !!selectedImage;
 
   const canSave = (nameChanged || avatarChanged) && nameValid;
+
 
   // --- Pick image ---
   const handlePickImage = useCallback(() => {
@@ -107,6 +109,13 @@ const ChangeProfile = () => {
       setLoading(false); // đảm bảo tắt loading ở cuối cùng
     }
   };
+
+  useEffect(() => {
+    navigation.getParent()?.setOptions({ tabBarStyle: { display: "none" } });
+    return () => {
+      navigation.getParent()?.setOptions({ tabBarStyle: DEFAULT_TAB_BAR_STYLE });
+    };
+  }, [navigation]);
 
   return (
     <KeyboardAvoidingView

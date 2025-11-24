@@ -114,7 +114,7 @@ export const searchParkingSpot = async ({
   type,
   avgRating,
 }: {
-  nameParking: string;
+  nameParking?: string;
   latitude: number;
   longitude: number;
   page?: number;
@@ -657,7 +657,7 @@ export const searchNoParkingRoute = async ({
   limit = 5,
   offset = 0,
 }: {
-  street: string;
+  street?: string;
   latitude: number;
   longitude: number;
   page?: number;

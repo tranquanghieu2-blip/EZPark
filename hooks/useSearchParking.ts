@@ -18,18 +18,18 @@ export const useSearchParking = () => {
    * @param coords - Vị trí hiện tại { latitude, longitude }
    */
   const fetchSpots = async (
-    query: string,
+    query?: string,
     reset = false,
     typeParkingSpot?: string,
     selectedRating?: number,
     coords?: { latitude: number; longitude: number }
   ) => {
-    if (!query.trim() || !coords) return;
+    if (!coords) return;
 
     try {
       setLoading(true);
 
-      // 1️⃣ Gọi API tìm kiếm bãi đỗ xe
+      // Gọi API tìm kiếm bãi đỗ xe
       const data = await searchParkingSpot({
         nameParking: query,
         latitude: coords.latitude,
@@ -41,7 +41,7 @@ export const useSearchParking = () => {
         avgRating: selectedRating,
       });
 
-      // 2️⃣ Tính khoảng cách song song bằng Promise.all
+      // Tính khoảng cách song song bằng Promise.all
       const enrichedWithDistance = await Promise.all(
         data.map(async (item: SearchParkingSpot) => {
           const distance = await calculateDistance(
@@ -54,7 +54,7 @@ export const useSearchParking = () => {
         })
       );
 
-      // 3️⃣ Lấy thống kê feedback song song
+      // Lấy thống kê feedback song song
       const enrichedWithStats = await Promise.all(
         enrichedWithDistance.map(async (spot) => {
           try {
@@ -66,7 +66,7 @@ export const useSearchParking = () => {
         })
       );
 
-      // 4️⃣ Cập nhật state
+      // Cập nhật state
       if (reset) {
         setSpots(enrichedWithStats);
         setOffset(limit);

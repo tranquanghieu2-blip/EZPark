@@ -19,6 +19,7 @@ import usePost from "@/hooks/usePost";
 import { updatePassword } from "@/service/api";
 import ToastCustom from "@/utils/CustomToast";
 import { DISABLED_OPACITY, isValidPassword, maxLengthPassword } from "@/utils/ui";
+import { DEFAULT_TAB_BAR_STYLE } from "@/utils/tabBarStyle";
 
 // ================= Type định nghĩa =================
 type RootStackParamList = {
@@ -30,7 +31,7 @@ const ChangePassword = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<RouteProp<RootStackParamList, "ChangePassword">>();
   const { user } = route.params;
-  const {refreshToken } = useAuth();
+  const { refreshToken } = useAuth();
 
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -91,6 +92,13 @@ const ChangePassword = () => {
     }
 
   };
+
+  useEffect(() => {
+    navigation.getParent()?.setOptions({ tabBarStyle: { display: "none" } });
+    return () => {
+      navigation.getParent()?.setOptions({ tabBarStyle: DEFAULT_TAB_BAR_STYLE });
+    };
+  }, [navigation]);
 
   return (
     <KeyboardAvoidingView
@@ -157,21 +165,21 @@ const ChangePassword = () => {
 
         {/* ==== Nút Lưu thay đổi ==== */}
         <View className="h-[50px] mb-3 mt-5">
-          
-            <GradientButton
-              onPress={handleSave}
-              disabled={loading}
-              className={`py-3 px-5 rounded-lg items-center justify-center h-full ${!canSave ? `opacity-${DISABLED_OPACITY}` : "opacity-100"}`}
-            >
-              {loading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text className="text-center text-white font-semibold text-lg">
-                  Lưu thay đổi
-                </Text>
-              )}
-            </GradientButton>
-          
+
+          <GradientButton
+            onPress={handleSave}
+            disabled={loading}
+            className={`py-3 px-5 rounded-lg items-center justify-center h-full ${!canSave ? `opacity-${DISABLED_OPACITY}` : "opacity-100"}`}
+          >
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text className="text-center text-white font-semibold text-lg">
+                Lưu thay đổi
+              </Text>
+            )}
+          </GradientButton>
+
         </View>
       </ScrollView>
 
