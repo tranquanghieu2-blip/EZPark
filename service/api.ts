@@ -192,7 +192,25 @@ export async function login(email: string, password: string) {
 }
 export async function GGLogin() {
   Linking.openURL(`${API_CONFIG.BASE_URL}/auth/google`);
+  
 }
+export const fetchMe = async (accessToken: string) => {
+  const res = await fetch(`${API_CONFIG.BASE_URL}/auth/me`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+  });
+  const json = await res.json();
+
+  if (!res.ok) {
+    throw new Error(json?.message || "Failed to fetch user info");
+  }
+
+  return json.data || json;
+};
+
 
 const buildFeedbackPayload = (data: {
   parking_spot_id: number;
