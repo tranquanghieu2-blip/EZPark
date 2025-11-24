@@ -40,6 +40,8 @@ import { Animated } from 'react-native';
 import { useForbiddenRouteWatcher } from '@/hooks/useForbiddenRouteWatcher';
 import { useSmartMapboxLocation } from '@/hooks/usePeriodicMapboxLocation';
 import { set } from 'lodash';
+import { mapEvents } from '@/utils/eventEmitter';
+import { EVENT_FORBIDDEN_ROUTE_ENTER, EVENT_FORBIDDEN_ROUTE_EXIT } from '@/utils/eventEmitter';
 
 const NoParkingRoute = () => {
   const location = useSmartMapboxLocation();
@@ -211,10 +213,16 @@ const NoParkingRoute = () => {
     onEnterZone: route => {
       setCurrentForbiddenRoute(route);
       console.log('ĐÃ VÀO TUYẾN CẤM:', route.street);
+
+      // emit event để các màn hình khác biết
+      mapEvents.emit(EVENT_FORBIDDEN_ROUTE_ENTER, route);
     },
     onExitZone: () => {
       setCurrentForbiddenRoute(null);
       console.log('ĐÃ RA KHỎI TUYẾN CẤM');
+
+      // emit exit
+      mapEvents.emit(EVENT_FORBIDDEN_ROUTE_EXIT);
     },
   });
   console.log('Check forbidden route:', check);

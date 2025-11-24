@@ -8,6 +8,10 @@ import {
   View,
   PermissionsAndroid,
   Platform,
+  Modal,
+  Pressable,
+  Animated,
+  Vibration,
 } from 'react-native';
 // @ts-ignore
 import MapboxGL from '@rnmapbox/maps';
@@ -60,6 +64,8 @@ import {
   EVENT_OPEN_SPOT,
   EVENT_FAVORITE_CHANGED,
   EVENT_USER_LOGOUT,
+  EVENT_FORBIDDEN_ROUTE_ENTER,
+  EVENT_FORBIDDEN_ROUTE_EXIT,
 } from '@/utils/eventEmitter';
 
 import { getRoutes } from '@/service/routingService';
@@ -458,8 +464,197 @@ const ParkingSpot = () => {
     }, [selectedId, userLocation, user, changedFavorites, favoriteSpots]),
   );
 
+  // STATE để hiển thị cảnh báo tuyến cấm shared từ NoParkingRoute
+  const [currentForbiddenRoute, setCurrentForbiddenRoute] =
+    useState<NoParkingRoute | null>(null);
+
+  // sử dụng cùng tên như noParkingRoute: showBanner / showBadge / showModal
+  const [showBanner, setShowBanner] = useState(false);
+  const [showBadge, setShowBadge] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+
+  // animation refs
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    const onEnter = (route: NoParkingRoute) => {
+      setCurrentForbiddenRoute(route);
+      Vibration.vibrate(300);
+      setShowBanner(true);
+      setShowBadge(false);
+      console.log('Received forbidden route enter event:', route?.street);
+    };
+    const onExit = () => {
+      setCurrentForbiddenRoute(null);
+      setShowBanner(false);
+      setShowBadge(false);
+      setShowModal(false);
+      console.log('Received forbidden route exit event');
+    };
+
+    mapEvents.on(EVENT_FORBIDDEN_ROUTE_ENTER, onEnter);
+    mapEvents.on(EVENT_FORBIDDEN_ROUTE_EXIT, onExit);
+
+    return () => {
+      mapEvents.off(EVENT_FORBIDDEN_ROUTE_ENTER, onEnter);
+      mapEvents.off(EVENT_FORBIDDEN_ROUTE_EXIT, onExit);
+    };
+  }, []);
+
+  // Khi vừa vào tuyến cấm → tự ẩn banner sau 7s và hiện badge
+  useEffect(() => {
+    if (!currentForbiddenRoute) {
+      setShowBanner(false);
+      setShowBadge(false);
+      setShowModal(false);
+      return;
+    }
+
+    setShowBanner(true);
+    setShowBadge(false);
+    const timer = setTimeout(() => {
+      setShowBanner(false);
+      setShowBadge(true);
+    }, 7000);
+
+    return () => clearTimeout(timer);
+  }, [currentForbiddenRoute]);
+
+  // fade banner
+  useEffect(() => {
+    Animated.timing(fadeAnim, {
+      toValue: showBanner ? 1 : 0,
+      duration: 600,
+      useNativeDriver: true,
+    }).start();
+  }, [showBanner, fadeAnim]);
+
+  // pulse badge
+  useEffect(() => {
+    if (!showBadge) return;
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1.2,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [showBadge, pulseAnim]);
+
   return (
     <View style={styles.container}>
+      {/* Banner tuyến cấm chung (hiện lên cả trên ParkingSpot) */}
+      {showBanner && currentForbiddenRoute && (
+        <Animated.View
+          style={{
+            position: 'absolute',
+            top: 75,
+            left: 16,
+            right: 16,
+            zIndex: 999,
+            backgroundColor: Colors.warning,
+            borderRadius: 8,
+            padding: 10,
+            opacity: fadeAnim,
+            shadowOpacity: 0.4,
+            shadowOffset: { width: 0, height: 2 },
+            shadowRadius: 4,
+          }}
+        >
+          <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 14 }}>
+            🚫 Bạn đang đi vào tuyến cấm đỗ xe!
+          </Text>
+          <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>
+            {currentForbiddenRoute.street}
+          </Text>
+        </Animated.View>
+      )}
+
+      {/* Badge nhỏ (sau khi banner ẩn sẽ hiện badge) */}
+      {showBadge && currentForbiddenRoute && (
+        <Animated.View
+          style={{
+            position: 'absolute',
+            top: 80,
+            right: 15,
+            backgroundColor: Colors.warning,
+            borderRadius: 24,
+            width: 46,
+            height: 46,
+            justifyContent: 'center',
+            alignItems: 'center',
+            transform: [{ scale: pulseAnim }],
+            zIndex: 999,
+            elevation: 5,
+          }}
+        >
+          <View style={{ width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center' }}>
+            {/* touch -> mở modal chi tiết */}
+            <Pressable onPress={() => setShowModal(true)}>
+              <IconQuestion color="white" size={24} />
+            </Pressable>
+          </View>
+        </Animated.View>
+      )}
+
+      {/* Modal chi tiết khi bấm badge */}
+      <Modal visible={showModal} transparent animationType="fade">
+        <View
+          style={{
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: '#0007',
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: 'white',
+              padding: 20,
+              borderRadius: 12,
+              width: '80%',
+            }}
+          >
+            <Text
+              style={{
+                fontWeight: 'bold',
+                fontSize: 18,
+                color: Colors.warning,
+              }}
+            >
+              🚫 Bạn đang di chuyển trên tuyến cấm đỗ
+            </Text>
+            <Text style={{ marginTop: 8, fontWeight: '600' }}>
+              {currentForbiddenRoute?.street}
+            </Text>
+            <Pressable
+              style={{
+                backgroundColor: '#eee',
+                marginTop: 16,
+                padding: 10,
+                paddingHorizontal: 35,
+                borderRadius: 6,
+              }}
+              onPress={() => setShowModal(false)}
+            >
+              <Text style={{ textAlign: 'center', fontWeight: '500', fontSize: 16 }}>
+                Đã hiểu
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+
       {/* Thanh tìm kiếm */}
       <SearchBar
         placeholder="Tìm bãi đỗ xe..."
