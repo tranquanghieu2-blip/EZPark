@@ -83,10 +83,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Logout: Xóa toàn bộ dữ liệu
   const logout = async () => {
     try {
-      await AsyncStorage.multiRemove(["user", "accessToken", "refreshToken"]);
+      await AsyncStorage.multiRemove(["user", "accessToken", "refreshToken", "sessionID"]);
       setUser(null);
       setAccessToken(null);
       setRefreshToken(null);
+      setSessionID(null);
       mapEvents.emit(EVENT_USER_LOGOUT);
       ToastCustom.success('Đăng xuất thành công!', 'Bạn đã đăng xuất khỏi EZPark.');
     } catch (e) {

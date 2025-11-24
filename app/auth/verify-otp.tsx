@@ -129,7 +129,7 @@ export default function VerifyOTP() {
         navigation.navigate("login");
       }
     } catch (err: any) {
-      console.error("Lỗi xác thực OTP:", err);
+      // console.error("Lỗi xác thực OTP:", err);
       ToastCustom.error("Xác thực thất bại", err?.message || "OTP không hợp lệ hoặc đã hết hạn.");
     } finally {
       setLoadingVerify(false);
