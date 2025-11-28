@@ -11,6 +11,7 @@ import google from "@/assets/icons/google.png";
 import iconError from "@/assets/icons/icon_error.png";
 import iconSuccess from "@/assets/icons/icon_success.png";
 import iconFavorite from "@/assets/icons/heart.png";
+import bell from "@/assets/icons/bell.png";
 
 export const icons = {
   iconParkingSpot,
@@ -26,4 +27,5 @@ export const icons = {
   iconError,
   iconSuccess,
   iconFavorite,
+  bell,
 };

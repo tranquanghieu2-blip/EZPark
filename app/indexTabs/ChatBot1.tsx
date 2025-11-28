@@ -22,10 +22,11 @@ import { useAuth } from "@/app/context/AuthContext";
 import NoUserLogin from "@/components/NoUserLogin";
 import BotTypingBubble from "@/components/BotTypingBubble";
 import { useSmartMapboxLocation } from "@/hooks/usePeriodicMapboxLocation";
+import { getAccessToken } from "@rnmapbox/maps";
 
 const ChatBot: React.FC = () => {
   const navigation = useNavigation<any>();
-  const { user } = useAuth();
+  const { user, accessToken } = useAuth();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -34,8 +35,8 @@ const ChatBot: React.FC = () => {
   const flatRef = useRef<FlatList<ChatMessage>>(null);
   const insets = useSafeAreaInsets();
   const userLocation = useSmartMapboxLocation();
-  const lat = userLocation?.latitude ?? undefined;
-  const lon = userLocation?.longitude ?? undefined;
+
+
 
 
   // -------------------------------
@@ -116,7 +117,8 @@ const ChatBot: React.FC = () => {
       setSending(true);
 
       try {
-        const response = await postChatMessage(text, sessionID ?? undefined, lat, lon);
+        const response = await postChatMessage(text, sessionID ?? undefined, userLocation ?? undefined, accessToken?? undefined);
+        console.log("userLocation: ", userLocation)
 
         // Lưu sessionID lần đầu
         if (!sessionID && response.session_id) {
@@ -154,7 +156,7 @@ const ChatBot: React.FC = () => {
     []
   );
 
-  if (!user) return <NoUserLogin />;
+  // if (!user) return <NoUserLogin />;
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={["bottom"]}>

@@ -127,7 +127,7 @@ export function useForbiddenRouteWatcher({
 
         if (cache) {
           const parsed = JSON.parse(cache);
-          console.log('Cached routes:', parsed.data?.length);
+          console.log('Cached routes:', parsed.data.length);
           setRoutes(parsed.data);
 
           // Pre-calculate bounds cho cached data
