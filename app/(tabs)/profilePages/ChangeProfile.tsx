@@ -31,7 +31,7 @@ const ChangeProfile = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<RouteProp<RootStackParamList, "ChangeProfile">>();
   const { user } = route.params;
-  const { updateUser } = useAuth();
+  // const { updateUser } = useAuth();
 
   const showAlert = (title: string, message?: string) => {
     Alert.alert(title, message);
@@ -98,7 +98,7 @@ const ChangeProfile = () => {
       const updatedUser = await updateUserProfile(profileData);
       if (!updatedUser) throw new Error("Dữ liệu người dùng không hợp lệ");
 
-      await updateUser(updatedUser);
+      // await updateUser(updatedUser);
       ToastCustom.success("Thành công", "Thông tin của bạn đã được cập nhật!");
       navigation.goBack();
     } catch (error) {

@@ -34,6 +34,7 @@ import {
   getMyFeedback,
   removeFavoriteParkingSpot,
   checkFavoriteParkingSpot,
+  fetchUserProfile,
 } from '@/service/api';
 import { useGetListFeedback } from '@/hooks/useGetListFeedback';
 import { FlatList } from 'react-native-gesture-handler';
@@ -137,6 +138,7 @@ const ParkingSpotDetail = () => {
   const [isFavorite, setIsFavorite] = useState(false);
   const [favoriteId, setFavoriteId] = useState<number | null>(null);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
+  const [userInfo, setUserInfo] = useState<any>(null);
 
   const [isToggling, setIsToggling] = useState(false);
   const openGoogleMaps = (latitude: number, longitude: number) => {
@@ -145,6 +147,21 @@ const ParkingSpotDetail = () => {
       console.error('Không thể mở Google Maps:', err),
     );
   };
+
+  const fetchUserInfo = async () => {
+    if (!user) return;
+    try {
+      const response = await fetchUserProfile();
+      setUserInfo(response);
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (user)
+      fetchUserInfo();
+  }, [user]);
 
   // Ẩn tab bar
   useEffect(() => {
@@ -501,17 +518,17 @@ const ParkingSpotDetail = () => {
                   <View className="flex-row items-center mt-4">
                     {/* Avatar */}
                     <View className="w-14 h-14 rounded-full overflow-hidden border border-gray-300">
-                      {user?.avatar ? (
+                      {userInfo?.avatar ? (
                         <Image
-                          source={{ uri: user.avatar }}
+                          source={{ uri: userInfo.avatar }}
                           className="w-full h-full"
                           resizeMode="cover"
                         />
                       ) : (
                         <View className="w-14 h-14 rounded-full bg-gray-300 items-center justify-center">
-                          {user?.name ? (
+                          {userInfo?.name ? (
                             <Text className="text-2xl font-bold text-white text-center">
-                              {user.name[0].toUpperCase()}
+                              {userInfo.name[0].toUpperCase()}
                             </Text>
                           ) : (
                             <Image
@@ -540,7 +557,7 @@ const ParkingSpotDetail = () => {
                               navigation.navigate('Rating', {
                                 spot,
                                 myFeedback,
-                                user,
+                                userInfo,
                                 onGoBack: () => {
                                   refetchFeedback();
                                   refetchStatistics();

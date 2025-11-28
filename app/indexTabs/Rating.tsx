@@ -31,7 +31,7 @@ type RootStackParamList = {
   Rating: {
     spot: ParkingSpotDetail,
     myFeedback?: Feedback | null,
-    user?: User | null,
+    userInfo?: User | null,
     onGoBack?: () => void
   };
 };
@@ -61,7 +61,7 @@ const Rating = () => {
   const route = useRoute<RouteProp<RootStackParamList, "Rating">>();
   const { spot } = route.params;
   const { myFeedback } = route.params || {};
-  const { user } = route.params || {};
+  const { userInfo } = route.params || {};
   const navigation = useNavigation<any>();
   const { onGoBack } = route.params ?? {};
   const { accessToken } = useAuth();
@@ -202,17 +202,17 @@ const Rating = () => {
             <Image source={images.avatar} className="w-full h-full" />
           </View> */}
           <View className="w-14 h-14 rounded-full overflow-hidden border border-gray-300">
-            {user?.avatar ? (
+            {userInfo?.avatar ? (
               <Image
-                source={{ uri: user?.avatar }}
+                source={{ uri: userInfo?.avatar }}
                 className="w-full h-full"
                 resizeMode="cover"
               />
             ) : (
               <View className="w-14 h-14 rounded-full bg-gray-300 items-center justify-center">
-                {user?.name ? (
+                {userInfo?.name ? (
                   <Text className="text-2xl font-bold text-white text-center">
-                    {user?.name[0].toUpperCase()}
+                    {userInfo?.name[0].toUpperCase()}
                   </Text>
                 ) : (
                   <Image
@@ -226,7 +226,7 @@ const Rating = () => {
           </View>
           <View className="ml-3 flex-1">
             <Text className="text-base font-semibold text-gray-900">
-              {user?.name}
+              {userInfo?.name}
             </Text>
             <Text className="text-sm text-gray-500">
               Hãy chia sẻ cảm nhận của bạn

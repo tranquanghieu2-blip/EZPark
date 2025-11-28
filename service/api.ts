@@ -371,7 +371,7 @@ export const fetchUserProfile = async (): Promise<User> => {
     return res.data?.data as User;
   } catch (error) {
     handleApiError('fetching user profile', error);
-    throw error; // ✅ Nên ném lỗi ra để component có thể bắt và xử lý
+    throw error; 
   }
 };
 
