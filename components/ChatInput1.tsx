@@ -68,7 +68,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSend, sending }) => {
                <ActivityIndicator size="large" color={Colors.blue_button} />
            ) : (
                <IconMicro 
-                size={30} 
+                size={26} 
                 color={isRecording ? "red" : Colors.blue_button} 
                />
            )}
@@ -79,7 +79,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSend, sending }) => {
           onChangeText={setText}
           placeholder={isRecording ? "Đang ghi âm..." : "Nhập tin nhắn..."}
           editable={!isRecording} // Disable input khi đang ghi âm
-          multiline={false}
+          multiline={true}
           returnKeyType="send"
           onSubmitEditing={handleSend}
           className="flex-1 bg-gray-100 rounded-lg px-4 py-2 text-base"

@@ -1,74 +1,79 @@
-import React, { useEffect, useRef } from 'react';
-import { Animated, Modal, Pressable, Text, View } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { Animated, Modal, Pressable, Text, View, ActivityIndicator } from 'react-native';
 import { IconClock } from '@/components/Icons';
 import Colors from '@/constants/colors';
 import { useConfirmedParking } from '@/hooks/useConfirmParking';
 import { getAllowedTimeRanges } from '@/utils/time';
 import { useSmartMapboxLocation } from '@/hooks/usePeriodicMapboxLocation';
 import ToastCustom from '@/utils/CustomToast';
+import haversine from 'haversine-distance';
 
 interface Props {
   onClose: () => void;
   route: NoParkingRoute | null;
 }
-/** Khoảng cách điểm → đoạn tuyến (m) */
-function getDistanceMeters(
-  lat: number,
-  lon: number,
-  lat1: number,
-  lon1: number,
-  lat2: number,
-  lon2: number,
-): number {
-  const R = 6371000;
-  const toRad = (deg: number): number => (deg * Math.PI) / 180;
 
-  const x = R * toRad(lon) * Math.cos(toRad(lat));
-  const y = R * toRad(lat);
-  const x1 = R * toRad(lon1) * Math.cos(toRad(lat1));
-  const y1 = R * toRad(lat1);
-  const x2 = R * toRad(lon2) * Math.cos(toRad(lat2));
-  const y2 = R * toRad(lat2);
+function distanceToSegment(
+  p: { latitude: number; longitude: number },
+  a: [number, number],
+  b: [number, number],
+) {
+  const [lon1, lat1] = a;
+  const [lon2, lat2] = b;
 
-  const A = { x: x1, y: y1 };
-  const B = { x: x2, y: y2 };
-  const P = { x, y };
+  // Vector A -> B (in lon/lat)
+  const ABx = lon2 - lon1;
+  const ABy = lat2 - lat1;
 
-  const AB = { x: B.x - A.x, y: B.y - A.y };
-  const AP = { x: P.x - A.x, y: P.y - A.y };
-  const ab2 = AB.x * AB.x + AB.y * AB.y;
-  const t = Math.max(0, Math.min(1, (AP.x * AB.x + AP.y * AB.y) / ab2));
+  // Vector A -> P
+  const APx = p.longitude - lon1;
+  const APy = p.latitude - lat1;
 
-  const closest = { x: A.x + AB.x * t, y: A.y + AB.y * t };
-  const dx = P.x - closest.x;
-  const dy = P.y - closest.y;
+  const dot = ABx * APx + ABy * APy;
+  const lenSq = ABx * ABx + ABy * ABy;
+  const t = Math.max(0, Math.min(1, dot / (lenSq || 1))); // avoid div by zero
 
-  return Math.sqrt(dx * dx + dy * dy);
+  // Projection point on segment
+  const projLon = lon1 + ABx * t;
+  const projLat = lat1 + ABy * t;
+
+  // Return haversine distance (meters) between user and projection
+  return haversine(
+    { lat: p.latitude, lon: p.longitude },
+    { lat: projLat, lon: projLon },
+  );
 }
 
-/** Kiểm tra user có nằm gần tuyến đường (polyline) không */
+function distanceToPolyline(
+  point: { latitude: number; longitude: number },
+  coords: [number, number][],
+) {
+  if (!coords || coords.length < 2) return Infinity;
+  let min = Infinity;
+  for (let i = 0; i < coords.length - 1; i++) {
+    const d = distanceToSegment(point, coords[i], coords[i + 1]);
+    if (d < min) min = d;
+  }
+  return min;
+}
+
 function isUserOnRoute(
   userLat: number,
   userLon: number,
-  route: [number, number][],
+  coords: [number, number][],
   toleranceMeters: number,
 ): boolean {
-  if (!route || route.length < 2) return false;
-
-  let minDistance = Infinity;
-  for (let i = 0; i < route.length - 1; i++) {
-    const [lon1, lat1] = route[i];
-    const [lon2, lat2] = route[i + 1];
-    const d = getDistanceMeters(userLat, userLon, lat1, lon1, lat2, lon2);
-    minDistance = Math.min(minDistance, d);
-  }
-  return minDistance <= toleranceMeters;
+  if (!coords || coords.length < 2) return false;
+  const dist = distanceToPolyline({ latitude: userLat, longitude: userLon }, coords);
+  return dist <= toleranceMeters;
 }
 
 const ConfirmParkingRoutesModal: React.FC<Props> = ({ route, onClose }) => {
   const location = useSmartMapboxLocation();
   const { confirmed, confirmRoute, clearConfirmed } = useConfirmedParking();
   const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  const [processingAction, setProcessingAction] = useState<'confirm' | 'cancel' | null>(null);
 
   const canConfirmOnRoute =
     route &&
@@ -88,49 +93,63 @@ const ConfirmParkingRoutesModal: React.FC<Props> = ({ route, onClose }) => {
     }).start();
   }, [route]);
 
-  // Hàm xác nhận đỗ xe
+  // Hàm xác nhận đỗ xe (có loading)
   const handleConfirm = async () => {
     if (!route || !canConfirmOnRoute) {
       ToastCustom.warning('Quá xa', 'Bạn đang ở quá xa tuyến đường.');
       return;
     }
+    setProcessingAction('confirm');
+    try {
+      const allowedRanges = getAllowedTimeRanges(route.time_range);
+      const now = new Date();
+      const todayStr = now.toLocaleDateString('en-CA');
 
-    const allowedRanges = getAllowedTimeRanges(route.time_range);
-    const now = new Date();
-    const todayStr = now.toLocaleDateString('en-CA');
+      const makeDateFromYMDAndTime = (ymd: string, timeStr: string) => {
+        const [y, m, d] = ymd.split('-').map(Number);
+        const [hour, minute, second] = timeStr.split(':').map(Number);
+        return new Date(y, m - 1, d, hour, minute, second);
+      };
 
-    const makeDateFromYMDAndTime = (ymd: string, timeStr: string) => {
-      const [y, m, d] = ymd.split('-').map(Number);
-      const [hour, minute, second] = timeStr.split(':').map(Number);
-      return new Date(y, m - 1, d, hour, minute, second);
-    };
+      let nearestEnd: Date | null = null;
+      for (const range of allowedRanges) {
+        const end = makeDateFromYMDAndTime(todayStr, range.end);
+        if (end > now && (!nearestEnd || end < nearestEnd)) nearestEnd = end;
+      }
 
-    let nearestEnd: Date | null = null;
-    for (const range of allowedRanges) {
-      const end = makeDateFromYMDAndTime(todayStr, range.end);
-      if (end > now && (!nearestEnd || end < nearestEnd)) nearestEnd = end;
+      await confirmRoute({
+        routeId: route.no_parking_route_id,
+        street: route.street,
+        confirmedLat: location?.latitude ?? 0,
+        confirmedLon: location?.longitude ?? 0,
+        endTime: nearestEnd,
+        route: route.route?.coordinates || [],
+      });
+
+      ToastCustom.success('Xác nhận đỗ thành công!', `Tuyến: ${route.street}`);
+      // Đợi ngắn để cập nhật state rồi đóng modal
+      setTimeout(onClose, 50);
+    } catch (err) {
+      console.error('handleConfirm error:', err);
+      ToastCustom.error('Lỗi', 'Không thể xác nhận đỗ hiện tại.');
+    } finally {
+      setProcessingAction(null);
     }
-
-    await confirmRoute({
-      routeId: route.no_parking_route_id,
-      street: route.street,
-      confirmedLat: location?.latitude ?? 0,
-      confirmedLon: location?.longitude ?? 0,
-      endTime: nearestEnd,
-      route: route.route?.coordinates || [],
-    });
-
-    ToastCustom.success('Xác nhận đỗ thành công!', `Tuyến: ${route.street}`);
-    // Đợi 500ms để đảm bảo trạng thái được cập nhật và lưu
-    setTimeout(onClose, 50);
   };
 
   // Hàm hủy xác nhận đỗ
   const handleCancelConfirm = async () => {
-    await clearConfirmed();
-    ToastCustom.success('Đã hủy thông báo', 'Bạn sẽ không nhận thông báo nữa.');
-    // Đợi 500ms
-    setTimeout(onClose, 50);
+    setProcessingAction('cancel');
+    try {
+      await clearConfirmed();
+      ToastCustom.success('Đã hủy thông báo', 'Bạn sẽ không nhận thông báo nữa.');
+      setTimeout(onClose, 50);
+    } catch (err) {
+      console.error('handleCancelConfirm error:', err);
+      ToastCustom.error('Lỗi', 'Không thể hủy thông báo.');
+    } finally {
+      setProcessingAction(null);
+    }
   };
 
   // const isConfirmed = confirmed?.routeId === route?.no_parking_route_id;
@@ -194,22 +213,32 @@ const ConfirmParkingRoutesModal: React.FC<Props> = ({ route, onClose }) => {
               <View className="flex-row w-full gap-2 mt-2">
                 <Pressable
                   onPress={onClose}
+                  disabled={processingAction !== null}
                   className="bg-gray-300 flex-1 h-[40px] rounded-xl justify-center items-center"
+                  style={{ opacity: processingAction ? 0.6 : 1 }}
                 >
                   <Text className="text-black font-semibold">Đóng</Text>
                 </Pressable>
 
                 <Pressable
                   onPress={isConfirmed ? handleCancelConfirm : handleConfirm}
+                  disabled={processingAction !== null}
                   className={`flex-1 h-[40px] rounded-xl justify-center items-center ${
                     isConfirmed
                       ? 'bg-red-600 active:bg-red-400'
                       : 'bg-blue-600 active:bg-blue-400'
                   }`}
+                  style={{ opacity: processingAction ? 0.8 : 1 }}
                 >
-                  <Text className="text-white font-semibold">
-                    {isConfirmed ? 'Hủy Thông Báo' : 'Xác Nhận Đỗ'}
-                  </Text>
+                  {processingAction === 'confirm' && !isConfirmed ? (
+                    <ActivityIndicator color="white" />
+                  ) : processingAction === 'cancel' && isConfirmed ? (
+                    <ActivityIndicator color="white" />
+                  ) : (
+                    <Text className="text-white font-semibold">
+                      {isConfirmed ? 'Hủy Thông Báo' : 'Xác Nhận Đỗ'}
+                    </Text>
+                  )}
                 </Pressable>
               </View>
             </View>

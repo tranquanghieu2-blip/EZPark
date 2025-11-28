@@ -12,20 +12,28 @@ import {
   Pressable,
   Animated,
   Vibration,
+  InteractionManager,
 } from 'react-native';
 // @ts-ignore
 import MapboxGL from '@rnmapbox/maps';
+
+import AsyncStorage from '@react-native-async-storage/async-storage';
+// @ts-ignore
+import {
+  CopilotProvider,
+  useCopilot,
+  CopilotStep,
+  walkthroughable,
+} from 'react-native-copilot';
 
 // ================= Components =================
 import CircleButton from '@/components/CircleButton';
 import {
   IconCrosshairs,
   IconQuestion,
-  IconRain,
   IconCancelRouting,
 } from '@/components/Icons';
 import SearchBar from '@/components/SearchBar';
-import { IconFavorite } from '@/components/Icons';
 // import UserLocationMarker from '@/components/UserLocation';
 // ================= Constants =================
 import Colors from '@/constants/colors';
@@ -41,6 +49,7 @@ import { useScheduleTimeTriggers } from '@/hooks/useScheduleTimeTriggers';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import useFetch from '../../hooks/useFetch';
 import { useSmartMapboxLocation } from '@/hooks/usePeriodicMapboxLocation';
+import { useConfirmedParking } from '@/hooks/useConfirmParking';
 
 // ================= Services =================
 import {
@@ -54,11 +63,7 @@ import { checkFavoriteParkingSpot } from '@/service/api';
 // ================= Utils =================
 import { clusterPolylines } from '@/utils/clusterPolylines';
 import { isDayRestricted, isWithinTimeRange } from '@/utils/validation';
-import { NativeModules } from 'react-native';
-import messaging from '@react-native-firebase/messaging';
 
-import { Point } from 'geojson';
-import DeviceInfo from 'react-native-device-info';
 import {
   mapEvents,
   EVENT_OPEN_SPOT,
@@ -75,9 +80,13 @@ import { useAuth } from '../context/AuthContext';
 import { useParkingSpotDetail } from '@/hooks/useParkingSpotDetail';
 import { images } from '@/constants/images';
 
+const WalkthroughableSearchBar = walkthroughable(SearchBar);
+const WalkthroughableCircleButton = walkthroughable(CircleButton);
 // ================= Component =================
-const ParkingSpot = () => {
+const ParkingSpotContent = () => {
+  // Đổi tên thành Content
   const { user } = useAuth();
+
   const location = useSmartMapboxLocation(1);
   console.log('Render Parking Spot');
   const shapeSourceRef = useRef<MapboxGL.ShapeSource>(null);
@@ -112,6 +121,8 @@ const ParkingSpot = () => {
   );
   // const { user } = useAuth();
 
+  const { confirmed } = useConfirmedParking();
+
   // lưu điểm đích và vị trí cuối cùng để tính lại route
   const [destination, setDestination] = useState<{
     lat: number;
@@ -124,6 +135,35 @@ const ParkingSpot = () => {
 
   const [isManualControl, setIsManualControl] = useState(false);
   const [favoriteSpots, setFavoriteSpots] = useState<Set<number>>(new Set());
+
+  const { start } = useCopilot();
+
+  useEffect(() => {
+    const checkTutorial = async () => {
+      try {
+        const TUTORIAL_KEY = 'HAS_SEEN_PARKING_TUTORIAL_V1';
+
+        const hasSeen = await AsyncStorage.getItem(TUTORIAL_KEY);
+
+        if (hasSeen === null) {
+          console.log('First timeeeeee');
+          // 1. Khởi động hướng dẫn
+          setTimeout(() => {
+            start();
+          }, 1000);
+
+          // 2. Lưu lại ngay lập tức để lần sau không hiện nữa
+          await AsyncStorage.setItem(TUTORIAL_KEY, 'true');
+        }
+      } catch (error) {
+        console.error('Lỗi khi kiểm tra trạng thái hướng dẫn:', error);
+      }
+    };
+    // Gọi hàm kiểm tra khi component mount
+    checkTutorial();
+    // Nếu muốn test lại hướng dẫn này, hãy uncomment dòng dưới để xóa key:
+    // AsyncStorage.removeItem('HAS_SEEN_PARKING_TUTORIAL_V1');
+  }, [start]); // Chỉ chạy 1 lần khi mount
 
   useEffect(() => {
     const handleUserLogout = () => {
@@ -278,8 +318,8 @@ const ParkingSpot = () => {
 
   // Hàm fetch chi tiết khi selectedId thay đổi
   const fetchDetail = useCallback(async () => {
-    if (selectedId == null || userLocation == null) return;
-    await fetchParkingSpotDetailWithStats(selectedId, userLocation);
+    if (selectedId == null) return;
+    await fetchParkingSpotDetailWithStats(selectedId, userLocation?? undefined);
   }, [selectedId, userLocation]);
 
   // Tự động gọi khi selectedId thay đổi
@@ -314,58 +354,7 @@ const ParkingSpot = () => {
     }
   };
 
-  //logic cập nhật route động theo vị trí hiện tại
-  const updateDynamicRoute = useCallback(
-    async (currentPos: { lat: number; lon: number }) => {
-      if (!destination) return;
 
-      const dist =
-        lastRoutePos &&
-        haversine(
-          { lat: lastRoutePos.lat, lon: lastRoutePos.lon },
-          { lat: currentPos.lat, lon: currentPos.lon },
-        );
-
-      // Chỉ cập nhật nếu di chuyển > 40m
-      if (dist && dist < 40) return;
-
-      try {
-        const routes = await getRoutes(
-          [currentPos.lon, currentPos.lat],
-          [destination.lon, destination.lat],
-        );
-
-        if (routes?.[0]?.geometry?.coordinates) {
-          const coords = routes[0].geometry.coordinates.map(
-            ([lon, lat]: [number, number]) => ({
-              longitude: lon,
-              latitude: lat,
-            }),
-          );
-          setRouteCoords([coords]);
-          setLastRoutePos(currentPos);
-        }
-      } catch (error) {
-        console.warn('Không thể cập nhật route:', error);
-      }
-    },
-    [destination, lastRoutePos],
-  );
-  //debounce để tránh gọi API quá nhiều
-  const debouncedUpdateRoute = useRef(
-    debounce(
-      (pos: { lat: number; lon: number }) => updateDynamicRoute(pos),
-      4000,
-    ),
-  ).current;
-  //mỗi khi userLocation thay đổi, tính lại route
-  useEffect(() => {
-    if (!userLocation || !destination) return;
-    debouncedUpdateRoute({
-      lat: userLocation.latitude,
-      lon: userLocation.longitude,
-    });
-  }, [userLocation, destination]);
 
   // Check favorite spots
   useEffect(() => {
@@ -414,6 +403,25 @@ const ParkingSpot = () => {
     checkAllFavorites();
   }, [parkingSpots, user]);
 
+  // Memoize handler để giữ identity giữa các render
+  const handleRouteFound = useCallback(
+    (coords: { longitude: number; latitude: number }[][]) => {
+      setRouteCoords(coords);
+      if (userLocation && coords.length > 0) {
+        const main = coords[0];
+        const destinationPoint = main[main.length - 1];
+        setDestination({
+          lat: destinationPoint.latitude,
+          lon: destinationPoint.longitude,
+        });
+        setLastRoutePos({
+          lat: userLocation.latitude,
+          lon: userLocation.longitude,
+        });
+      }
+    },
+    [userLocation],
+  );
   useFocusEffect(
     useCallback(() => {
       console.log('ParkingSpot screen focused');
@@ -516,7 +524,7 @@ const ParkingSpot = () => {
     const timer = setTimeout(() => {
       setShowBanner(false);
       setShowBadge(true);
-    }, 7000);
+    }, 100000);
 
     return () => clearTimeout(timer);
   }, [currentForbiddenRoute]);
@@ -559,7 +567,7 @@ const ParkingSpot = () => {
           style={{
             position: 'absolute',
             top: 75,
-            left: 16,
+            left: 70,
             right: 16,
             zIndex: 999,
             backgroundColor: Colors.warning,
@@ -571,7 +579,7 @@ const ParkingSpot = () => {
             shadowRadius: 4,
           }}
         >
-          <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 14 }}>
+          <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 18 }}>
             🚫 Bạn đang đi vào tuyến cấm đỗ xe!
           </Text>
           <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>
@@ -598,7 +606,14 @@ const ParkingSpot = () => {
             elevation: 5,
           }}
         >
-          <View style={{ width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center' }}>
+          <View
+            style={{
+              width: '100%',
+              height: '100%',
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}
+          >
             {/* touch -> mở modal chi tiết */}
             <Pressable onPress={() => setShowModal(true)}>
               <IconQuestion color="white" size={24} />
@@ -647,7 +662,9 @@ const ParkingSpot = () => {
               }}
               onPress={() => setShowModal(false)}
             >
-              <Text style={{ textAlign: 'center', fontWeight: '500', fontSize: 16 }}>
+              <Text
+                style={{ textAlign: 'center', fontWeight: '500', fontSize: 16 }}
+              >
                 Đã hiểu
               </Text>
             </Pressable>
@@ -656,56 +673,67 @@ const ParkingSpot = () => {
       </Modal>
 
       {/* Thanh tìm kiếm */}
-      <SearchBar
-        placeholder="Tìm bãi đỗ xe..."
-        onPress={() => navigation.navigate('SearchParkingSpot' as never)}
-      />
+      <CopilotStep
+        text="Nhập địa điểm bạn muốn tìm bãi đỗ xe tại đây"
+        order={1}
+        name="search_bar"
+      >
+        <WalkthroughableSearchBar
+          placeholder="Tìm bãi đỗ xe..."
+          onPress={() => navigation.navigate('SearchParkingSpot' as never)}
+        />
+      </CopilotStep>
 
-      {/* Nút nổi */}
+
       <View className="absolute right-4 bottom-10 z-20 flex-col space-y-4 gap-3">
-        {isRouting && (
-          <CircleButton
-            icon={<IconCancelRouting size={40} color={Colors.danger} />}
-            bgColor="#000000c5"
+        <CopilotStep
+          text="Bấm vào đây để chat với trợ lý ảo AI"
+          order={2}
+          name="chatbot_btn"
+        >
+          <WalkthroughableCircleButton
+            icon={
+              <Image
+                source={images.chatbot}
+                style={{ width: 35, height: 25 }}
+              />
+            }
+            bgColor="#fff"
+            onPress={() => navigation.navigate('ChatBot')}
+          />
+        </CopilotStep>
+        <CopilotStep text="Xem hướng dẫn chi tiết" order={3} name="help_btn">
+          <WalkthroughableCircleButton
+            icon={<IconQuestion size={20} color={Colors.blue_button} />}
+            bgColor="#fff"
             onPress={() => {
-              setRouteCoords([]);
-              setDestination(null);
-              setLastRoutePos(null);
-              setShowInstructionModal(false);
-              setShowDropdown(false);
+              setShowHelp(true);
+              // start();
             }}
           />
-        )}
-
-        <CircleButton
-          icon={
-            <Image source={images.chatbot} style={{ width: 35, height: 25 }} />
-          }
-          bgColor="#fff"
-          onPress={() => navigation.navigate('ChatBot')}
-        />
-
-        <CircleButton
-          icon={<IconQuestion size={20} color={Colors.blue_button} />}
-          bgColor="#fff"
-          onPress={() => setShowHelp(true)}
-        />
-        <CircleButton
-          icon={<IconCrosshairs size={20} color={Colors.blue_button} />}
-          bgColor="#fff"
-          onPress={() => {
-            if (userLocation && cameraRef.current) {
-              cameraRef.current.setCamera({
-                centerCoordinate: [
-                  userLocation.longitude,
-                  userLocation.latitude,
-                ],
-                zoomLevel: 15,
-                animationDuration: 800,
-              });
-            }
-          }}
-        />
+        </CopilotStep>
+        <CopilotStep
+          text="Xem hướng dẫn chi tiết và ý nghĩa các biểu tượng"
+          order={4}
+          name="location_btn"
+        >
+          <WalkthroughableCircleButton
+            icon={<IconCrosshairs size={20} color={Colors.blue_button} />}
+            bgColor="#fff"
+            onPress={() => {
+              if (userLocation && cameraRef.current) {
+                cameraRef.current.setCamera({
+                  centerCoordinate: [
+                    userLocation.longitude,
+                    userLocation.latitude,
+                  ],
+                  zoomLevel: 15,
+                  animationDuration: 800,
+                });
+              }
+            }}
+          />
+        </CopilotStep>
       </View>
 
       <HelpModalParkingSpot
@@ -890,7 +918,11 @@ const ParkingSpot = () => {
             lon,
             lat,
           ]);
-          const isSelected = selectedRouteId === route.no_parking_route_id;
+          const midIndex = Math.floor(coords.length / 2);
+          const [midLon, midLat] = coords[midIndex];
+
+          const isConfirmed =confirmed?.routeId && confirmed.routeId === route.no_parking_route_id;
+
           return (
             <MapboxGL.ShapeSource
               key={`npr-${route.no_parking_route_id}`}
@@ -934,11 +966,10 @@ const ParkingSpot = () => {
             >
               <MapboxGL.LineLayer
                 id={`npr-layer-${route.no_parking_route_id}`}
-                belowLayerID="unclustered-point"
                 style={{
-                  lineColor: 'green', //  Đổi màu khi chọn
-                  lineWidth: isSelected ? 6 : 4, // Tăng độ dày
-                  lineOpacity: isSelected ? 0.9 : 0.6, //  Làm nổi bật hơn
+                  lineColor: 'green',
+                  lineWidth: 4,
+                  lineOpacity: 0.7,
                 }}
               />
             </MapboxGL.ShapeSource>
@@ -1060,15 +1091,15 @@ const ParkingSpot = () => {
               style={{
                 iconImage: [
                   'case',
-                  ['==', ['get', 'isFavorite'], true], // Nếu isFavorite = true
-                  'favoriteIcon', // Hiển thị icon yêu thích
-                  'parkingIcon', // Ngược lại hiển thị icon parking bình thường
+                  ['==', ['get', 'isFavorite'], true],
+                  'favoriteIcon',
+                  'parkingIcon',
                 ],
                 iconSize: [
                   'case',
                   ['==', ['get', 'isFavorite'], true],
-                  0.9, // icon lớn hơn nếu là favorite
-                  0.7, // mặc định nhỏ hơn
+                  0.9,
+                  0.7,
                 ],
                 iconAllowOverlap: true,
                 symbolSortKey: 10,
@@ -1139,18 +1170,18 @@ const ParkingSpot = () => {
       )}
 
       {/* Modal cho Parking Spot Detail */}
-      <ParkingSpotDetailModal
+      {/* <ParkingSpotDetailModal
         key={`${selectedId}-${showParkingDetail ? 'open' : 'closed'}`} // ép render lại khi mở lại modal
         visible={showParkingDetail}
         onClose={() => setShowParkingDetail(false)}
         loading={parkingSpotDetailLoad}
         error={parkingSpotsError}
         detail={parkingSpotDetail}
-        showInstructionModal={showInstructionModal}
-        showDropdown={showDropdown}
+        // showInstructionModal={showInstructionModal}
+        // showDropdown={showDropdown}
         currentLocation={userLocation}
-        onSetShowInstructionModal={setShowInstructionModal}
-        onSetShowDropdown={setShowDropdown}
+        // onSetShowInstructionModal={setShowInstructionModal}
+        // onSetShowDropdown={setShowDropdown}
         onRouteFound={coords => {
           setRouteCoords(coords);
           if (userLocation && coords.length > 0) {
@@ -1166,6 +1197,28 @@ const ParkingSpot = () => {
             });
           }
         }}
+      /> */}
+      {/* <ParkingSpotDetailModal
+        // bỏ key để tránh unmount/remount khi mở/đóng
+        visible={showParkingDetail}
+        onClose={() => setShowParkingDetail(false)}
+        loading={parkingSpotDetailLoad}
+        error={parkingSpotsError}
+        detail={parkingSpotDetail}
+        currentLocation={userLocation}
+        onRouteFound={handleRouteFound}
+      /> */}
+
+
+      <ParkingSpotDetailModal
+        // bỏ key để tránh unmount/remount khi mở/đóng
+        visible={showParkingDetail}
+        onClose={() => setShowParkingDetail(false)}
+        loading={parkingSpotDetailLoad}
+        error={parkingSpotsError}
+        detail={parkingSpotDetail}
+        currentLocation={userLocation}
+        onRouteFound={handleRouteFound}
       />
 
       {/* Modal cho Route Confirmation */}
@@ -1180,6 +1233,34 @@ const ParkingSpot = () => {
         />
       )}
     </View>
+  );
+};
+
+// ================= Component Wrapper  =================
+const ParkingSpot = () => {
+  return (
+    <CopilotProvider
+      overlay="svg"
+      androidStatusBarVisible={true}
+      animated={true}
+      // verticalOffset={42}
+      tooltipStyle={{
+        borderRadius: 20,
+        backgroundColor: 'white',
+        marginTop: -1,
+      }}
+      stepNumberComponent={() => null}
+      arrowColor="white"
+      backdropColor="rgba(0, 0, 0, 0.7)"
+      labels={{
+        previous: 'Trước',
+        next: 'Tiếp',
+        skip: 'Bỏ qua',
+        finish: 'Xong',
+      }}
+    >
+      <ParkingSpotContent />
+    </CopilotProvider>
   );
 };
 

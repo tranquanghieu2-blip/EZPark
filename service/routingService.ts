@@ -39,7 +39,7 @@ export async function getRoutes(start: [number, number], end: [number, number]) 
       "pk.eyJ1IjoiaGlldWRldiIsImEiOiJjbWdpc3Q0eTIwZGtrMmpvcXFyNmx3eWYzIn0.IstlTiJSDcJR1KK288O4KA";
 
     // Giữ nguyên các tham số hiện tại (không thay đổi alternatives để tránh ảnh hưởng UI)
-    const url = `${baseUrl}/${start[0]},${start[1]};${end[0]},${end[1]}?alternatives=false&geometries=geojson&overview=full&steps=true&language=vi&access_token=${accessToken}`;
+    const url = `${baseUrl}/${start[0]},${start[1]};${end[0]},${end[1]}?alternatives=false&geometries=geojson&overview=full&steps=false&language=vi&access_token=${accessToken}`;
 
     const res = await fetch(url);
     if (!res.ok) throw new Error(`Mapbox API error: ${res.status}`);
@@ -48,47 +48,46 @@ export async function getRoutes(start: [number, number], end: [number, number]) 
     if (!data.routes?.length) throw new Error("Không tìm thấy tuyến đường");
 
     // Chuẩn hóa: thêm mảng instructions cho từng route dựa trên legs[].steps[]
-    const routes = data.routes.map((route: any) => {
-      const instructions: {
-        instruction: string;
-        distance?: number;
-        duration?: number;
-        maneuver?: any;
-        name?: string;
-        geometry?: any;
-      }[] = [];
+    // const routes = data.routes.map((route: any) => {
+    //   // const instructions: {
+    //   //   instruction: string;
+    //   //   distance?: number;
+    //   //   duration?: number;
+    //   //   maneuver?: any;
+    //   //   name?: string;
+    //   //   geometry?: any;
+    //   // }[] = [];
 
-      if (Array.isArray(route.legs)) {
-        route.legs.forEach((leg: any) => {
-          if (Array.isArray(leg.steps)) {
-            leg.steps.forEach((step: any) => {
-              const instrText =
-                // Mapbox thường chứa instruction trong step.maneuver.instruction
-                step.maneuver?.instruction ??
-                // fallback: build a readable text
-                `${step.maneuver?.type ?? "Đi tiếp"} ${step.name ?? ""}`.trim();
+    //   // if (Array.isArray(route.legs)) {
+    //   //   route.legs.forEach((leg: any) => {
+    //   //     if (Array.isArray(leg.steps)) {
+    //   //       leg.steps.forEach((step: any) => {
+    //   //         const instrText =
+    //   //           // Mapbox thường chứa instruction trong step.maneuver.instruction
+    //   //           step.maneuver?.instruction ??
+    //   //           // fallback: build a readable text
+    //   //           `${step.maneuver?.type ?? "Đi tiếp"} ${step.name ?? ""}`.trim();
 
-              instructions.push({
-                instruction: instrText,
-                distance: step.distance,
-                duration: step.duration,
-                maneuver: step.maneuver,
-                name: step.name,
-                geometry: step.geometry,
-              });
-            });
-          }
-        });
-      }
+    //   //         instructions.push({
+    //   //           instruction: instrText,
+    //   //           distance: step.distance,
+    //   //           duration: step.duration,
+    //   //           maneuver: step.maneuver,
+    //   //           name: step.name,
+    //   //           geometry: step.geometry,
+    //   //         });
+    //   //       });
+    //   //     }
+    //   //   });
+    //   // }
 
-      // Trả về route gốc nhưng thêm trường instructions (không xóa hoặc đổi các trường khác)
-      return {
-        ...route,
-        instructions,
-      };
-    });
+    //   // Trả về route gốc nhưng thêm trường instructions (không xóa hoặc đổi các trường khác)
+    //   return {
+    //     ...route,
+    //   };
+    // });
 
-    return routes;
+    return data.routes;
   } catch (error) {
     console.error("getRoute error:", error);
     throw error;

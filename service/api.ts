@@ -619,15 +619,15 @@ export const fetchHistoryChat = async (session_id?: string): Promise<HistoryChat
 export const postChatMessage = async (
   query: string,
   session_id?: string,
-  lat?: number,
-  lng?: number,
+  UserLocation: {latitude: number; longitude: number} | null = null,
+  accessToken?: string
 ): Promise<ResponseFromChatbot> => {
   try {
     
     const body: Record<string, any> = { query };
     if (session_id) body.session_id = session_id;
-    if (lat) body.lat = lat;
-    if (lng) body.lng = lng;
+    if (UserLocation) body.user_location = UserLocation;
+    if(accessToken) body.accessToken = accessToken;
     const response = await fetch(`${API_CONFIG.BASE_URL}/chat`, {
       method: 'POST',
       headers: {

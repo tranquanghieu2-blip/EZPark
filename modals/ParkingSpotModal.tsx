@@ -27,12 +27,12 @@ interface Props {
   loading: boolean;
   error: Error | null;
   detail: ParkingSpotDetailWithStats | null;
-  showInstructionModal: boolean;
-  showDropdown: boolean;
+  // showInstructionModal: boolean;
+  // showDropdown: boolean;
   currentLocation?: { latitude: number; longitude: number } | null;
   onRouteFound?: (coords: { latitude: number; longitude: number }[][]) => void;
-  onSetShowInstructionModal?: (show: boolean) => void;
-  onSetShowDropdown?: (show: boolean) => void;
+  // onSetShowInstructionModal?: (show: boolean) => void;
+  // onSetShowDropdown?: (show: boolean) => void;
 }
 
 const typeLabel: Record<ParkingSpotDetail['type'], string> = {
@@ -46,29 +46,12 @@ const ParkingSpotDetailModal: React.FC<Props> = ({
   loading,
   error,
   detail,
-  showInstructionModal,
-  showDropdown,
-  currentLocation,
-  onRouteFound,
-  onSetShowInstructionModal, // ← Destructure callbacks
-  onSetShowDropdown,
+
 }) => {
   const navigation = useNavigation<any>();
   const [distance, setDistance] = useState<string | null>(null);
 
-  const formatMeters = (m?: number) => {
-    if (!m) return '';
-    if (m >= 1000) return `${(m / 1000).toFixed(1)} km`;
-    return `${Math.round(m)} m`;
-  };
 
-  const formatDuration = (s?: number) => {
-    if (!s) return '';
-    const mins = Math.round(s / 60);
-    return mins > 60
-      ? `${Math.floor(mins / 60)}h ${mins % 60}m`
-      : `${mins} phút`;
-  };
 
   const openGoogleMaps = (latitude: number, longitude: number) => {
     const url = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`;
@@ -149,7 +132,8 @@ const ParkingSpotDetailModal: React.FC<Props> = ({
                       <View className="w-[30px] items-center">
                         <IconPredict size={24} color={Colors.blue_button} />
                       </View>
-                      <Text className="flex-1">Dự đoán còn {detail.predictionData.prediction.availability_percentage} chỗ trống</Text>
+                        <Text className="flex-1">Dự đoán còn {detail.predictionData.prediction.availability_percentage} chỗ trống ngay lúc này</Text>
+
                     </View>
                   )}
                 </View>
@@ -187,38 +171,7 @@ const ParkingSpotDetailModal: React.FC<Props> = ({
               </Pressable>
 
               <Pressable
-                // onPress={() => {
-                //   if (detail && currentLocation) {
-                //     getRoutes(
-                //       [currentLocation.longitude, currentLocation.latitude],
-                //       [detail.longitude, detail.latitude],
-                //     )
-                //       .then(routes => {
-                //         if (routes && routes.length > 0) {
-                //           const main = routes[0];
-                //           if (main.instructions) {
-                //             setInstructions(main.instructions);
-                //           }
 
-                //           if (onRouteFound) {
-                //             const coords = routes.map((r: any) =>
-                //               r.geometry.coordinates.map(
-                //                 ([lon, lat]: [number, number]) => ({
-                //                   longitude: lon,
-                //                   latitude: lat,
-                //                 }),
-                //               ),
-                //             );
-                //             onRouteFound(coords);
-                //           }
-                //           // Hiện dropdown sau khi có route
-                //           onSetShowDropdown?.(true);
-                //         }
-                //         onClose();
-                //       })
-                //       .catch(err => console.error('Route error:', err));
-                //   }
-                // }}
                 onPress={() => {
                   if (detail) {
                     openGoogleMaps(detail.latitude, detail.longitude);
@@ -235,32 +188,7 @@ const ParkingSpotDetailModal: React.FC<Props> = ({
         </View>
       </Modal>
 
-      {/* Dropdown modal */}
-      {showDropdown && (
-        <View className="absolute top-[80px] left-3 w-[200px] bg-white rounded-xl shadow-lg p-2 border border-gray-200 z-50">
-          <Text className="font-semibold text-lg text-black mb-2 text-center">
-            Chỉ đường chi tiết
-          </Text>
 
-          <Pressable
-            onPress={() => onSetShowInstructionModal?.(true)}
-            className="bg-blue-500 active:bg-blue-600 py-2 rounded-lg"
-          >
-            <Text className="text-white text-center font-semibold =">
-              Xem hướng dẫn
-            </Text>
-          </Pressable>
-
-          <Pressable
-            onPress={() => onSetShowDropdown?.(false)}
-            className="mt-2 bg-gray-300 active:bg-gray-500 py-2 rounded-lg"
-          >
-            <Text className="text-center font-semibold text-gray-700">
-              Đóng
-            </Text>
-          </Pressable>
-        </View>
-      )}
 
 
     </>

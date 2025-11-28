@@ -238,12 +238,12 @@ const NoParkingRoute = () => {
       setShowModal(false);
       return;
     }
-    // Khi có tuyến mới → hiện banner
+    // Khi có tuyến mới 
     Vibration.vibrate(300);
     setShowBanner(true);
     setShowBadge(false);
 
-    // Ẩn banner sau 7s → hiện badge
+    // Ẩn banner sau 7s 
     const timer = setTimeout(() => {
       setShowBanner(false);
       setShowBadge(true);
