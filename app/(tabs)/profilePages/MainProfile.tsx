@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -8,7 +8,7 @@ import {
   ScrollView,
   Dimensions,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "@/app/context/AuthContext";
 import HeaderProfile from "@/components/HeaderProfile";
@@ -24,6 +24,7 @@ import {
   IconLogout,
 } from "@/components/Icons";
 import NoUserLogin from "@/components/NoUserLogin";
+import { fetchUserProfile } from "@/service/api";
 
 export default function Profile() {
   const navigation = useNavigation<any>();
@@ -32,8 +33,31 @@ export default function Profile() {
   const insets = useSafeAreaInsets();
   const screenHeight = Dimensions.get("screen").height;
   const headerHeight = screenHeight * 0.3 + insets.top;
+  const [userInfo, setUserInfo] = useState<any>(null);
 
-  // Nếu chưa đăng nhập
+  const fetchUserInfo = async () => {
+    if (!user) return;
+    try {
+      const response = await fetchUserProfile();
+      setUserInfo(response);
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (user)
+      fetchUserInfo();
+  }, [user]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      if (user)
+        fetchUserInfo();
+    }, [user])
+  );
+
+    // Nếu chưa đăng nhập
   if (!user) {
     return <NoUserLogin />;
   }
@@ -51,9 +75,9 @@ export default function Profile() {
         {/* Ảnh đại diện */}
         <View className="items-center">
           <View className="relative">
-            {user.avatar ? (
+            {userInfo?.avatar ? (
               <Image
-                source={{ uri: user.avatar }}
+                source={{ uri: userInfo.avatar }}
                 className="w-28 h-28 rounded-full border-4 border-white"
               />
             ) : (
@@ -68,14 +92,14 @@ export default function Profile() {
 
         {/* Tên người dùng */}
         <View className="items-center mt-2">
-          <Text className="text-xl font-semibold text-black">{user.name}</Text>
-          <Text className="text-gray-500 mt-1">{user.username}</Text>
+          <Text className="text-xl font-semibold text-black">{userInfo?.name}</Text>
+          <Text className="text-gray-500 mt-1">{userInfo?.username}</Text>
         </View>
 
         {/* Danh sách tùy chọn chính */}
         <View className="mt-5 mx-4 bg-white rounded-2xl border border-gray-200 overflow-hidden">
           <Pressable className="flex-row items-center px-4 py-3 border-b border-gray-200 active:bg-gray-50"
-            onPress={() => navigation.navigate("ChangeProfile", {user: user})}
+            onPress={() => navigation.navigate("ChangeProfile", { user: userInfo })}
           >
             <IconEditAccount size={20} color="#000" />
             <Text className="flex-1 ml-3 text-[15px] text-black">
@@ -101,7 +125,7 @@ export default function Profile() {
           </Pressable>
 
           <Pressable className="flex-row items-center px-4 py-3 active:bg-gray-50"
-            onPress={() => navigation.navigate("ChangePassword", {user: user})}
+            onPress={() => navigation.navigate("ChangePassword", { user: user })}
           >
             <IconPassword size={20} color="#000" />
             <Text className="flex-1 ml-3 text-[15px] text-black">
