@@ -20,7 +20,7 @@ export const useConfirmedParking = () => {
   const [confirmed, setConfirmed] = useState<ConfirmedState | null>(null);
   const endTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Hủy xác nhận đỗ xe (đặt lên trước để có thể gọi trong confirmRoute)
+  // Hủy xác nhận đỗ xe
   const clearConfirmed = async () => {
     try {
       // Hủy subscription trên server / FCM
@@ -111,9 +111,9 @@ export const useConfirmedParking = () => {
     saveState();
   }, [confirmed]);
 
-  // Tự động hủy xác nhận khi đến endTime (chỉ chạy 1 lần)
+  // Tự động hủy xác nhận khi đến endTime
   useEffect(() => {
-    // Luôn dọn timeout cũ trước
+    //dọn timeout cũ trước
     if (endTimerRef.current) {
       clearTimeout(endTimerRef.current);
       endTimerRef.current = null;
@@ -126,15 +126,15 @@ export const useConfirmedParking = () => {
     const timeLeft = end.getTime() - now.getTime();
 
     if (timeLeft <= 0) {
-      console.log('⏰ Đã quá hạn, tự động hủy ngay');
+      console.log('Đã quá hạn, tự động hủy ngay');
       clearConfirmed();
       return;
     }
 
-    console.log(`🕒 Đặt hẹn tự hủy sau ${Math.round(timeLeft / 1000)} giây`);
+    console.log(`Đặt hẹn tự hủy sau ${Math.round(timeLeft / 1000)} giây`);
 
     endTimerRef.current = setTimeout(() => {
-      console.log('⏰ Hết hạn, tự động hủy thông báo');
+      console.log('Hết hạn, tự động hủy thông báo');
       clearConfirmed();
     }, timeLeft);
 

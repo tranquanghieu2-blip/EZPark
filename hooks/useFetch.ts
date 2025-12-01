@@ -29,12 +29,10 @@ const useFetch = <T,>(
     setLoading(false);
   }, []);
 
-  // ✅ chỉ chạy lại khi deps thay đổi
   useEffect(() => {
     if (autoFetch && fetchFunction) {
       fetchData();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);
 
   return { data, loading, error, refetch: fetchData, reset };

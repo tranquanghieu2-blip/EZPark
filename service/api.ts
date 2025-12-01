@@ -1,7 +1,6 @@
-import { daNangBounds } from './../constants/mapBounds';
 import api from '@/service/apiClient';
 import { normalizeFilePath } from '@/utils/normalizeFilePath';
-import { UserLocation } from '@rnmapbox/maps';
+
 
 import { Linking } from 'react-native';
 export const API_CONFIG = {
@@ -437,22 +436,7 @@ export const getListFavoriteParkingSpots = async (): Promise<
   }
 };
 
-// export const checkFavoriteParkingSpot = async (
-//   parking_spot_id: number,
-// ): Promise<{ isFavorite: boolean; favoriteId: number | null }> => {
-//   try {
-//     const res = await api.get(`/favorites/check/${parking_spot_id}`);
-//     const favoriteId = res.data.data; // API trả về favoriteId hoặc null
-    
-//     return {
-//       isFavorite: !!favoriteId, // true nếu có favoriteId, false nếu null
-//       favoriteId: favoriteId || null
-//     };
-//   } catch (error) {
-//     handleApiError("Checking favorite status", error);
-//     throw error;
-//   }
-// };
+
 export const checkFavoriteParkingSpot = async (
   parking_spot_id: number,
 ): Promise<{ isFavorite: boolean; favoriteId: number | null }> => {
@@ -470,6 +454,8 @@ export const checkFavoriteParkingSpot = async (
     throw error;
   }
 };
+
+
 
 
 

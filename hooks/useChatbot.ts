@@ -34,7 +34,7 @@ const useChatbot = <T,>(
     if (autoFetch && fetchFunction) {
       fetchData();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, deps);
 
   return { data, loading, error, refetch: fetchData, reset };

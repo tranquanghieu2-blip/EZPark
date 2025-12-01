@@ -15,7 +15,7 @@ export default function AuthLayout() {
   return (
     <Stack.Navigator
         screenOptions={{
-          headerTitleAlign: "center", // ✅ căn giữa tiêu đề cho tất cả các header
+          headerTitleAlign: "center", 
         }}
     >
       <Stack.Screen

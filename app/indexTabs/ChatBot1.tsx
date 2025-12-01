@@ -38,10 +38,7 @@ const ChatBot: React.FC = () => {
 
 
 
-
-  // -------------------------------
-  // Load SessionID + lịch sử chat
-  // -------------------------------
+//load session, lịch sử chat
   const loadSession = useCallback(async () => {
     try {
       const storedSession = await AsyncStorage.getItem("sessionID");
@@ -51,7 +48,7 @@ const ChatBot: React.FC = () => {
       }
       setSessionID(storedSession);
 
-
+      //quá hạn session
       const history = await fetchHistoryChat(storedSession);
       console.log("Session expired", history?.session_info?.is_expired);
       if (history?.session_info?.is_expired) {
@@ -80,9 +77,6 @@ const ChatBot: React.FC = () => {
     loadSession();
   }, [loadSession]);
 
-  // -------------------------------
-  // Gợi ý chat mặc định
-  // -------------------------------
   const suggestions = useMemo(
     () => [
       "Có bãi đỗ nào gần tuyến Nguyễn Văn Linh không?",
@@ -94,9 +88,7 @@ const ChatBot: React.FC = () => {
     []
   );
 
-  // -------------------------------
-  // Gửi tin nhắn
-  // -------------------------------
+//Gửi tin nhắn
   const handleSend = useCallback(
     async (text: string) => {
       if (!text.trim()) return;
@@ -112,13 +104,11 @@ const ChatBot: React.FC = () => {
         created_at: currentTime,
       };
       setMessages((prev) => [...prev, userMsg]);
-
       setBotTyping(true);
       setSending(true);
 
       try {
         const response = await postChatMessage(text, sessionID ?? undefined, userLocation ?? undefined, accessToken?? undefined);
-        console.log("userLocation: ", userLocation)
 
         // Lưu sessionID lần đầu
         if (!sessionID && response.session_id) {
@@ -139,10 +129,7 @@ const ChatBot: React.FC = () => {
       } finally {
         setBotTyping(false);
         setSending(false);
-        setTimeout(
-          () => flatRef.current?.scrollToOffset({ offset: 0, animated: true }),
-          80
-        );
+        setTimeout(() => flatRef.current?.scrollToOffset({ offset: 0, animated: true }), 80);
       }
     },
     [sessionID]

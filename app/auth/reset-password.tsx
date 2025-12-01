@@ -30,10 +30,6 @@ const ResetPassword = () => {
   const route = useRoute<ResetPasswordRouteProp>();
   const navigation = useNavigation<any>();
   const { email, resetToken } = route.params;
-  // console.log("ResetPassword received email:", email);
-  // console.log("ResetPassword received code:", code);
-
-
   const [password, setPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -43,17 +39,12 @@ const ResetPassword = () => {
   const [loading, setLoading] = useState<boolean>(false);
 
   // Kiểm tra định dạng mật khẩu
-  
   const passwordValid = isValidPassword(password);
-  const confirmValid =
-    confirmNewPassword === password && confirmNewPassword.length > 0;
+  const confirmValid = confirmNewPassword === password && confirmNewPassword.length > 0;
 
   // Theo dõi thay đổi mật khẩu
   useEffect(() => {
-    const changed =
-      password.length > 0 &&
-      confirmNewPassword.length > 0;
-    const samePassword = password === confirmNewPassword;
+    const changed =password.length > 0 &&confirmNewPassword.length > 0;
     setIsChanged(changed);
   }, [password, confirmNewPassword]);
 
@@ -124,7 +115,7 @@ const ResetPassword = () => {
           />
         </View>
 
-        {/* ==== Nút Lưu thay đổi ==== */}
+        {/* Nút Lưu thay đổi*/}
         <View className="h-[50px] mb-3 mt-5">
           
             <GradientButton

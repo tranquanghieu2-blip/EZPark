@@ -1,4 +1,4 @@
-// ================= Thông dụng =================
+// Thông dụng
 import React, { useCallback, useRef, useState, useEffect, use } from 'react';
 import {
   ActivityIndicator,
@@ -12,7 +12,6 @@ import {
   Pressable,
   Animated,
   Vibration,
-  InteractionManager,
 } from 'react-native';
 // @ts-ignore
 import MapboxGL from '@rnmapbox/maps';
@@ -26,32 +25,29 @@ import {
   walkthroughable,
 } from 'react-native-copilot';
 
-// ================= Components =================
+// Components
 import CircleButton from '@/components/CircleButton';
 import {
   IconCrosshairs,
   IconQuestion,
-  IconCancelRouting,
 } from '@/components/Icons';
 import SearchBar from '@/components/SearchBar';
-// import UserLocationMarker from '@/components/UserLocation';
-// ================= Constants =================
+// Constants
 import Colors from '@/constants/colors';
 import { icons } from '@/constants/icons';
 import { daNangRegion } from '@/constants/mapBounds';
-// ================= Modals =================
-import FloodReportModal from '@/modals/FloodReportModal';
+// Modals
 import { HelpModalParkingSpot } from '@/modals/HelpModal';
 import ParkingSpotDetailModal from '../../modals/ParkingSpotModal';
 import ConfirmParkingRoutesModal from '../../modals/ConfirmParkingRoutes';
-// ================= Custom hooks =================
+// Custom hooks
 import { useScheduleTimeTriggers } from '@/hooks/useScheduleTimeTriggers';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import useFetch from '../../hooks/useFetch';
 import { useSmartMapboxLocation } from '@/hooks/usePeriodicMapboxLocation';
 import { useConfirmedParking } from '@/hooks/useConfirmParking';
 
-// ================= Services =================
+// Services
 import {
   fetchNoParkingRoutes,
   fetchParkingSpotDetail,
@@ -59,9 +55,7 @@ import {
 } from '../../service/api';
 import { checkFavoriteParkingSpot } from '@/service/api';
 
-// import { startRepeatingNotification } from '@/service/testNoti';
-// ================= Utils =================
-import { clusterPolylines } from '@/utils/clusterPolylines';
+// Utils
 import { isDayRestricted, isWithinTimeRange } from '@/utils/validation';
 
 import {
@@ -73,27 +67,23 @@ import {
   EVENT_FORBIDDEN_ROUTE_EXIT,
 } from '@/utils/eventEmitter';
 
-import { getRoutes } from '@/service/routingService';
-import haversine from 'haversine-distance';
-import { debounce, map } from 'lodash';
 import { useAuth } from '../context/AuthContext';
 import { useParkingSpotDetail } from '@/hooks/useParkingSpotDetail';
 import { images } from '@/constants/images';
 
 const WalkthroughableSearchBar = walkthroughable(SearchBar);
 const WalkthroughableCircleButton = walkthroughable(CircleButton);
-// ================= Component =================
+// Component
 const ParkingSpotContent = () => {
-  // Đổi tên thành Content
+
   const { user } = useAuth();
 
-  const location = useSmartMapboxLocation(1);
+  const location = useSmartMapboxLocation(10);
   console.log('Render Parking Spot');
   const shapeSourceRef = useRef<MapboxGL.ShapeSource>(null);
   const cameraRef = useRef<MapboxGL.Camera>(null);
   const navigation = useNavigation<any>();
   const mapRef = useRef<MapboxGL.MapView>(null);
-  const [region, setRegion] = useState(daNangRegion);
   const [userLocation, setUserLocation] = useState<{
     latitude: number;
     longitude: number;
@@ -103,35 +93,19 @@ const ParkingSpotContent = () => {
     { longitude: number; latitude: number }[][]
   >([]);
 
-  const [isRouting, setIsRouting] = useState(false);
 
   const [showParkingDetail, setShowParkingDetail] = useState(false);
-  const [showRouteConfirm, setShowRouteConfirm] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
-  const [showReport, setShowReport] = useState(false);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [selectedRoute, setSelectedRoute] = useState<NoParkingRoute | null>(
     null,
   );
-  const [selectedRouteId, setSelectedRouteId] = useState<number | null>(null);
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [showInstructionModal, setShowInstructionModal] = useState(false);
   const [changedFavorites, setChangedFavorites] = useState<Set<number>>(
     new Set(),
   );
-  // const { user } = useAuth();
 
   const { confirmed } = useConfirmedParking();
 
-  // lưu điểm đích và vị trí cuối cùng để tính lại route
-  const [destination, setDestination] = useState<{
-    lat: number;
-    lon: number;
-  } | null>(null);
-  const [lastRoutePos, setLastRoutePos] = useState<{
-    lat: number;
-    lon: number;
-  } | null>(null);
 
   const [isManualControl, setIsManualControl] = useState(false);
   const [favoriteSpots, setFavoriteSpots] = useState<Set<number>>(new Set());
@@ -142,32 +116,31 @@ const ParkingSpotContent = () => {
     const checkTutorial = async () => {
       try {
         const TUTORIAL_KEY = 'HAS_SEEN_PARKING_TUTORIAL_V1';
-
         const hasSeen = await AsyncStorage.getItem(TUTORIAL_KEY);
 
         if (hasSeen === null) {
           console.log('First timeeeeee');
-          // 1. Khởi động hướng dẫn
+          // Khởi động hướng dẫn
           setTimeout(() => {
             start();
           }, 1000);
 
-          // 2. Lưu lại ngay lập tức để lần sau không hiện nữa
+          //Lưu lại ngay lập tức để lần sau không hiện nữa
           await AsyncStorage.setItem(TUTORIAL_KEY, 'true');
         }
       } catch (error) {
         console.error('Lỗi khi kiểm tra trạng thái hướng dẫn:', error);
       }
     };
-    // Gọi hàm kiểm tra khi component mount
+    //kiểm tra khi component mount
     checkTutorial();
-    // Nếu muốn test lại hướng dẫn này, hãy uncomment dòng dưới để xóa key:
+    // test lại hướng dẫn, hãy uncomment dòng dưới để xóa key:
     // AsyncStorage.removeItem('HAS_SEEN_PARKING_TUTORIAL_V1');
-  }, [start]); // Chỉ chạy 1 lần khi mount
+  }, [start]); 
 
   useEffect(() => {
     const handleUserLogout = () => {
-      console.log('User has logged out — resetting ParkingSpot state');
+      console.log('User has logged out');
 
       // Xoá các dữ liệu chỉ dành cho user
       setFavoriteSpots(new Set());
@@ -207,7 +180,7 @@ const ParkingSpotContent = () => {
 
     if (!cameraRef.current) return;
     if (!routeCoords || routeCoords.length === 0) {
-      // Nếu muốn trả camera về vị trí người dùng khi hủy route:
+      // trả camera về vị trí người dùng khi hủy route:
       if (userLocation && cameraRef.current) {
         cameraRef.current.setCamera({
           centerCoordinate: [userLocation.longitude, userLocation.latitude],
@@ -235,12 +208,11 @@ const ParkingSpotContent = () => {
       if (p.longitude > maxLon) maxLon = p.longitude;
     });
 
-    // Thêm small padding vào bbox (dạng độ, an toàn)
-    const latPadding = (maxLat - minLat) * 0.15 || 0.002; // 15% hoặc min safe
+    const latPadding = (maxLat - minLat) * 0.15 || 0.002;
     const lonPadding = (maxLon - minLon) * 0.15 || 0.002;
 
-    const sw = [minLon - lonPadding, minLat - latPadding]; // [lon, lat]
-    const ne = [maxLon + lonPadding, maxLat + latPadding]; // [lon, lat]
+    const sw = [minLon - lonPadding, minLat - latPadding];
+    const ne = [maxLon + lonPadding, maxLat + latPadding]; 
 
     try {
       //setCamera với bounds
@@ -277,7 +249,7 @@ const ParkingSpotContent = () => {
     }
   }, [location]);
 
-  // === PERMISSIONS ===
+  // PERMISSIONS
   const requestLocationPermission = async () => {
     if (Platform.OS === 'android') {
       const granted = await PermissionsAndroid.request(
@@ -298,18 +270,16 @@ const ParkingSpotContent = () => {
     requestLocationPermission();
   }, []);
 
-  useEffect(() => {
-    setIsRouting(routeCoords.length > 0);
-  }, [routeCoords]);
 
-  // === Fetch parking spots ===
+
+  // Fetch parking spots
   const {
     data: parkingSpots,
     loading: parkingSpotsLoad,
     error: parkingSpotsError,
   } = useFetch<ParkingSpot[]>(fetchParkingSpots);
 
-  // === Fetch parking spot detail ===
+  //Fetch parking spot detail
   const {
     spot: parkingSpotDetail,
     loading: parkingSpotDetailLoad,
@@ -329,32 +299,14 @@ const ParkingSpotContent = () => {
     }
   }, [selectedId]);
 
-  // === Fetch no-parking routes ===
+  // Fetch no-parking routes
   const { data: noParkingRoutes } =
     useFetch<NoParkingRoute[]>(fetchNoParkingRoutes);
 
-  // === Trigger time updates ===
+  // Trigger time updates
   const [, forceUpdate] = useState(0);
   const triggerUpdate = useCallback(() => forceUpdate(x => x + 1), []);
   useScheduleTimeTriggers(noParkingRoutes, triggerUpdate, 'allowed');
-
-  // === Khi bản đồ thay đổi (Mapbox) ===
-  const onRegionDidChange = async () => {
-    try {
-      const center = await mapRef.current?.getCenter();
-      if (center) {
-        setRegion({
-          ...region,
-          latitude: center[0],
-          longitude: center[0],
-        });
-      }
-    } catch (error) {
-      console.warn('Không thể lấy tâm bản đồ:', error);
-    }
-  };
-
-
 
   // Check favorite spots
   useEffect(() => {
@@ -403,25 +355,7 @@ const ParkingSpotContent = () => {
     checkAllFavorites();
   }, [parkingSpots, user]);
 
-  // Memoize handler để giữ identity giữa các render
-  const handleRouteFound = useCallback(
-    (coords: { longitude: number; latitude: number }[][]) => {
-      setRouteCoords(coords);
-      if (userLocation && coords.length > 0) {
-        const main = coords[0];
-        const destinationPoint = main[main.length - 1];
-        setDestination({
-          lat: destinationPoint.latitude,
-          lon: destinationPoint.longitude,
-        });
-        setLastRoutePos({
-          lat: userLocation.latitude,
-          lon: userLocation.longitude,
-        });
-      }
-    },
-    [userLocation],
-  );
+
   useFocusEffect(
     useCallback(() => {
       console.log('ParkingSpot screen focused');
@@ -467,12 +401,10 @@ const ParkingSpotContent = () => {
 
         refreshChangedFavorites();
       }
-
-      // Không cần cleanup ở đây
     }, [selectedId, userLocation, user, changedFavorites, favoriteSpots]),
   );
 
-  // STATE để hiển thị cảnh báo tuyến cấm shared từ NoParkingRoute
+  // STATE hiển thị cảnh báo tuyến cấm từ NoParkingRoute
   const [currentForbiddenRoute, setCurrentForbiddenRoute] =
     useState<NoParkingRoute | null>(null);
 
@@ -510,7 +442,7 @@ const ParkingSpotContent = () => {
     };
   }, []);
 
-  // Khi vừa vào tuyến cấm → tự ẩn banner sau 7s và hiện badge
+  // Khi vừa vào tuyến cấm tự ẩn banner sau 7s và hiện badge
   useEffect(() => {
     if (!currentForbiddenRoute) {
       setShowBanner(false);
@@ -524,7 +456,7 @@ const ParkingSpotContent = () => {
     const timer = setTimeout(() => {
       setShowBanner(false);
       setShowBadge(true);
-    }, 100000);
+    }, 7000);
 
     return () => clearTimeout(timer);
   }, [currentForbiddenRoute]);
@@ -580,7 +512,7 @@ const ParkingSpotContent = () => {
           }}
         >
           <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 18 }}>
-            🚫 Bạn đang đi vào tuyến cấm đỗ xe!
+             Bạn đang đi vào tuyến cấm đỗ xe!
           </Text>
           <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>
             {currentForbiddenRoute.street}
@@ -614,7 +546,6 @@ const ParkingSpotContent = () => {
               alignItems: 'center',
             }}
           >
-            {/* touch -> mở modal chi tiết */}
             <Pressable onPress={() => setShowModal(true)}>
               <IconQuestion color="white" size={24} />
             </Pressable>
@@ -647,7 +578,7 @@ const ParkingSpotContent = () => {
                 color: Colors.warning,
               }}
             >
-              🚫 Bạn đang di chuyển trên tuyến cấm đỗ
+              Bạn đang di chuyển trên tuyến cấm đỗ
             </Text>
             <Text style={{ marginTop: 8, fontWeight: '600' }}>
               {currentForbiddenRoute?.street}
@@ -746,7 +677,6 @@ const ParkingSpotContent = () => {
         ref={mapRef}
         style={styles.map}
         styleURL={MapboxGL.StyleURL.Street}
-        onRegionDidChange={onRegionDidChange}
         scaleBarEnabled={false}
         attributionEnabled={false}
         compassEnabled={false}
@@ -875,7 +805,7 @@ const ParkingSpotContent = () => {
             );
           })()}
 
-        {/* custom user marker (dùng location từ useSmartMapboxLocation) */}
+        {/* custom user marker */}
         {userLocation && (
           <MapboxGL.PointAnnotation
             id="user-marker"
@@ -918,10 +848,7 @@ const ParkingSpotContent = () => {
             lon,
             lat,
           ]);
-          const midIndex = Math.floor(coords.length / 2);
-          const [midLon, midLat] = coords[midIndex];
 
-          const isConfirmed =confirmed?.routeId && confirmed.routeId === route.no_parking_route_id;
 
           return (
             <MapboxGL.ShapeSource
@@ -947,8 +874,6 @@ const ParkingSpotContent = () => {
 
                 if (selectedRoute) {
                   setSelectedRoute(selectedRoute);
-                  setShowRouteConfirm(true);
-                  setSelectedRouteId(routeId);
                   // Di chuyển camera đến vị trí bãi đỗ
                   if (selectedRoute?.route?.coordinates?.length) {
                     const coords = selectedRoute.route.coordinates;
@@ -976,16 +901,9 @@ const ParkingSpotContent = () => {
           );
         })}
 
-        {/* <MapboxGL.UserLocation
-          visible={true}
-          showsUserHeadingIndicator={false}
-          minDisplacement={10} // chỉ cập nhật khi di chuyển ít nhất 10 mét
-          onUpdate={() => {
-            console.log('UPDATE USER LOCATION');
-          }}
-        /> */}
 
-        {/* === Parking Spot Clustering === */}
+
+        {/*Parking Spot Clustering*/}
         {parkingSpots && (
           <MapboxGL.ShapeSource
             ref={shapeSourceRef}
@@ -1057,7 +975,7 @@ const ParkingSpotContent = () => {
                   }
                 }
               } else {
-                // Nếu click vào marker (không phải cluster)
+                // Nếu click vào marker
                 const spotData = feature.properties;
                 setSelectedId(spotData.id);
                 setShowParkingDetail(true);
@@ -1169,56 +1087,15 @@ const ParkingSpotContent = () => {
         </Text>
       )}
 
-      {/* Modal cho Parking Spot Detail */}
-      {/* <ParkingSpotDetailModal
-        key={`${selectedId}-${showParkingDetail ? 'open' : 'closed'}`} // ép render lại khi mở lại modal
-        visible={showParkingDetail}
-        onClose={() => setShowParkingDetail(false)}
-        loading={parkingSpotDetailLoad}
-        error={parkingSpotsError}
-        detail={parkingSpotDetail}
-        // showInstructionModal={showInstructionModal}
-        // showDropdown={showDropdown}
-        currentLocation={userLocation}
-        // onSetShowInstructionModal={setShowInstructionModal}
-        // onSetShowDropdown={setShowDropdown}
-        onRouteFound={coords => {
-          setRouteCoords(coords);
-          if (userLocation && coords.length > 0) {
-            const main = coords[0];
-            const destinationPoint = main[main.length - 1];
-            setDestination({
-              lat: destinationPoint.latitude,
-              lon: destinationPoint.longitude,
-            });
-            setLastRoutePos({
-              lat: userLocation.latitude,
-              lon: userLocation.longitude,
-            });
-          }
-        }}
-      /> */}
-      {/* <ParkingSpotDetailModal
-        // bỏ key để tránh unmount/remount khi mở/đóng
-        visible={showParkingDetail}
-        onClose={() => setShowParkingDetail(false)}
-        loading={parkingSpotDetailLoad}
-        error={parkingSpotsError}
-        detail={parkingSpotDetail}
-        currentLocation={userLocation}
-        onRouteFound={handleRouteFound}
-      /> */}
 
 
       <ParkingSpotDetailModal
-        // bỏ key để tránh unmount/remount khi mở/đóng
         visible={showParkingDetail}
         onClose={() => setShowParkingDetail(false)}
         loading={parkingSpotDetailLoad}
         error={parkingSpotsError}
         detail={parkingSpotDetail}
         currentLocation={userLocation}
-        onRouteFound={handleRouteFound}
       />
 
       {/* Modal cho Route Confirmation */}
@@ -1227,8 +1104,6 @@ const ParkingSpotContent = () => {
           route={selectedRoute}
           onClose={() => {
             setSelectedRoute(null);
-            setShowRouteConfirm(false);
-            setSelectedRouteId(null);
           }}
         />
       )}
@@ -1236,7 +1111,7 @@ const ParkingSpotContent = () => {
   );
 };
 
-// ================= Component Wrapper  =================
+// Component Wrapper 
 const ParkingSpot = () => {
   return (
     <CopilotProvider

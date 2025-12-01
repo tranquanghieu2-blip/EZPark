@@ -9,7 +9,7 @@ interface Props {
   style?: ViewStyle
 }
 
-// Thay React.ElementRef -> React.ComponentRef
+//React.ComponentRef
 const CircleButton = forwardRef<React.ComponentRef<typeof TouchableOpacity>, Props>(
   ({ icon, bgColor = '#ab8bff', onPress, size = 50, style }, ref) => {
     return (

@@ -54,7 +54,7 @@ export const useParkingSpotDetail = () => {
       // Gộp dữ liệu
       const enrichedData: ParkingSpotDetailWithStats = {
         ...data,
-        distance, // có thể là null nếu không tính được
+        distance,
         statistics,
         predictionData,
       };

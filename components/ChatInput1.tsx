@@ -1,9 +1,15 @@
-import React, { useState } from "react";
-import { View, TextInput, TouchableOpacity, Text, ActivityIndicator } from "react-native";
-import Ionicons from "@react-native-vector-icons/ionicons";
-import { IconMicro } from "@/components/Icons"; // Giả định icon mic của bạn
-import Colors from "@/constants/colors";
-import { useSpeechToText } from "@/hooks/useSpeechToText"; // Import hook vừa tạo
+import React, { useState } from 'react';
+import {
+  View,
+  TextInput,
+  TouchableOpacity,
+  Text,
+  ActivityIndicator,
+} from 'react-native';
+import Ionicons from '@react-native-vector-icons/ionicons';
+import { IconMicro } from '@/components/Icons'; // Giả định icon mic của bạn
+import Colors from '@/constants/colors';
+import { useSpeechToText } from '@/hooks/useSpeechToText'; // Import hook vừa tạo
 
 interface ChatInputProps {
   onSend: (text: string) => void;
@@ -11,52 +17,49 @@ interface ChatInputProps {
 }
 
 const ChatInput: React.FC<ChatInputProps> = ({ onSend, sending }) => {
-  const [text, setText] = useState("");
+  const [text, setText] = useState('');
 
-  // Callback khi STT thành công -> Tự động gửi tin nhắn
+  //Tự động gửi tin nhắn
   const handleSpeechDetected = (detectedText: string) => {
     if (detectedText) {
-        // setText(detectedText); // Hiển thị text lên input (tuỳ chọn)
-        onSend(detectedText);  // Gửi ngay lập tức cho backend chatbot
+      // setText(detectedText);
+      onSend(detectedText);
     }
   };
 
-  // Sử dụng hook
-  const { isRecording, processing, startRecording, stopRecording } = useSpeechToText({
-    onSpeechDetected: handleSpeechDetected
-  });
+  const { isRecording, processing, startRecording, stopRecording } =
+    useSpeechToText({
+      onSpeechDetected: handleSpeechDetected,
+    });
 
   const handleSend = () => {
     const trimmed = text.trim();
     if (!trimmed) return;
     onSend(trimmed);
-    setText("");
+    setText('');
   };
 
   const handleMicPress = () => {
-      if (isRecording) {
-          // Nếu đang ghi mà bấm nút -> dừng thủ công
-          stopRecording();
-      } else {
-          startRecording();
-      }
+    if (isRecording) {
+      stopRecording();
+    } else {
+      startRecording();
+    }
   };
 
   return (
     <View className="border-t border-gray-200 bg-white px-3 py-2">
-        
       {/* Hiển thị trạng thái ghi âm */}
       {isRecording && (
-          <View className="absolute top-[-40] left-0 right-0 items-center justify-center">
-              <View className="bg-red-500 px-4 py-1 rounded-full">
-                  <Text className="text-white font-bold">Đang nghe...</Text>
-              </View>
+        <View className="absolute top-[-40] left-0 right-0 items-center justify-center">
+          <View className="bg-red-500 px-4 py-1 rounded-full">
+            <Text className="text-white font-bold">Đang nghe...</Text>
           </View>
+        </View>
       )}
 
       <View className="flex-row items-center">
-
-                {/* Nút Micro */}
+        {/* Micro */}
         <TouchableOpacity
           activeOpacity={0.7}
           onPress={handleMicPress}
@@ -64,30 +67,27 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSend, sending }) => {
           accessibilityRole="button"
           disabled={processing || sending}
         >
-           {processing ? (
-               <ActivityIndicator size="large" color={Colors.blue_button} />
-           ) : (
-               <IconMicro 
-                size={26} 
-                color={isRecording ? "red" : Colors.blue_button} 
-               />
-           )}
+          {processing ? (
+            <ActivityIndicator size="large" color={Colors.blue_button} />
+          ) : (
+            <IconMicro
+              size={26}
+              color={isRecording ? 'red' : Colors.blue_button}
+            />
+          )}
         </TouchableOpacity>
 
         <TextInput
           value={text}
           onChangeText={setText}
-          placeholder={isRecording ? "Đang ghi âm..." : "Nhập tin nhắn..."}
-          editable={!isRecording} // Disable input khi đang ghi âm
+          placeholder={isRecording ? 'Đang ghi âm...' : 'Nhập tin nhắn...'}
+          editable={!isRecording}
           multiline={true}
           returnKeyType="send"
           onSubmitEditing={handleSend}
           className="flex-1 bg-gray-100 rounded-lg px-4 py-2 text-base"
         />
-        
 
-
-        {/* Nút Gửi */}
         <TouchableOpacity
           activeOpacity={0.7}
           onPress={handleSend}

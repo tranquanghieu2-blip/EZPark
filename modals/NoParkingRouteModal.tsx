@@ -56,7 +56,7 @@ const NoParkingRouteModal: React.FC<Props> = ({ route, onClose }) => {
     const typeIcons: Record<NoParkingRoute["type"], any> = {
         "no parking": icons.banParking,
         "no stopping": icons.banStopping,
-        "alternate days": icons.banOddEven, // tạm thời dùng icon cấm chẵn lẻ
+        "alternate days": icons.banOddEven,
     };
 
 
@@ -69,7 +69,7 @@ const NoParkingRouteModal: React.FC<Props> = ({ route, onClose }) => {
             // Fade in
             Animated.timing(fadeAnim, {
                 toValue: 1,
-                duration: 500, // 👈 chỉnh thời gian tại đây
+                duration: 500, 
                 useNativeDriver: true,
             }).start();
         } else {
@@ -85,7 +85,7 @@ const NoParkingRouteModal: React.FC<Props> = ({ route, onClose }) => {
         <Modal
             transparent
             visible={!!route}
-            animationType="none" // để mình tự điều khiển animation
+            animationType="none" 
             onRequestClose={onClose}
 
         >

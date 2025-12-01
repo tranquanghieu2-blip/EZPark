@@ -83,12 +83,10 @@ const SearchNoParkingRoute = () => {
         return days.map((d) => dayMap[d] || d).join(", ");
     };
 
-    // ===============================
     // Fetch mỗi khi query location thay đổi
-    // ===============================
     useEffect(() => {
         if (location) {
-            console.log("📍 Đã có location:", location);
+            console.log("Đã có location:", location);
             setIsLocationReady(true);
         }
     }, [location]);
@@ -105,9 +103,7 @@ const SearchNoParkingRoute = () => {
         fetchNoParkingRoutes(debouncedQuery, true, location);
     }, [debouncedQuery, location]);
 
-    // ===============================
     // Load thêm
-    // ===============================
     const handleLoadMore = async () => {
         if (!location || loadingMore) return;
         setLoadingMore(true);
@@ -119,9 +115,7 @@ const SearchNoParkingRoute = () => {
         setLoadingMore(false);
     };
 
-    // ===============================
     // Reset danh sách (rút gọn)
-    // ===============================
     const handleReset = async () => {
         if (!location || loadingReset) return;
         setLoadingReset(true);
@@ -133,7 +127,6 @@ const SearchNoParkingRoute = () => {
         setLoadingReset(false);
     };
 
-    // ===============================
     // Render
     useFocusEffect(
         useCallback(() => {
@@ -155,7 +148,6 @@ const SearchNoParkingRoute = () => {
             </View>
         );
     }
-    // ===============================
     return (
         <View className="flex-1 bg-white px-4 pt-4">
             {/* Search */}

@@ -46,7 +46,7 @@ const AllowedParkingRouteModal: React.FC<Props> = ({ route, onClose }) => {
             // Fade in
             Animated.timing(fadeAnim, {
                 toValue: 1,
-                duration: 500, // 👈 chỉnh thời gian tại đây
+                duration: 500, 
                 useNativeDriver: true,
             }).start();
         } else {

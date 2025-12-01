@@ -10,12 +10,6 @@ export const useGetListFeedback = () => {
   const [hasMore, setHasMore] = useState(true);
   const { user } = useAuth();
 
-  /**
-   * Fetch danh sách feedback
-   * @param parkingSpotId id của bãi đỗ xe
-   * @param reset có muốn reset danh sách cũ hay không
-   * @param limit số lượng phần tử cần lấy (mặc định 5)
-   */
   const fetchFeedbacks = async (
     parkingSpotId: number,
     reset = false,

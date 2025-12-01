@@ -39,7 +39,7 @@ const ForgotPassword = () => {
 
   const canSave = emailValid;
 
-  // --- Save profile ---
+  // Lưu profile
 const handleSave = async () => {
   if (!canSave) return;
 

@@ -10,13 +10,6 @@ export const useSearchParking = () => {
 
   const limit = 5;
 
-  /**
-   * @param query - Tên bãi đỗ xe muốn tìm
-   * @param reset - Có reset danh sách không
-   * @param typeParkingSpot - Loại bãi đỗ (nếu có)
-   * @param selectedRating - Đánh giá đã chọn (nếu có)
-   * @param coords - Vị trí hiện tại { latitude, longitude }
-   */
   const fetchSpots = async (
     query?: string,
     reset = false,

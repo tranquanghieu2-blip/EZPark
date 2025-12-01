@@ -6,7 +6,7 @@ import { icons } from '@/constants/icons';
 import usePost from '@/hooks/usePost';
 import { useAuth } from '@/app/context/AuthContext';
 import MessageModal from '@/modals/MessageModal';
-import {  fetchMe, GGLogin, login } from '@/service/api';
+import { fetchMe, GGLogin, login } from '@/service/api';
 import { useNavigation } from '@react-navigation/native';
 import React, { useState, useEffect } from 'react';
 import {
@@ -21,67 +21,17 @@ import {
 } from 'react-native';
 import { Linking } from 'react-native';
 import ToastCustom from '@/utils/CustomToast';
-import { DISABLED_OPACITY, maxLengthEmail, maxLengthPassword, isValidPassword  } from '@/utils/ui';
+import {
+  DISABLED_OPACITY,
+  maxLengthEmail,
+  maxLengthPassword,
+  isValidPassword,
+} from '@/utils/ui';
 import api from '@/service/apiClient';
 
 export default function Login() {
   const navigation = useNavigation<any>();
-  const { login: saveAuth } = useAuth(); // Hàm login từ AuthContext
-
-
-  useEffect(() => {
-    // Lắng nghe deep link callback từ Google
-    const handleDeepLink = async (event: { url: string }) => {
-      console.log("Full URL:", event.url);
-      
-      if (event.url.includes('auth/callback')) {
-        try {
-          // Parse URL để lấy tempToken
-          const urlObj = new URL(event.url);
-          const tempToken = urlObj.searchParams.get('tempToken');
-          console.log("Temp Token:", tempToken);
-          
-          if (!tempToken) {
-            throw new Error('No temp token received from Google login');
-          }
-
-          // Gọi handleGoogleCallback với tempToken
-          const result = await fetchMe(tempToken);
-          console.log("Result: ",result)
-          
-          // Lưu token vào AuthContext
-          if (result?.refreshToken && result?.accessToken) {
-            await saveAuth(result.user, result.accessToken, result.refreshToken);
-            navigation.navigate('(tabs)' as never);
-            ToastCustom.success(
-              'Đăng nhập Google thành công!',
-              'Chào mừng bạn đến với EZPark.'
-            );
-          }
-        } catch (error) {
-          console.error('Google login failed:', error);
-          ToastCustom.error(
-            'Đăng nhập Google thất bại!',
-            'Vui lòng thử lại.'
-          );
-        }
-      }
-    };
-
-    // Subscribe to deep links
-    const subscription = Linking.addEventListener('url', handleDeepLink);
-
-    // Check if app was opened from a deep link
-    Linking.getInitialURL().then((url) => {
-      if (url && url.includes('auth/callback')) {
-        handleDeepLink({ url });
-      }
-    });
-
-    return () => {
-      subscription.remove();
-    };
-  }, []);
+  const { login: saveAuth } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -96,13 +46,62 @@ export default function Login() {
 
   const isFormInvalid = !emailValid || !passwordValid;
 
+  useEffect(() => {
+    const handleDeepLink = async (event: { url: string }) => {
+      if (event.url.includes('auth/callback')) {
+        try {
+          //lấy tempToken
+          const urlObj = new URL(event.url);
+          const tempToken = urlObj.searchParams.get('tempToken');
+          if (!tempToken) {
+            throw new Error('No temp token received from Google login');
+          }
+
+          // Gọi handleGoogleCallback với tempToken
+          const result = await fetchMe(tempToken);
+          console.log('Result: ', result);
+
+          // Lưu token vào AuthContext
+          if (result?.refreshToken && result?.accessToken) {
+            await saveAuth(
+              result.user,
+              result.accessToken,
+              result.refreshToken,
+            );
+            navigation.navigate('(tabs)' as never);
+            ToastCustom.success(
+              'Đăng nhập Google thành công!',
+              'Chào mừng bạn đến với EZPark.',
+            );
+          }
+        } catch (error) {
+          console.error('Google login failed:', error);
+          ToastCustom.error('Đăng nhập Google thất bại!', 'Vui lòng thử lại.');
+        }
+      }
+    };
+
+    // Subscribe to deep links
+    const subscription = Linking.addEventListener('url', handleDeepLink);
+
+    // Check if app was opened from a deep link
+    Linking.getInitialURL().then(url => {
+      if (url && url.includes('auth/callback')) {
+        handleDeepLink({ url });
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
+
   const handleLogin = async () => {
     if (!emailValid) return alert('Email không hợp lệ');
     if (!passwordValid) return alert('Mật khẩu phải >= 10 ký tự, có chữ và số');
 
     try {
       const res = await execute(email, password);
-      console.log('Đăng nhập thành công:', res);
 
       if (res?.user && res?.accessToken) {
         await saveAuth(res.user, res.accessToken, res.refreshToken);
@@ -200,7 +199,6 @@ export default function Login() {
         <Pressable
           className="bg-gray-200 py-3 rounded-lg mb-3 h-[50px] items-center justify-center flex-row gap-2"
           onPress={() => {
-            //Linking.openURL(`${API_CONFIG.BASE_URL}/auth/google`);
             GGLogin();
           }}
         >

@@ -75,11 +75,11 @@ export default function RootLayout() {
   registerDevice();
 
   useEffect(() => {
-    // 🔹 Tạo channel khi app khởi động
+    // Tạo channel khi app khởi động
     createNotificationChannel();
 
-    // 🔹 Lắng nghe thông báo khi app đang mở (foreground)
-    const unsubscribe = messaging().onMessage(async remoteMessage => {
+    // Lắng nghe thông báo khi app đang mở (foreground)
+    const subscribe = messaging().onMessage(async remoteMessage => {
       await notifee.displayNotification({
         title: remoteMessage.notification?.title,
         body: remoteMessage.notification?.body,
@@ -92,7 +92,7 @@ export default function RootLayout() {
       });
     });
 
-    return unsubscribe;
+    return subscribe;
   }, []);
   return (
     <AuthProvider>
