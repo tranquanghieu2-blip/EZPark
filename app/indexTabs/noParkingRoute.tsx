@@ -35,13 +35,14 @@ import { HelpModalNoParkingRoute } from '@/modals/HelpModal';
 import NoParkingRouteModal from '@/modals/NoParkingRouteModal';
 import { images } from '@/constants/images';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import haversine from 'haversine-distance';
 import { Animated } from 'react-native';
 import { useForbiddenRouteWatcher } from '@/hooks/useForbiddenRouteWatcher';
 import { useSmartMapboxLocation } from '@/hooks/usePeriodicMapboxLocation';
-import { set } from 'lodash';
 import { mapEvents } from '@/utils/eventEmitter';
-import { EVENT_FORBIDDEN_ROUTE_ENTER, EVENT_FORBIDDEN_ROUTE_EXIT } from '@/utils/eventEmitter';
+import {
+  EVENT_FORBIDDEN_ROUTE_ENTER,
+  EVENT_FORBIDDEN_ROUTE_EXIT,
+} from '@/utils/eventEmitter';
 
 const NoParkingRoute = () => {
   const location = useSmartMapboxLocation();
@@ -49,19 +50,8 @@ const NoParkingRoute = () => {
   const navigation = useNavigation<any>();
   const routeNav = useRoute<any>();
 
-  // STATE
-  const [center, setCenter] = useState<{ latitude: number; longitude: number }>(
-    DA_NANG_CENTER,
-  );
   const [currentForbiddenRoute, setCurrentForbiddenRoute] =
     useState<NoParkingRoute | null>(null);
-  const [region, setRegion] = useState<{
-    latitude: number;
-    longitude: number;
-    latitudeDelta: number;
-    longitudeDelta: number;
-  }>(DA_NANG_VIEWPORT);
-  const [zoomLevel, setZoomLevel] = useState(12);
   const [selectedRoute, setSelectedRoute] = useState<NoParkingRoute | null>(
     null,
   );
@@ -75,12 +65,8 @@ const NoParkingRoute = () => {
     longitude: number;
   } | null>(null);
 
-  // REF
   const mapRef = useRef<MapboxGL.MapView>(null);
   const cameraRef = useRef<MapboxGL.Camera>(null);
-
-  // DATA FETCH
-
   const {
     data: noParkingRoutes,
     loading: noParkingRoutesLoad,
@@ -94,10 +80,9 @@ const NoParkingRoute = () => {
     const found = routesWithGeometry.find(r => r.no_parking_route_id === id);
     if (!found) return;
 
-    // 1. Set selected route để mở modal
+    // Set selected route để mở modal
     setSelectedRoute(found);
-
-    // 2. Zoom gần vào tuyến (lấy midpoint)
+    // Zoom gần vào tuyến
     if (found?.route?.coordinates?.length) {
       const mid = Math.floor(found.route.coordinates.length / 2);
       const [lon, lat] = found.route.coordinates[mid];
@@ -109,11 +94,11 @@ const NoParkingRoute = () => {
       });
     }
 
-    // 3. Clear param để không trigger lại khi re-render
+    // Clear param để không trigger lại khi re-render
     navigation.setParams({ selectedNoParkingRouteId: undefined });
   }, [routeNav?.params?.selectedNoParkingRouteId, routesWithGeometry]);
 
-  //= GEOMETRY=
+  // GEOMETRY
   useEffect(() => {
     if (!noParkingRoutes) return;
 
@@ -160,34 +145,10 @@ const NoParkingRoute = () => {
     enrichGeometry();
   }, [noParkingRoutes]);
 
-  //= TIME TRIGGER=
+  //TIME TRIGGER
   const [, forceUpdate] = useState(0);
   const triggerUpdate = useCallback(() => forceUpdate(x => x + 1), []);
   useScheduleTimeTriggers(noParkingRoutes, triggerUpdate, 'forbidden');
-
-  const onRegionDidChange = async () => {
-    try {
-      const centerPoint = await mapRef.current?.getCenter();
-      const   zoomLevel = await mapRef.current?.getZoom();
-      const bounds = await mapRef.current?.getVisibleBounds();
-      if (centerPoint && bounds) {
-        const ne = bounds[0];
-        const sw = bounds[1];
-        const latitudeDelta = Math.abs(ne[1] - sw[1]);
-        const longitudeDelta = Math.abs(ne[0] - sw[0]);
-        setRegion({
-          latitude: centerPoint[1],
-          longitude: centerPoint[0],
-          latitudeDelta: Math.max(latitudeDelta, 0.001),
-          longitudeDelta: Math.max(longitudeDelta, 0.001),
-        });
-      }
-      if (zoomLevel !== undefined) setZoomLevel(zoomLevel);
-    } catch (err) {
-      console.warn('Không thể lấy tâm, zoom hoặc bounds bản đồ:', err);
-    }
-  };
-
   useEffect(() => {
     if (
       location &&
@@ -199,8 +160,6 @@ const NoParkingRoute = () => {
     }
   }, [location]);
 
-
-  //= USER LOCATION & CẢNH BÁO=
   const [showBanner, setShowBanner] = useState(false);
   const [showBadge, setShowBadge] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -226,7 +185,7 @@ const NoParkingRoute = () => {
     },
   });
   console.log('Check forbidden route:', check);
-  // Khi vừa vào tuyến cấm → hiển thị banner
+  // Khi vừa vào tuyến cấm  hiển thị banner
   useEffect(() => {
     console.log(
       'TUYẾN CẤM HIỆN TẠI: ',
@@ -238,12 +197,12 @@ const NoParkingRoute = () => {
       setShowModal(false);
       return;
     }
-    // Khi có tuyến mới 
+    // Khi có tuyến mới
     Vibration.vibrate(300);
     setShowBanner(true);
     setShowBadge(false);
 
-    // Ẩn banner sau 7s 
+    // Ẩn banner sau 7s
     const timer = setTimeout(() => {
       setShowBanner(false);
       setShowBadge(true);
@@ -280,7 +239,6 @@ const NoParkingRoute = () => {
     ).start();
   }, [showBadge]);
 
-  //= RENDER=
   return (
     <View style={styles.container}>
       {/* Thanh tìm kiếm */}
@@ -332,7 +290,6 @@ const NoParkingRoute = () => {
         ref={mapRef}
         style={styles.map}
         styleURL={MapboxGL.StyleURL.Street}
-        onRegionDidChange={onRegionDidChange}
         scaleBarEnabled={false}
         attributionEnabled={false}
         compassEnabled={false}
@@ -353,12 +310,6 @@ const NoParkingRoute = () => {
           zoomLevel={10}
         />
 
-        {/* Vị trí người dùng */}
-        {/* <MapboxGL.UserLocation
-          visible={true}
-          showsUserHeadingIndicator={true}
-          onUpdate={handleUserLocationUpdate}
-        /> */}
         {userLocation && (
           <MapboxGL.PointAnnotation
             id="user-marker"
@@ -391,7 +342,7 @@ const NoParkingRoute = () => {
           </MapboxGL.PointAnnotation>
         )}
 
-        {/* ROUTES (clustered) */}
+        {/* ROUTES */}
         {routesWithGeometry?.map(route => {
           if (!route.route) return null;
 
@@ -418,16 +369,14 @@ const NoParkingRoute = () => {
               }}
               onPress={() => {
                 setSelectedRoute(route);
-
-                // Sử dụng 'route' thay vì 'selectedRoute'
                 if (route?.route?.coordinates?.length) {
                   const coords = route.route.coordinates;
                   const midIndex = Math.floor(coords.length / 2);
-                  const [lon, lat] = coords[midIndex]; // Lấy điểm giữa tuyến
+                  const [lon, lat] = coords[midIndex];
 
                   cameraRef.current?.setCamera({
                     centerCoordinate: [lon, lat],
-                    zoomLevel: 14, // ← Tăng zoom level để thấy rõ hơn
+                    zoomLevel: 14, 
                     animationDuration: 700,
                   });
                 }
@@ -437,10 +386,9 @@ const NoParkingRoute = () => {
                 id={`line-${route.no_parking_route_id}`}
                 style={{
                   lineColor: style.strokeColor,
-
                   lineCap: 'round',
-                  lineWidth: isSelected ? 6 : 4, // Tăng độ dày
-                  lineOpacity: isSelected ? 0.9 : 0.8, //  Làm nổi bật hơn
+                  lineWidth: isSelected ? 6 : 4, 
+                  lineOpacity: isSelected ? 0.9 : 0.8,
                 }}
               />
             </MapboxGL.ShapeSource>
@@ -468,7 +416,7 @@ const NoParkingRoute = () => {
         route={selectedRoute}
         onClose={() => setSelectedRoute(null)}
       />
-      {/* ===== Banner lớn ===== */}
+      {/*Banner lớn */}
       {showBanner && (
         <Animated.View
           style={{
@@ -496,17 +444,16 @@ const NoParkingRoute = () => {
           />
           <View style={{ flex: 1 }}>
             <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 14 }}>
-              🚫 Bạn đang đi vào tuyến đường cấm đỗ xe!
+              Bạn đang đi vào tuyến đường cấm đỗ xe!
             </Text>
             <Text style={{ color: '#fff', fontSize: 16, fontWeight: 'bold' }}>
-              {/* 7. SỬA LẠI: Dùng state đã đổi tên */}
               {currentForbiddenRoute?.street}
             </Text>
           </View>
         </Animated.View>
       )}
 
-      {/* ===== Badge nhỏ ===== */}
+      {/* Badge nhỏ*/}
       {showBadge && (
         <Animated.View
           style={{
@@ -530,7 +477,7 @@ const NoParkingRoute = () => {
         </Animated.View>
       )}
 
-      {/* ===== Modal chi tiết ===== */}
+      {/*Modal chi tiết*/}
       <Modal visible={showModal} transparent animationType="fade">
         <View
           style={{
@@ -555,7 +502,7 @@ const NoParkingRoute = () => {
                 color: Colors.warning,
               }}
             >
-              🚫 Bạn đang di chuyển trên tuyến cấm đỗ
+               Bạn đang di chuyển trên tuyến cấm đỗ
             </Text>
             <Text
               style={{
@@ -563,10 +510,9 @@ const NoParkingRoute = () => {
                 fontWeight: '600',
               }}
             >
-              {/* 7. SỬA LẠI: Dùng state đã đổi tên */}
               {currentForbiddenRoute?.street}
             </Text>
-            {/* <Text>Thời gian: {routes?.time_range}</Text> */}
+
             <Pressable
               style={{
                 backgroundColor: '#eee',

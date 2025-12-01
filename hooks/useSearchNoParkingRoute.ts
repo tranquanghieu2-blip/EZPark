@@ -9,11 +9,7 @@ export const useSearchNoParkingRoute = () => {
 
   const limit = 5;
 
-  /**
-   * @param query - Tên bãi đỗ xe muốn tìm
-   * @param reset - Có reset danh sách không
-   * @param coords - Vị trí hiện tại { latitude, longitude }
-   */
+
   const fetchNoParkingRoutes = async (
     query?: string,
     reset = false,

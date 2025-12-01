@@ -52,7 +52,7 @@ const ChangeProfile = () => {
   const canSave = (nameChanged || avatarChanged) && nameValid;
 
 
-  // --- Pick image ---
+
   const handlePickImage = useCallback(() => {
     launchImageLibrary(
       {
@@ -75,7 +75,7 @@ const ChangeProfile = () => {
     );
   }, []);
 
-  // --- Save profile ---
+  // Lưu profile
   const handleSave = async () => {
     if (!canSave) return;
 
@@ -106,7 +106,7 @@ const ChangeProfile = () => {
       ToastCustom.error("Lỗi", "Không thể lưu thay đổi, vui lòng thử lại.");
       setShowFailModal(true);
     } finally {
-      setLoading(false); // đảm bảo tắt loading ở cuối cùng
+      setLoading(false);
     }
   };
 

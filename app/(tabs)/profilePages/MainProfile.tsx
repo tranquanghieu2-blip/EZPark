@@ -57,7 +57,7 @@ export default function Profile() {
     }, [user])
   );
 
-    // Nếu chưa đăng nhập
+    //chưa đăng nhập
   if (!user) {
     return <NoUserLogin />;
   }

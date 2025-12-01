@@ -65,7 +65,7 @@ export default function SignUp() {
     <KeyboardAwareScrollView
       contentContainerStyle={{ flexGrow: 1, justifyContent: "center", padding: 24, backgroundColor: 'white' }}
       enableOnAndroid={true}
-      extraScrollHeight={20} // đẩy thêm một chút khi bàn phím xuất hiện
+      extraScrollHeight={20}
       keyboardShouldPersistTaps="handled"
     >
 
@@ -105,8 +105,6 @@ export default function SignUp() {
       
       />
       {/* Bộ đếm ký tự */}
-      
-
       <InputRow
         icon={<IconPassword size={22} color="#fff" />}
         placeholder="Mật khẩu"

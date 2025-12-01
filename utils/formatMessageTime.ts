@@ -13,14 +13,14 @@ export const formatMessageTime = (timestamp: string) => {
 
   // Nếu cùng ngày
   if (now.isSame(messageTime, "day")) {
-    return messageTime.format("h:mm A"); // 👉 Ví dụ: 5:00 PM
+    return messageTime.format("h:mm A"); 
   }
 
   // Nếu là hôm qua
   if (now.subtract(1, "day").isSame(messageTime, "day")) {
-    return `Hôm qua ${messageTime.format("h:mm A")}`; // 👉 Hôm qua 5:00 PM
+    return `Hôm qua ${messageTime.format("h:mm A")}`;
   }
 
   // Nếu cũ hơn nữa
-  return messageTime.format("DD/MM/YYYY h:mm A"); // 👉 12/11/2025 5:00 PM
+  return messageTime.format("DD/MM/YYYY h:mm A"); 
 };

@@ -42,8 +42,6 @@ const RatingStars = ({ value, size = 16 }: { value: number; size?: number }) => 
 const SearchParkingSpot = () => {
   const navigation = useNavigation<any>();
   const location = useSmartMapboxLocation();
-  // const location= {latitude: 16.0611987, longitude: 108.2191217}
-
 
   // Ẩn tab bar
   useEffect(() => {
@@ -83,12 +81,10 @@ const SearchParkingSpot = () => {
     "Đỗ xe ven đường": "on street parking",
   };
 
-  // ===============================
   // Fetch mỗi khi query / filters / location thay đổi
-  // ===============================
   useEffect(() => {
     if (location) {
-      console.log("📍 Đã có location:", location);
+      console.log("Đã có location:", location);
       setIsLocationReady(true);
     }
   }, [location]);
@@ -110,9 +106,7 @@ const SearchParkingSpot = () => {
     );
   }, [debouncedQuery, filters, location]);
 
-  // ===============================
   // Load thêm
-  // ===============================
   const handleLoadMore = async () => {
     if (!location || loadingMore) return;
     setLoadingMore(true);
@@ -126,9 +120,7 @@ const SearchParkingSpot = () => {
     setLoadingMore(false);
   };
 
-  // ===============================
   // Reset danh sách (rút gọn)
-  // ===============================
   const handleReset = async () => {
     if (!location || loadingReset) return;
     setLoadingReset(true);
@@ -142,7 +134,6 @@ const SearchParkingSpot = () => {
     setLoadingReset(false);
   };
 
-  // ===============================
   // Render
   useFocusEffect(
     useCallback(() => {
@@ -166,7 +157,6 @@ const SearchParkingSpot = () => {
       </View>
     );
   }
-  // ===============================
   return (
     <View className="flex-1 bg-white px-4 pt-4">
       {/* Search + Filter */}

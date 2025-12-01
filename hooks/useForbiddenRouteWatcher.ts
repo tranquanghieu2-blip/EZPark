@@ -7,12 +7,7 @@ import dayjs from 'dayjs';
 
 const CACHE_KEY = 'no_parking_routes_cache';
 
-// Tính khoảng cách giữa 2 điểm (meters)
-const dist = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-  return haversine({ lat: lat1, lon: lon1 }, { lat: lat2, lon: lon2 });
-};
-
-// Tính khoảng cách từ point → đoạn thẳng (polyline segment)
+// Tính khoảng cách từ point đoạn thẳng (polyline segment)
 function distanceToSegment(
   p: { latitude: number; longitude: number },
   a: [number, number],
@@ -21,7 +16,7 @@ function distanceToSegment(
   const [lon1, lat1] = a;
   const [lon2, lat2] = b;
 
-  // Vector A -> B (trong lat/lon - không chính xác cho khoảng cách lớn)
+  // Vector A -> B
   const ABx = lon2 - lon1;
   const ABy = lat2 - lat1;
 
@@ -38,14 +33,13 @@ function distanceToSegment(
   const projLon = lon1 + ABx * t;
   const projLat = lat1 + ABy * t;
 
-  // ← SỬA: Dùng haversine thay vì Euclidean
   return haversine(
     { lat: p.latitude, lon: p.longitude },
     { lat: projLat, lon: projLon },
   );
 }
 
-// Tính khoảng cách từ user → polyline hoàn chỉnh
+// Tính khoảng cách từ user, polyline hoàn chỉnh
 function distanceToPolyline(
   point: { latitude: number; longitude: number },
   coords: [number, number][],
@@ -60,7 +54,7 @@ function distanceToPolyline(
   return min;
 }
 
-// Helper function - move outside component để không tạo lại
+// move outside component để không tạo lại
 const isInBoundingBox = (
   userLoc: { latitude: number; longitude: number },
   routeBounds: {
@@ -117,7 +111,7 @@ export function useForbiddenRouteWatcher({
   const isFetching = useRef(false);
   const lastPos = useRef<{ lat: number; lon: number } | null>(null); // ← THÊM
 
-  // ---- Load từ cache hoặc API ----
+  //Load từ cache hoặc API
   useEffect(() => {
     const loadRoutes = async () => {
       console.log('Loading routes...');
@@ -180,9 +174,9 @@ export function useForbiddenRouteWatcher({
     loadRoutes();
   }, []);
 
-  // ---- Kiểm tra vị trí người dùng ----
+  // Kiểm tra vị trí người dùng
   useEffect(() => {
-    // ← Kiểm tra null TRƯỚC
+    // Kiểm tra null trước
     if (!userLocation || routesWithBounds.length === 0) {
       console.log('Skipping check:', {
         hasLocation: !!userLocation,
@@ -193,16 +187,16 @@ export function useForbiddenRouteWatcher({
 
     console.log('Checking location:', userLocation);
 
-    // ← THÊM: Check movement threshold
+    //  Check movement threshold
     if (lastPos.current) {
       const moved = haversine(
         { lat: lastPos.current.lat, lon: lastPos.current.lon },
         { lat: userLocation.latitude, lon: userLocation.longitude },
       );
-      console.log('🚶 Moved:', moved.toFixed(2), 'm');
+      console.log('Moved:', moved.toFixed(2), 'm');
 
       if (moved < 10) {
-        // ← Chỉ check khi di chuyển >= 3m
+        // chỉ check khi di chuyển >= 10m
         console.log('Movement too small, skipping');
         return;
       }
@@ -245,7 +239,7 @@ export function useForbiddenRouteWatcher({
         route.route.coordinates,
       );
 
-      console.log('📏 Polyline distance:', polylineDistance);
+      console.log(' Polyline distance:', polylineDistance);
 
       if (polylineDistance <= 40) {
         inZone = true;
@@ -255,7 +249,7 @@ export function useForbiddenRouteWatcher({
       if (inZone) break;
     }
 
-    // ← SỬA: Cho phép vào tuyến mới ngay cả khi đã ở trong tuyến cũ
+    //Cho phép vào tuyến mới ngay cả khi đã ở trong tuyến cũ
     if (
       inZone &&
       (!currentZone ||

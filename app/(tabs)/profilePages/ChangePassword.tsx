@@ -21,7 +21,7 @@ import ToastCustom from "@/utils/CustomToast";
 import { DISABLED_OPACITY, isValidPassword, maxLengthPassword } from "@/utils/ui";
 import { DEFAULT_TAB_BAR_STYLE } from "@/utils/tabBarStyle";
 
-// ================= Type định nghĩa =================
+
 type RootStackParamList = {
   MainProfile: undefined;
   ChangePassword: { user: User };
@@ -62,13 +62,10 @@ const ChangePassword = () => {
     setIsChanged(changed);
   }, [oldPassword, newPassword, confirmNewPassword]);
 
-  // Chỉ hiển thị nút khi hợp lệ & không trùng mật khẩu
-  const canSave =
-    isChanged && !isSamePassword && oldPasswordValid && newPasswordValid && confirmValid;
+
+  const canSave = isChanged && !isSamePassword && oldPasswordValid && newPasswordValid && confirmValid;
 
   const handleSave = async () => {
-    console.log("Lưu thay đổi:", { oldPassword, newPassword });
-    // TODO: Gọi API đổi mật khẩu tại đây
     try {
       setLoading(true);
       const passwordData = {
@@ -135,7 +132,7 @@ const ChangePassword = () => {
             secure
             show={showNewPassword}
             toggle={() => setShowNewPassword(!showNewPassword)}
-            // ❗ Nếu mật khẩu trùng, báo lỗi riêng
+            // mật khẩu trùng báo lỗi
             valid={newPasswordValid && !isSamePassword}
             errorMsg={
               isSamePassword
@@ -163,7 +160,7 @@ const ChangePassword = () => {
           />
         </View>
 
-        {/* ==== Nút Lưu thay đổi ==== */}
+        {/*Lưu thay đổi */}
         <View className="h-[50px] mb-3 mt-5">
 
           <GradientButton
@@ -183,7 +180,7 @@ const ChangePassword = () => {
         </View>
       </ScrollView>
 
-      {/* Modal thông báo lỗi */}
+      {/* Modal báo lỗi */}
       <MessageModal
         visible={showFailModal}
         onClose={() => setShowFailModal(false)}

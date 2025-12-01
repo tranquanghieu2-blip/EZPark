@@ -44,7 +44,6 @@ import NoUserLogin from '@/components/NoUserLogin';
 import { DEFAULT_TAB_BAR_STYLE } from '@/utils/tabBarStyle';
 import { EVENT_FAVORITE_CHANGED, mapEvents } from '@/utils/eventEmitter';
 
-// ================= Type định nghĩa =================
 type RootStackParamList = {
   parkingSpot1: undefined;
   SearchParkingSpot: undefined;
@@ -54,9 +53,6 @@ type RootStackParamList = {
 
 type RatingsMap = { 1: number; 2: number; 3: number; 4: number; 5: number };
 
-// ================= Data mẫu đánh giá =================
-
-// ================= Helper Components =================
 
 // Hiển thị hàng sao
 const RatingStars = ({
@@ -176,7 +172,7 @@ const ParkingSpotDetail = () => {
     };
   }, [navigation]);
 
-  // === Gọi API đánh giá của người dùng ===
+  // Gọi API đánh giá của người dùng
   const fetchMyFeedback = useCallback(() => {
     if (!spot?.parking_spot_id) {
       return Promise.reject(new Error('Missing parking_spot_id'));
@@ -193,7 +189,7 @@ const ParkingSpotDetail = () => {
     spot?.parking_spot_id,
   ]);
 
-  // === Xử lý yêu thích bãi đỗ ===
+  // Xử lý yêu thích bãi đỗ
   useEffect(() => {
     console.log('checkFavorite:', spot?.parking_spot_id, favoriteId);
 
@@ -225,9 +221,7 @@ const ParkingSpotDetail = () => {
 
     try {
       if (!isFavorite) {
-        // Optimistic update
         setIsFavorite(true);
-
         const added = await addFavoriteParkingSpot(spot.parking_spot_id);
         mapEvents.emit(EVENT_FAVORITE_CHANGED, spot.parking_spot_id);
         setFavoriteId(added.favorite_id);
@@ -237,7 +231,6 @@ const ParkingSpotDetail = () => {
         );
       } else {
         if (favoriteId) {
-          // Optimistic update
           setIsFavorite(false);
           setFavoriteId(null);
 
@@ -250,7 +243,6 @@ const ParkingSpotDetail = () => {
         }
       }
     } catch (error) {
-      // Rollback khi lỗi
       setIsFavorite(previousFavorite);
       setFavoriteId(previousFavoriteId);
 
@@ -261,12 +253,11 @@ const ParkingSpotDetail = () => {
     }
   };
 
-  // ==== Danh sách feedback ====
+  // Danh sách feedback
   const {
     feedbacks,
     loading: listFeedbackLoading,
     fetchFeedbacks,
-    resetFeedbacks,
     hasMore,
   } = useGetListFeedback();
 
@@ -295,7 +286,7 @@ const ParkingSpotDetail = () => {
     setLoadingReset(false);
   };
 
-  // ==== Thống kê feedback ====
+  // Thống kê feedback
   const fetchStatistics = useCallback(async () => {
     if (!spot?.parking_spot_id) {
       throw new Error('Thiếu parking_spot_id');
@@ -306,12 +297,10 @@ const ParkingSpotDetail = () => {
   // Luôn gọi useFetch với callback hợp lệ — không để null
   const {
     data: statistics,
-    loading: statisticsLoading,
-    error: statisticsError,
     refetch: refetchStatistics,
   } = useFetch<FeedbackStatistics>(
     fetchStatistics,
-    !!spot?.parking_spot_id, // chỉ bật khi có ID
+    !!spot?.parking_spot_id, 
     [spot?.parking_spot_id]
   );
 
@@ -326,13 +315,9 @@ const ParkingSpotDetail = () => {
   const hasFeedback = !!myFeedback;
   const rating = myFeedback?.average_rating ?? 0;
 
-  // ==== Tính toán trung bình mock data ====
+  // Tính toán trung bình mock data
   const totalReviews = Object.values(MOCK_RATINGS).reduce((s, v) => s + v, 0);
 
-  // Nếu chưa đăng nhập
-  // if (!user) {
-  //   return <NoUserLogin />;
-  // }
 
 
   return (
@@ -341,7 +326,7 @@ const ParkingSpotDetail = () => {
         className="flex-1 bg-white mx-4"
         showsVerticalScrollIndicator={false}
       >
-        {/* ==== Thông tin bãi đỗ ==== */}
+        {/*Thông tin bãi đỗ */}
         <View className="flex gap-1 mt-3 ">
           <View className="flex-row items-center">
             <Text className="text-xl font-bold text-black flex-1">
@@ -433,7 +418,7 @@ const ParkingSpotDetail = () => {
           <View className="h-[1px] bg-gray-300 w-full mt-3" />
         </View>
 
-        {/* ==== Đánh giá tổng quan ==== */}
+        {/* Đánh giá tổng quan */}
         <View className="mt-5">
           <Text className="text-lg font-semibold text-black mb-4">
             Đánh giá tổng quan
@@ -480,7 +465,7 @@ const ParkingSpotDetail = () => {
           <View className="h-[1px] bg-gray-300 w-full mt-4" />
         </View>
 
-        {/* ==== Đánh giá của bạn ==== */}
+        {/* Đánh giá của bạn */}
         <View className="mt-5">
           <View className="flex-row justify-between items-center">
             <Text className="text-lg font-semibold text-black">

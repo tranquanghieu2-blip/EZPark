@@ -19,7 +19,7 @@ export function HelpModalParkingSpot({ visible, onClose }: HelpModalProps) {
     >
       <View className="flex-1 justify-center items-center bg-black/30">
         <View className="bg-white w-4/5 p-6 rounded-2xl">
-          <Text className="text-xl font-bold text-center">📘 Chú thích</Text>
+          <Text className="text-xl font-bold text-center">Chú thích</Text>
           <View className="my-4 w-4/5">
             <View className="flex-row items-center gap-3 mb-1">
               <Image
@@ -56,7 +56,7 @@ export function HelpModalNoParkingRoute({ visible, onClose }: HelpModalProps) {
     >
       <View className="flex-1 justify-center items-center bg-black/30">
         <View className="bg-white w-4/5 p-6 rounded-2xl">
-          <Text className="text-xl font-bold text-center">📘 Chú thích</Text>
+          <Text className="text-xl font-bold text-center">Chú thích</Text>
           <View className="my-3 w-4/5">
             <View className="flex-row items-center gap-3 mb-1">
               <IconLine size={30} color= "red" />

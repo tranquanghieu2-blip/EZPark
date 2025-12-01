@@ -26,7 +26,7 @@ import ToastCustom from "@/utils/CustomToast";
 import { useDebounce } from "@/hooks/useDebounce";
 import { maxLengthReview } from "@/utils/ui";
 
-// ========================== TYPES ==========================
+// TYPES
 type RootStackParamList = {
   Rating: {
     spot: ParkingSpotDetail,
@@ -47,7 +47,7 @@ type RatingValues = {
   security: number;
 };
 
-// ========================== CONSTANTS ==========================
+// CONSTANTS
 const ratingItems: RatingItem[] = [
   { id: "convenience", label: "Mức độ thuận tiện" },
   { id: "space", label: "Không gian đỗ xe" },
@@ -56,7 +56,7 @@ const ratingItems: RatingItem[] = [
 
 const MAX_CHAR = maxLengthReview;
 
-// ========================== COMPONENT ==========================
+// COMPONENT
 const Rating = () => {
   const route = useRoute<RouteProp<RootStackParamList, "Rating">>();
   const { spot } = route.params;
@@ -98,7 +98,7 @@ const Rating = () => {
     setIsDisableSend(!hasAnyRating);
   }, [ratings]);
 
-  // ========================== API CALL ==========================
+  // API CALL
   // Dựng payload chung
   const buildFeedbackData = () => ({
     parking_spot_id: spot.parking_spot_id,
@@ -108,29 +108,10 @@ const Rating = () => {
     comment: debouncedComment,
   });
 
-  // Validate trước khi gửi
-  const validateBeforeSubmit = useCallback(() => {
-    if (!accessToken) {
-      Alert.alert("Thông báo", "Bạn cần đăng nhập để gửi đánh giá.");
-      return false;
-    }
-    if (!spot?.parking_spot_id) {
-      Alert.alert("Lỗi", "Thiếu thông tin bãi đỗ xe.");
-      return false;
-    }
-    // ít nhất 1 rating (hoặc yêu cầu tất cả > 0 tuỳ spec)
-    const hasAnyRating = Object.values(ratings).every((v) => v > 0);
-    if (!hasAnyRating) {
-      Alert.alert("Thông báo", "Vui lòng đánh giá ít nhất một mục bằng một sao trở lên.");
-      return false;
-    }
-    // comment optional — có thể add rule nếu muốn
-    return true;
-  }, [accessToken, spot, ratings]);
+
 
   // Submit Feedback — tự động chọn Create hoặc Update
   const handleFeedbackSubmit = async () => {
-    if (!validateBeforeSubmit()) return;
 
     try {
       setLoading(true);
@@ -149,10 +130,9 @@ const Rating = () => {
       if (onGoBack) onGoBack(); // gọi callback của parent
       navigation.goBack(); // quay lại
 
-      console.log("✅ Feedback response:", res);
+      console.log("Feedback response:", res);
     } catch (err: any) {
-      Alert.alert("Lỗi", err.message || "Không thể gửi đánh giá.");
-      // ToastCustom.error("Lỗi", err.message || "Không thể gửi đánh giá.")
+      ToastCustom.error("Lỗi", err.message || "Không thể gửi đánh giá.")
     } finally {
       setLoading(false);
     }
@@ -174,7 +154,7 @@ const Rating = () => {
     }
   };
 
-  // ========================== HANDLERS ==========================
+  // HANDLERS
   const getFeedbackText = (value: number) => {
     const map: Record<number, string> = {
       5: "Tuyệt vời",
@@ -192,15 +172,12 @@ const Rating = () => {
 
 
 
-  // ========================== RENDER ==========================
+  // RENDER
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
       <View className="flex-1 bg-white px-4">
         {/* Avatar + User info */}
         <View className="flex-row items-center bg-white py-4 rounded-xl shadow-sm mt-2">
-          {/* <View className="w-14 h-14 rounded-full overflow-hidden border border-gray-300">
-            <Image source={images.avatar} className="w-full h-full" />
-          </View> */}
           <View className="w-14 h-14 rounded-full overflow-hidden border border-gray-300">
             {userInfo?.avatar ? (
               <Image

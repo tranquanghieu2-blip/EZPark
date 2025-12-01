@@ -27,12 +27,8 @@ interface Props {
   loading: boolean;
   error: Error | null;
   detail: ParkingSpotDetailWithStats | null;
-  // showInstructionModal: boolean;
-  // showDropdown: boolean;
   currentLocation?: { latitude: number; longitude: number } | null;
   onRouteFound?: (coords: { latitude: number; longitude: number }[][]) => void;
-  // onSetShowInstructionModal?: (show: boolean) => void;
-  // onSetShowDropdown?: (show: boolean) => void;
 }
 
 const typeLabel: Record<ParkingSpotDetail['type'], string> = {

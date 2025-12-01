@@ -33,14 +33,11 @@ export default function VerifyOTP() {
 
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
-  // const [timer, setTimer] = useState(60);
   const [timer, setTimer] = useState(180);
   const [showFailModal, setShowFailModal] = useState(false);
-  const [isButtonEnabled, setIsButtonEnabled] = useState(false); // kiểm soát enable/disable nút
+  const [isButtonEnabled, setIsButtonEnabled] = useState(false);
 
   const inputs = useRef<TextInput[]>([]);
-  // const { loading: loadingVerifySignup, execute: executeVerifySignup } = usePost(verifyOtp);
-  // const { loading: loadingSignUp, execute: executeSignUp, error: errorSignUp } = usePost(signUp);
   const [loadingVerify, setLoadingVerify] = useState(false);
   const [loadingResend, setLoadingResend] = useState(false);
 
@@ -129,7 +126,6 @@ export default function VerifyOTP() {
         navigation.navigate("login");
       }
     } catch (err: any) {
-      // console.error("Lỗi xác thực OTP:", err);
       ToastCustom.error("Xác thực thất bại", err?.message || "OTP không hợp lệ hoặc đã hết hạn.");
     } finally {
       setLoadingVerify(false);
@@ -179,7 +175,6 @@ export default function VerifyOTP() {
         Nhập OTP được gửi về email của bạn
       </Text>
 
-      {/* Ô nhập OTP */}
       <View className="flex-row justify-between mb-8">
         {otp.map((digit, index) => (
           <TextInput

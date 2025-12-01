@@ -14,9 +14,7 @@ const api = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
-// ===========================
 // Add accessToken vào mỗi request
-// ===========================
 api.interceptors.request.use(async (config) => {
   const token = await AsyncStorage.getItem("accessToken");
   if (token) {
@@ -36,9 +34,7 @@ const processQueue = (error: any, token: string | null = null) => {
   failedQueue = [];
 };
 
-// ===========================
 // Refresh Token tự động khi 401
-// ===========================
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -71,7 +67,7 @@ api.interceptors.response.use(
         const newAccessToken = res.data.accessToken;
         await AsyncStorage.setItem("accessToken", newAccessToken);
 
-        // 🔹 Gọi hàm updateAccessToken trong AuthContext
+        // Gọi hàm updateAccessToken trong AuthContext
         if (updateAccessTokenCallback) updateAccessTokenCallback(newAccessToken);
 
         api.defaults.headers.common["Authorization"] = "Bearer " + newAccessToken;

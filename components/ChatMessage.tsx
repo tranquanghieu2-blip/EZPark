@@ -13,8 +13,6 @@ const MessageBubble = ({
   isUser,
   text,
   created_at,
-  intent,
-  search_method,
 }: {
   isUser: boolean;
   text: string;
@@ -49,19 +47,6 @@ const MessageBubble = ({
           {text}
         </Text>
 
-        {/* Intent & Search method */}
-        {/* {!isUser && (intent || search_method) && (
-          <View className="mt-2">
-            {intent && (
-              <Text className="text-xs text-gray-500">🎯 Intent: {intent}</Text>
-            )}
-            {search_method && (
-              <Text className="text-xs text-gray-500">
-                🔍 Search: {search_method}
-              </Text>
-            )}
-          </View>
-        )} */}
       </View>
     </View>
 

@@ -10,7 +10,7 @@ const GOOGLE_API_KEY = 'AIzaSyCLEyeZlqU5ei4N0VOHI4zTK0cpYRGHLsk';
 const GOOGLE_STT_URL = `https://speech.googleapis.com/v1/speech:recognize?key=${GOOGLE_API_KEY}`;
 
 interface UseSpeechToTextProps {
-  onSpeechDetected: (text: string) => void; // Callback khi có text từ Google
+  onSpeechDetected: (text: string) => void;
 }
 
 export const useSpeechToText = ({ onSpeechDetected }: UseSpeechToTextProps) => {
@@ -76,7 +76,7 @@ export const useSpeechToText = ({ onSpeechDetected }: UseSpeechToTextProps) => {
           }
         }
       } else {
-        // Có tiếng nói -> Reset timer
+        // Có tiếng nói, Reset timer
         silenceStartRef.current = null;
       }
     });
@@ -142,10 +142,10 @@ export const useSpeechToText = ({ onSpeechDetected }: UseSpeechToTextProps) => {
   const sendToGoogleSTT = async (filePath: string) => {
     setProcessing(true);
     try {
-      // 1. Đọc file sang Base64
+      // Đọc file sang Base64
       const base64Audio = await RNFS.readFile(filePath, 'base64');
 
-      // 2. Gọi Google Cloud STT API
+      // Gọi Google Cloud STT API
       const response = await axios.post(GOOGLE_STT_URL, {
         config: {
           encoding: 'LINEAR16',
@@ -157,7 +157,7 @@ export const useSpeechToText = ({ onSpeechDetected }: UseSpeechToTextProps) => {
         },
       });
 
-      // 3. Parse kết quả
+      // Parse kết quả
       const results = response.data.results;
       if (results && results.length > 0) {
         const transcript = results[0].alternatives[0].transcript;
@@ -186,7 +186,7 @@ export const useSpeechToText = ({ onSpeechDetected }: UseSpeechToTextProps) => {
     isRecording,
     processing,
     startRecording,
-    stopRecording, // Expose hàm này nếu muốn dừng thủ công
+    stopRecording,
     setAutoStopEnabled,
     setMaxRecordingMs,
   };

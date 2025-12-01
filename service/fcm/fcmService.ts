@@ -87,7 +87,7 @@ export const subscribeToRoute = async (routeId: number) => {
     try {
       data = text ? JSON.parse(text) : null;
     } catch (e) {
-      data = text; // non-JSON response
+      data = text;
     }
 
     console.log('subscribeToRoute - response status:', res.status, 'body:', data);
@@ -95,7 +95,7 @@ export const subscribeToRoute = async (routeId: number) => {
     if (!res.ok) {
       return null;
     }
-    return data; // successful response body
+    return data;
   } catch (error) {
     console.error('subscribeToRoute - error:', error);
     return null;
