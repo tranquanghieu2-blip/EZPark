@@ -21,6 +21,7 @@ export const fetchNoParkingRoutes = async (): Promise<NoParkingRoute[]> => {
       throw new Error(`Error fetching routes: ${response.statusText}`);
     }
     const data = await response.json();
+    console.log("Data", data)
     // Trả về mảng NoParkingRoute
     return data;
   } catch (error) {
@@ -424,9 +425,7 @@ export const removeFavoriteParkingSpot = async (parking_spot_id: number) => {
   }
 };
 
-export const getListFavoriteParkingSpots = async (): Promise<
-  getListFavoriteParkingSpots[]
-> => {
+export const getListFavoriteParkingSpots = async (): Promise< getListFavoriteParkingSpots[]> => {
   try {
     const res = await api.get('/favorites/list');
     return res.data.data;

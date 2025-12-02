@@ -13,7 +13,7 @@ export const useParkingSpotDetail = () => {
 
   const fetchParkingSpotDetailWithStats = async (
     parking_spot_id: number,
-    userLocation?: { latitude: number; longitude: number } // <-- tùy chọn
+    userLocation?: { latitude: number; longitude: number } 
   ) => {
     if (!parking_spot_id) return;
 

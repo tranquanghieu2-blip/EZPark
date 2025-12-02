@@ -15,9 +15,11 @@ import Colors from '@/constants/colors';
 import { images } from '@/constants/images';
 import api from '@/service/apiClient';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { getListFavoriteParkingSpots } from '@/service/api';
 import { mapEvents, EVENT_OPEN_SPOT } from '@/utils/eventEmitter';
 import { useAuth } from '../context/AuthContext';
 import NoUserLogin from '@/components/NoUserLogin';
+import { get } from 'lodash';
 
 const Favourite = () => {
   const navigation = useNavigation<any>();
@@ -50,8 +52,8 @@ const Favourite = () => {
   const fetchFavorites = async (showMainLoading = true) => {
     try {
       if (showMainLoading) setLoading(true);
-      const response = await api.get('/favorites/list');
-      setFavorites(response.data.data);
+      const data = await getListFavoriteParkingSpots();
+      setFavorites(data);
     } catch (error) {
       console.error('Error fetching favorites:', error);
     } finally {
@@ -71,7 +73,7 @@ const Favourite = () => {
 
   return (
     <SafeAreaView className="flex-1 bg-white px-4">
-      <Text className="text-2xl font-bold text-gray-900 mt-4 mb-4">
+      <Text className="text-2xl font-bold text-gray-900 mt-4 mb-4 items-center">
         Danh sách yêu thích
       </Text>
 

@@ -12,7 +12,7 @@ import {
 import MapboxGL from '@rnmapbox/maps';
 // Components
 import CircleButton from '@/components/CircleButton';
-import { IconCrosshairs, IconQuestion } from '@/components/Icons';
+import { IconCrosshairs, IconQuestion, IconWarning } from '@/components/Icons';
 import SearchBar from '@/components/SearchBar';
 // Constants
 import Colors from '@/constants/colors';
@@ -187,10 +187,7 @@ const NoParkingRoute = () => {
   console.log('Check forbidden route:', check);
   // Khi vừa vào tuyến cấm  hiển thị banner
   useEffect(() => {
-    console.log(
-      'TUYẾN CẤM HIỆN TẠI: ',
-      currentForbiddenRoute?.street || 'Không có',
-    );
+    console.log('Tuyến cấm hiện tại: ',currentForbiddenRoute?.street || 'Không có',);
     if (!currentForbiddenRoute) {
       setShowBanner(false);
       setShowBadge(false);
@@ -198,7 +195,7 @@ const NoParkingRoute = () => {
       return;
     }
     // Khi có tuyến mới
-    Vibration.vibrate(300);
+    Vibration.vibrate(300); //rung
     setShowBanner(true);
     setShowBadge(false);
 
@@ -422,32 +419,24 @@ const NoParkingRoute = () => {
           style={{
             position: 'absolute',
             top: 75,
-            right: 15,
-            alignSelf: 'center',
-            width: '85%',
+            left: 16,
+            right: 16,
+            zIndex: 999,
             backgroundColor: Colors.warning,
             borderRadius: 8,
-            flexDirection: 'row',
-            alignItems: 'center',
             padding: 10,
             opacity: fadeAnim,
-            zIndex: 999,
             shadowOpacity: 0.4,
             shadowOffset: { width: 0, height: 2 },
             shadowRadius: 4,
           }}
         >
-          <Image
-            source={icons.iconParkingSpot}
-            style={{ width: 24, height: 24, marginRight: 10 }}
-            resizeMode="contain"
-          />
           <View style={{ flex: 1 }}>
-            <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 14 }}>
-              Bạn đang đi vào tuyến đường cấm đỗ xe!
+            <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 18 }}>
+             <IconWarning color="red" size={22} />Bạn đang đi vào tuyến đường cấm đỗ xe!
             </Text>
-            <Text style={{ color: '#fff', fontSize: 16, fontWeight: 'bold' }}>
-              {currentForbiddenRoute?.street}
+            <Text style={{ color: '#fff', fontSize: 20, fontWeight: '700' }}>
+              Tuyến: {currentForbiddenRoute?.street}
             </Text>
           </View>
         </Animated.View>
@@ -472,7 +461,7 @@ const NoParkingRoute = () => {
           }}
         >
           <Pressable onPress={() => setShowModal(true)}>
-            <IconQuestion color="white" size={24} />
+            <IconWarning color="white" size={24} />
           </Pressable>
         </Animated.View>
       )}
@@ -507,10 +496,11 @@ const NoParkingRoute = () => {
             <Text
               style={{
                 marginTop: 8,
-                fontWeight: '600',
+                fontWeight: '700',
+                fontSize: 20,
               }}
             >
-              {currentForbiddenRoute?.street}
+              Tuyến: {currentForbiddenRoute?.street}
             </Text>
 
             <Pressable
