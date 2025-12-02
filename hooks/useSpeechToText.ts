@@ -4,9 +4,9 @@ import RNFS from 'react-native-fs';
 import { Buffer } from 'buffer';
 import axios from 'axios';
 import { Platform, PermissionsAndroid } from 'react-native';
+import { GOOGLE_API_KEY } from '@env';
 
 // Cấu hình Google API
-const GOOGLE_API_KEY = 'AIzaSyCLEyeZlqU5ei4N0VOHI4zTK0cpYRGHLsk';
 const GOOGLE_STT_URL = `https://speech.googleapis.com/v1/speech:recognize?key=${GOOGLE_API_KEY}`;
 
 interface UseSpeechToTextProps {
