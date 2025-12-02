@@ -6,8 +6,12 @@ import { isDayRestricted, isWithinTimeRange } from '@/utils/validation';
 import dayjs from 'dayjs';
 
 const CACHE_KEY = 'no_parking_routes_cache';
+const LOCATION_CHECK = {
+  MIN_MOVEMENT_M: 10,
+  FORBIDDEN_ZONE_RADIUS_M: 40,
+};
 
-// Tính khoảng cách từ point đoạn thẳng (polyline segment)
+// Tính khoảng cách từ point đoạn thẳng
 function distanceToSegment(
   p: { latitude: number; longitude: number },
   a: [number, number],
@@ -39,7 +43,7 @@ function distanceToSegment(
   );
 }
 
-// Tính khoảng cách từ user, polyline hoàn chỉnh
+// Tính khoảng cách từ user đến polyline
 function distanceToPolyline(
   point: { latitude: number; longitude: number },
   coords: [number, number][],
@@ -54,7 +58,7 @@ function distanceToPolyline(
   return min;
 }
 
-// move outside component để không tạo lại
+// Check user có nằm trong bounding box của tuyến đường không
 const isInBoundingBox = (
   userLoc: { latitude: number; longitude: number },
   routeBounds: {
@@ -72,7 +76,7 @@ const isInBoundingBox = (
   );
 };
 
-// Helper function to calculate bounds
+//calculate bounds
 function calculateBounds(coordinates: [number, number][]): {
   minLat: number;
   maxLat: number;
@@ -99,11 +103,10 @@ export function useForbiddenRouteWatcher({
   onEnterZone,
   onExitZone,
 }: {
-  userLocation: { latitude: number; longitude: number } | null; // ← Cho phép null
+  userLocation: { latitude: number; longitude: number } | null;
   onEnterZone?: (route: NoParkingRoute) => void;
   onExitZone?: (route: NoParkingRoute) => void;
 }) {
-  const [routes, setRoutes] = useState<NoParkingRoute[]>([]);
   const [routesWithBounds, setRoutesWithBounds] = useState<
     (NoParkingRoute & { bounds: ReturnType<typeof calculateBounds> })[]
   >([]);
@@ -111,63 +114,119 @@ export function useForbiddenRouteWatcher({
   const isFetching = useRef(false);
   const lastPos = useRef<{ lat: number; lon: number } | null>(null); // ← THÊM
 
-  //Load từ cache hoặc API
+  // Load từ API lưu vô cache, quá 6 ngày mới load
+  // useEffect(() => {
+  //   const loadRoutes = async () => {
+  //     console.log('Loading routes...');
+
+  //     try {
+  //       const cacheStr = await AsyncStorage.getItem(CACHE_KEY);
+
+  //       let needFetch = true;
+
+  //       if (cacheStr) {
+  //         const parsed = JSON.parse(cacheStr);
+  //         const { data, lastUpdated } = parsed;
+
+  //         console.log('Cached routes:', data);
+
+  //         const diffDays = dayjs().diff(dayjs(lastUpdated), 'day');
+  //         console.log('Cache age:', diffDays, 'days');
+
+  //         setRoutesWithBounds(
+  //           data.map((r: NoParkingRoute) => ({
+  //             ...r,
+  //             bounds: calculateBounds(r.route.coordinates),
+  //           })),
+  //         );
+
+  //         if (diffDays < 6) {
+  //           console.log('Cache valid, skip fetch');
+  //           needFetch = false;
+  //         }
+  //       }
+
+  //       if (needFetch && !isFetching.current) {
+  //         console.log('Fetching fresh routes...');
+  //         isFetching.current = true;
+
+  //         const fresh = await fetchNoParkingRoutes();
+  //         console.log('New routes fetched:', fresh?.length);
+
+  //         setRoutesWithBounds(
+  //           fresh.map(route => ({
+  //             ...route,
+  //             bounds: calculateBounds(route.route.coordinates),
+  //           })),
+  //         );
+
+  //         // Update cache
+  //         await AsyncStorage.setItem(
+  //           CACHE_KEY,
+  //           JSON.stringify({
+  //             data: fresh,
+  //             lastUpdated: new Date().toISOString(),
+  //           }),
+  //         );
+
+  //         isFetching.current = false;
+  //       }
+  //     } catch (e) {
+  //       console.error('Error loading routes:', e);
+  //       isFetching.current = false;
+  //     }
+  //   };
+
+  //   loadRoutes();
+  // }, []);
+
+  // dùng cho test demo khi thêm tuyến mới
   useEffect(() => {
     const loadRoutes = async () => {
-      console.log('Loading routes...');
-      try {
-        const cache = await AsyncStorage.getItem(CACHE_KEY);
-        console.log('Cache:', cache ? 'found' : 'not found');
+      console.log('Loading fresh routes...');
 
+      try {
+        isFetching.current = true;
+
+        // Luôn fetch API trước
+        const fresh = await fetchNoParkingRoutes();
+
+        console.log('Fetched fresh:', fresh);
+
+        //Update state = data mới
+        // setRoutes(fresh);
+        const withBounds = fresh.map(route => ({
+          ...route,
+          bounds: calculateBounds(route.route.coordinates),
+        }));
+        setRoutesWithBounds(withBounds);
+
+        //Ghi đè cache
+        await AsyncStorage.setItem(
+          CACHE_KEY,
+          JSON.stringify({
+            data: fresh,
+            lastUpdated: new Date().toISOString(),
+          }),
+        );
+
+        isFetching.current = false;
+      } catch (err) {
+        console.log('API failed:', err);
+
+        isFetching.current = false;
+
+        // Nếu API lỗi thì load cache
+        const cache = await AsyncStorage.getItem(CACHE_KEY);
         if (cache) {
           const parsed = JSON.parse(cache);
-          console.log('Cached routes:', parsed.data.length);
-          setRoutes(parsed.data);
 
-          // Pre-calculate bounds cho cached data
           const withBounds = parsed.data.map((route: NoParkingRoute) => ({
             ...route,
             bounds: calculateBounds(route.route.coordinates),
           }));
           setRoutesWithBounds(withBounds);
-          console.log('Routes with bounds loaded:', withBounds.length);
-
-          const diffDays = dayjs().diff(dayjs(parsed.lastUpdated), 'days');
-          console.log('Cache age:', diffDays, 'days');
-
-          if (diffDays < 6) {
-            console.log('Cache valid, skipping fetch');
-            return; // refresh mỗi 6 ngày
-          }
         }
-
-        if (!isFetching.current) {
-          console.log('Fetching fresh routes...');
-          isFetching.current = true;
-          const fresh = await fetchNoParkingRoutes();
-          console.log('Fetched:', fresh?.length, 'routes');
-
-          await AsyncStorage.setItem(
-            CACHE_KEY,
-            JSON.stringify({
-              data: fresh,
-              lastUpdated: new Date().toISOString(),
-            }),
-          );
-          setRoutes(fresh);
-
-          // Pre-calculate bounds cho fresh data
-          const withBounds = fresh.map(route => ({
-            ...route,
-            bounds: calculateBounds(route.route.coordinates),
-          }));
-          console.log('Fresh routes with bounds:', withBounds.length);
-          setRoutesWithBounds(withBounds);
-
-          isFetching.current = false;
-        }
-      } catch (err) {
-        console.error('Error loading routes:', err);
       }
     };
 
@@ -187,7 +246,7 @@ export function useForbiddenRouteWatcher({
 
     console.log('Checking location:', userLocation);
 
-    //  Check movement threshold
+    //  Check đi đc bnh mét
     if (lastPos.current) {
       const moved = haversine(
         { lat: lastPos.current.lat, lon: lastPos.current.lon },
@@ -195,8 +254,8 @@ export function useForbiddenRouteWatcher({
       );
       console.log('Moved:', moved.toFixed(2), 'm');
 
-      if (moved < 10) {
-        // chỉ check khi di chuyển >= 10m
+      // chỉ check khi di chuyển >= 10m
+      if (moved < LOCATION_CHECK.MIN_MOVEMENT_M) {
         console.log('Movement too small, skipping');
         return;
       }
@@ -215,14 +274,7 @@ export function useForbiddenRouteWatcher({
       const isDayOk = isDayRestricted(now, route.days_restricted);
       const isTimeOk = isWithinTimeRange(now, route.time_range);
 
-      if (!isDayOk) {
-        continue;
-      }
-      if (!isTimeOk) {
-        continue;
-      }
-
-      if (!route.route?.coordinates) {
+      if (!isDayOk || !isTimeOk || !route.route?.coordinates) {
         continue;
       }
 
@@ -241,7 +293,7 @@ export function useForbiddenRouteWatcher({
 
       console.log(' Polyline distance:', polylineDistance);
 
-      if (polylineDistance <= 40) {
+      if (polylineDistance <= LOCATION_CHECK.FORBIDDEN_ZONE_RADIUS_M) {
         inZone = true;
         matchedZone = route;
       }
@@ -255,7 +307,7 @@ export function useForbiddenRouteWatcher({
       (!currentZone ||
         currentZone.no_parking_route_id !== matchedZone?.no_parking_route_id)
     ) {
-      // Nếu đang ở tuyến cũ → gọi onExitZone trước
+      // Nếu đang ở tuyến cũ gọi onExitZone trước
       if (currentZone) {
         console.log('Exiting old zone:', currentZone.street);
         onExitZone?.(currentZone);

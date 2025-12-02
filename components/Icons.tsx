@@ -29,6 +29,9 @@ export const IconRain = (props: any) => (
 export const IconQuestion = (props: any) => (
   <FontAwesome5 name="question-circle" iconStyle="solid" {...props} />
 );
+export const IconWarning = (props: any) => (
+  <FontAwesome name="warning" iconStyle="solid" {...props} />
+);
 
 export const IconCrosshairs = (props: any) => (
   <FontAwesome5 name="crosshairs" iconStyle="solid" {...props} />

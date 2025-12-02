@@ -27,10 +27,7 @@ import {
 
 // Components
 import CircleButton from '@/components/CircleButton';
-import {
-  IconCrosshairs,
-  IconQuestion,
-} from '@/components/Icons';
+import { IconCrosshairs, IconQuestion, IconWarning } from '@/components/Icons';
 import SearchBar from '@/components/SearchBar';
 // Constants
 import Colors from '@/constants/colors';
@@ -75,7 +72,6 @@ const WalkthroughableSearchBar = walkthroughable(SearchBar);
 const WalkthroughableCircleButton = walkthroughable(CircleButton);
 // Component
 const ParkingSpotContent = () => {
-
   const { user } = useAuth();
 
   const location = useSmartMapboxLocation(10);
@@ -89,11 +85,6 @@ const ParkingSpotContent = () => {
     longitude: number;
   } | null>(null);
 
-  const [routeCoords, setRouteCoords] = useState<
-    { longitude: number; latitude: number }[][]
-  >([]);
-
-
   const [showParkingDetail, setShowParkingDetail] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -104,10 +95,6 @@ const ParkingSpotContent = () => {
     new Set(),
   );
 
-  const { confirmed } = useConfirmedParking();
-
-
-  const [isManualControl, setIsManualControl] = useState(false);
   const [favoriteSpots, setFavoriteSpots] = useState<Set<number>>(new Set());
 
   const { start } = useCopilot();
@@ -115,17 +102,16 @@ const ParkingSpotContent = () => {
   useEffect(() => {
     const checkTutorial = async () => {
       try {
-        const TUTORIAL_KEY = 'HAS_SEEN_PARKING_TUTORIAL_V1';
+        const TUTORIAL_KEY = 'HAS_SEEN_PARKING_TUTORIAL';
         const hasSeen = await AsyncStorage.getItem(TUTORIAL_KEY);
 
         if (hasSeen === null) {
-          console.log('First timeeeeee');
           // Khởi động hướng dẫn
           setTimeout(() => {
             start();
           }, 1000);
 
-          //Lưu lại ngay lập tức để lần sau không hiện nữa
+          //Lưu lại để lần sau không hiện nữa
           await AsyncStorage.setItem(TUTORIAL_KEY, 'true');
         }
       } catch (error) {
@@ -134,9 +120,9 @@ const ParkingSpotContent = () => {
     };
     //kiểm tra khi component mount
     checkTutorial();
-    // test lại hướng dẫn, hãy uncomment dòng dưới để xóa key:
-    // AsyncStorage.removeItem('HAS_SEEN_PARKING_TUTORIAL_V1');
-  }, [start]); 
+    // test lại hướng dẫn
+    // AsyncStorage.removeItem('HAS_SEEN_PARKING_TUTORIAL');
+  }, [start]);
 
   useEffect(() => {
     const handleUserLogout = () => {
@@ -168,70 +154,6 @@ const ParkingSpotContent = () => {
       mapEvents.off(EVENT_OPEN_SPOT, handleOpenSpot);
     };
   }, []);
-
-  const prevRouteRef = useRef(routeCoords);
-
-  useEffect(() => {
-    // Chỉ chạy khi routeCoords thực sự thay đổi nội dung
-    if (JSON.stringify(prevRouteRef.current) === JSON.stringify(routeCoords)) {
-      return;
-    }
-    prevRouteRef.current = routeCoords;
-
-    if (!cameraRef.current) return;
-    if (!routeCoords || routeCoords.length === 0) {
-      // trả camera về vị trí người dùng khi hủy route:
-      if (userLocation && cameraRef.current) {
-        cameraRef.current.setCamera({
-          centerCoordinate: [userLocation.longitude, userLocation.latitude],
-          zoomLevel: 13,
-          animationDuration: 700,
-        });
-      }
-      return;
-    }
-
-    // Lấy route chính (route đầu tiên)
-    const coords = routeCoords[0];
-    if (!coords || coords.length === 0) return;
-
-    // Tính bounding box
-    let minLat = coords[0].latitude;
-    let maxLat = coords[0].latitude;
-    let minLon = coords[0].longitude;
-    let maxLon = coords[0].longitude;
-
-    coords.forEach(p => {
-      if (p.latitude < minLat) minLat = p.latitude;
-      if (p.latitude > maxLat) maxLat = p.latitude;
-      if (p.longitude < minLon) minLon = p.longitude;
-      if (p.longitude > maxLon) maxLon = p.longitude;
-    });
-
-    const latPadding = (maxLat - minLat) * 0.15 || 0.002;
-    const lonPadding = (maxLon - minLon) * 0.15 || 0.002;
-
-    const sw = [minLon - lonPadding, minLat - latPadding];
-    const ne = [maxLon + lonPadding, maxLat + latPadding]; 
-
-    try {
-      //setCamera với bounds
-      cameraRef.current.fitBounds(ne, sw, 80, 900);
-    } catch (err) {
-      console.warn(
-        'Error fitting camera to route bounds, fallback to center/zoom:',
-        err,
-      );
-      // fallback: center to midpoint + zoom
-      const midLat = (minLat + maxLat) / 2;
-      const midLon = (minLon + maxLon) / 2;
-      cameraRef.current.setCamera({
-        centerCoordinate: [midLon, midLat],
-        zoomLevel: 12,
-        animationDuration: 700,
-      });
-    }
-  }, [routeCoords, cameraRef, userLocation, isManualControl]);
 
   useEffect(() => {
     if (!location) {
@@ -270,8 +192,6 @@ const ParkingSpotContent = () => {
     requestLocationPermission();
   }, []);
 
-
-
   // Fetch parking spots
   const {
     data: parkingSpots,
@@ -289,7 +209,10 @@ const ParkingSpotContent = () => {
   // Hàm fetch chi tiết khi selectedId thay đổi
   const fetchDetail = useCallback(async () => {
     if (selectedId == null) return;
-    await fetchParkingSpotDetailWithStats(selectedId, userLocation?? undefined);
+    await fetchParkingSpotDetailWithStats(
+      selectedId,
+      userLocation ?? undefined,
+    );
   }, [selectedId, userLocation]);
 
   // Tự động gọi khi selectedId thay đổi
@@ -354,7 +277,6 @@ const ParkingSpotContent = () => {
 
     checkAllFavorites();
   }, [parkingSpots, user]);
-
 
   useFocusEffect(
     useCallback(() => {
@@ -499,7 +421,7 @@ const ParkingSpotContent = () => {
           style={{
             position: 'absolute',
             top: 75,
-            left: 70,
+            left: 16,
             right: 16,
             zIndex: 999,
             backgroundColor: Colors.warning,
@@ -512,10 +434,11 @@ const ParkingSpotContent = () => {
           }}
         >
           <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 18 }}>
-             Bạn đang đi vào tuyến cấm đỗ xe!
+            <IconWarning color="red" size={22} />
+            Bạn đang đi vào tuyến cấm đỗ xe!
           </Text>
-          <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>
-            {currentForbiddenRoute.street}
+          <Text style={{ color: '#fff', fontSize: 20, fontWeight: '700' }}>
+            Tuyến: {currentForbiddenRoute.street}
           </Text>
         </Animated.View>
       )}
@@ -547,7 +470,7 @@ const ParkingSpotContent = () => {
             }}
           >
             <Pressable onPress={() => setShowModal(true)}>
-              <IconQuestion color="white" size={24} />
+              <IconWarning color="white" size={24} />
             </Pressable>
           </View>
         </Animated.View>
@@ -615,7 +538,6 @@ const ParkingSpotContent = () => {
         />
       </CopilotStep>
 
-
       <View className="absolute right-4 bottom-10 z-20 flex-col space-y-4 gap-3">
         <CopilotStep
           text="Bấm vào đây để chat với trợ lý ảo AI"
@@ -644,7 +566,7 @@ const ParkingSpotContent = () => {
           />
         </CopilotStep>
         <CopilotStep
-          text="Xem hướng dẫn chi tiết và ý nghĩa các biểu tượng"
+          text="Xem vị trí hiện tại của bạn trên bản đồ"
           order={4}
           name="location_btn"
         >
@@ -696,115 +618,6 @@ const ParkingSpotContent = () => {
           zoomLevel={10}
         />
 
-        {routeCoords.length > 0 &&
-          routeCoords.map((route, idx) => (
-            <MapboxGL.ShapeSource
-              key={`routeLine-${idx}`}
-              id={`routeLine-${idx}`}
-              shape={{
-                type: 'Feature',
-                geometry: {
-                  type: 'LineString',
-                  coordinates: route.map(p => [p.longitude, p.latitude]),
-                },
-                properties: {},
-              }}
-            >
-              <MapboxGL.LineLayer
-                id={`routeOutline-${idx}`}
-                style={{
-                  lineColor: '#ffffff',
-                  lineWidth: idx === 0 ? 7 : 6,
-                  lineOpacity: 0.9,
-                  lineJoin: 'round',
-                  lineCap: 'round',
-                }}
-              />
-
-              <MapboxGL.LineLayer
-                id={`routeMain-${idx}`}
-                aboveLayerID={`routeOutline-${idx}`}
-                style={{
-                  lineColor: idx === 0 ? '#307bddff' : '#3585ecff',
-                  lineWidth: idx === 0 ? 6 : 4,
-                  lineOpacity: idx === 0 ? 1 : 0.9,
-                  lineBlur: 0.3,
-                  lineJoin: 'round',
-                  lineCap: 'round',
-                }}
-              />
-            </MapboxGL.ShapeSource>
-          ))}
-
-        {/* MARKERS: origin & destination */}
-        {routeCoords.length > 0 &&
-          (() => {
-            const main = routeCoords[0];
-            if (!main || main.length === 0) return null;
-            const origin = main[0];
-            const destination = main[main.length - 1];
-
-            return (
-              <>
-                <MapboxGL.PointAnnotation
-                  id="route-origin"
-                  key="route-origin"
-                  coordinate={[origin.longitude, origin.latitude]}
-                >
-                  <View
-                    style={{
-                      width: 18,
-                      height: 18,
-                      borderRadius: 9,
-                      backgroundColor: '#fff',
-                      borderWidth: 3,
-                      borderColor: '#307bdd',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <View
-                      style={{
-                        width: 8,
-                        height: 8,
-                        borderRadius: 4,
-                        backgroundColor: '#307bdd',
-                      }}
-                    />
-                  </View>
-                </MapboxGL.PointAnnotation>
-
-                <MapboxGL.PointAnnotation
-                  id="route-destination"
-                  key="route-destination"
-                  coordinate={[destination.longitude, destination.latitude]}
-                >
-                  <View
-                    style={{
-                      width: 18,
-                      height: 18,
-                      borderRadius: 9,
-                      backgroundColor: '#fff',
-                      borderWidth: 3,
-                      borderColor: '#34c759',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <View
-                      style={{
-                        width: 8,
-                        height: 8,
-                        borderRadius: 4,
-                        backgroundColor: '#34c759',
-                      }}
-                    />
-                  </View>
-                </MapboxGL.PointAnnotation>
-              </>
-            );
-          })()}
-
         {/* custom user marker */}
         {userLocation && (
           <MapboxGL.PointAnnotation
@@ -848,7 +661,6 @@ const ParkingSpotContent = () => {
             lon,
             lat,
           ]);
-
 
           return (
             <MapboxGL.ShapeSource
@@ -900,8 +712,6 @@ const ParkingSpotContent = () => {
             </MapboxGL.ShapeSource>
           );
         })}
-
-
 
         {/*Parking Spot Clustering*/}
         {parkingSpots && (
@@ -1087,8 +897,6 @@ const ParkingSpotContent = () => {
         </Text>
       )}
 
-
-
       <ParkingSpotDetailModal
         visible={showParkingDetail}
         onClose={() => setShowParkingDetail(false)}
@@ -1111,7 +919,7 @@ const ParkingSpotContent = () => {
   );
 };
 
-// Component Wrapper 
+// Component Wrapper
 const ParkingSpot = () => {
   return (
     <CopilotProvider
