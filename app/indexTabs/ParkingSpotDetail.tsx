@@ -333,7 +333,8 @@ const ParkingSpotDetail = () => {
               {spot.name}
             </Text>
 
-            {favoriteLoading ? (
+            {user ? (
+              favoriteLoading ? (
               // Hiển thị loading khi đang kiểm tra trạng thái
               <ActivityIndicator
                 size="small"
@@ -352,7 +353,9 @@ const ParkingSpotDetail = () => {
                   <IconNoFavorite size={32} color={Colors.heart} />
                 )}
               </TouchableOpacity>
-            )}
+            )
+            ) : null}
+
           </View>
 
           <Text className="text-base text-gray-600">{spot.address}</Text>
@@ -490,7 +493,7 @@ const ParkingSpotDetail = () => {
               {myFeedbackError && !myFeedbackLoading && (
                 <View className="mt-3 p-3 bg-red-50 rounded-xl">
                   <Text className="text-red-600 font-medium mb-2">
-                    ⚠️ {myFeedbackError.message || 'Không thể tải đánh giá.'}
+                    {myFeedbackError.message || 'Không thể tải đánh giá.'}
                   </Text>
                   <TouchableOpacity onPress={refetchFeedback} className="self-start">
                     <Text className="text-blue-600 underline">Thử lại</Text>
