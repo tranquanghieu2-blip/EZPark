@@ -1,42 +1,27 @@
 import GradientButton from "@/components/GradientButton";
-import { IconCamera, IconsPerson } from "@/components/Icons";
+import { IconsPerson } from "@/components/Icons";
 import { InputRow } from "@/components/InputRow";
-import { useAuth } from "@/app/context/AuthContext";
-import MessageModal from "@/modals/MessageModal";
-import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
-import React, { useState, useEffect, useCallback } from "react";
+import { useNavigation} from "@react-navigation/native";
+import React, { useState} from "react";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   ScrollView,
   Text,
   View,
-  Image,
-  Alert
 } from "react-native";
 import { sendPasswordResetOtp } from "@/service/api";
 import ToastCustom from "@/utils/CustomToast";
-import { DISABLED_OPACITY } from "@/utils/ui";
+import { DISABLED_OPACITY, isValidEmail } from "@/utils/ui";
 
-type RootStackParamList = {
-  MainProfile: undefined;
-  ChangeProfile: { user: User };
-};
 
 const ForgotPassword = () => {
   const navigation = useNavigation<any>();
-
   const [email, setEmail] = useState("");
-  const [showFailModal, setShowFailModal] = useState(false);
   const [loading, setLoading] = useState<boolean>(false);
-
   const trimmedEmail = email.trim();
-  const emailValid =
-    trimmedEmail.length > 0 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail);
-
-
+  const emailValid = isValidEmail(trimmedEmail);
   const canSave = emailValid;
 
   // Lưu profile
@@ -105,15 +90,6 @@ const handleSave = async () => {
           
         </View>
       </ScrollView>
-
-      {/* Modal lỗi */}
-      <MessageModal
-        visible={showFailModal}
-        onClose={() => setShowFailModal(false)}
-        title="Cập nhật thất bại"
-        message="Không thể lưu thay đổi, vui lòng thử lại."
-        type="error"
-      />
     </KeyboardAvoidingView>
   );
 }

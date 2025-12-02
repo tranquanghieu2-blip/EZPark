@@ -32,7 +32,6 @@ import SearchBar from '@/components/SearchBar';
 // Constants
 import Colors from '@/constants/colors';
 import { icons } from '@/constants/icons';
-import { daNangRegion } from '@/constants/mapBounds';
 // Modals
 import { HelpModalParkingSpot } from '@/modals/HelpModal';
 import ParkingSpotDetailModal from '../../modals/ParkingSpotModal';
@@ -42,7 +41,6 @@ import { useScheduleTimeTriggers } from '@/hooks/useScheduleTimeTriggers';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import useFetch from '../../hooks/useFetch';
 import { useSmartMapboxLocation } from '@/hooks/usePeriodicMapboxLocation';
-import { useConfirmedParking } from '@/hooks/useConfirmParking';
 
 // Services
 import {

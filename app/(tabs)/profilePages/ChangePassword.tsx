@@ -2,35 +2,24 @@ import GradientButton from "@/components/GradientButton";
 import { IconPassword } from "@/components/Icons";
 import { InputRow } from "@/components/InputRow";
 import { useAuth } from "@/app/context/AuthContext";
-import MessageModal from "@/modals/MessageModal";
-import { login } from "@/service/api";
-import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
+import { useNavigation} from "@react-navigation/native";
 import React, { useState, useEffect } from "react";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   ScrollView,
   Text,
   View,
 } from "react-native";
-import usePost from "@/hooks/usePost";
 import { updatePassword } from "@/service/api";
 import ToastCustom from "@/utils/CustomToast";
 import { DISABLED_OPACITY, isValidPassword, maxLengthPassword } from "@/utils/ui";
 import { DEFAULT_TAB_BAR_STYLE } from "@/utils/tabBarStyle";
 
 
-type RootStackParamList = {
-  MainProfile: undefined;
-  ChangePassword: { user: User };
-};
-
 const ChangePassword = () => {
   const navigation = useNavigation<any>();
-  const route = useRoute<RouteProp<RootStackParamList, "ChangePassword">>();
-  const { user } = route.params;
   const { refreshToken } = useAuth();
 
   const [oldPassword, setOldPassword] = useState("");
@@ -39,7 +28,6 @@ const ChangePassword = () => {
   const [showOldPassword, setShowOldPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [showFailModal, setShowFailModal] = useState(false);
   const [isChanged, setIsChanged] = useState(false);
   const [isSamePassword, setIsSamePassword] = useState(false);
   const [loading, setLoading] = useState<boolean>(false);
@@ -179,15 +167,6 @@ const ChangePassword = () => {
 
         </View>
       </ScrollView>
-
-      {/* Modal báo lỗi */}
-      <MessageModal
-        visible={showFailModal}
-        onClose={() => setShowFailModal(false)}
-        title="Cập nhật thất bại"
-        message="Không thể lưu mật khẩu, vui lòng thử lại."
-        type="error"
-      />
     </KeyboardAvoidingView>
   );
 };

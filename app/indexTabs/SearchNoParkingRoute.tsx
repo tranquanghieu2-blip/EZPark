@@ -17,7 +17,6 @@ import { useSmartMapboxLocation } from "@/hooks/usePeriodicMapboxLocation";
 import { useSearchNoParkingRoute } from "@/hooks/useSearchNoParkingRoute";
 import Colors from "@/constants/colors";
 import { IconCalendar, IconClock, IconDistance, IconNote, IconSideParking } from "@/components/Icons";
-import { max } from "lodash";
 import { maxLengthSearch } from "@/utils/ui";
 
 const SearchNoParkingRoute = () => {

@@ -13,9 +13,8 @@ import { createNotificationChannel } from '@/service/fcm/notifications';
 import notifee, { AndroidImportance } from '@notifee/react-native';
 import messaging from '@react-native-firebase/messaging';
 import '../global.css';
-import { Toast } from 'toastify-react-native';
 import { ToastCustomView } from '@/components/ToastCustomView';
-import { EVENT_USER_LOGOUT, mapEvents, EVENT_USER_LOGIN } from '@/utils/eventEmitter';
+import { mapEvents, EVENT_USER_LOGIN } from '@/utils/eventEmitter';
 import { useNavigation } from '@react-navigation/native';
 import Colors from '@/constants/colors';
 

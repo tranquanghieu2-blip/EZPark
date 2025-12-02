@@ -4,15 +4,12 @@ import {
   FlatList,
   Image,
   ImageBackground,
-  Keyboard,
   Pressable,
   Text,
   TextInput,
   TouchableOpacity,
-  TouchableWithoutFeedback,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { IconDistance, IconFilter, IconParkingSpotType, IconStar, IconStarHalf, IconStarNo } from "@/components/Icons";
 import GradientButton from "@/components/GradientButton";
@@ -23,7 +20,6 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { useSearchParking } from "@/hooks/useSearchParking";
 import { DEFAULT_TAB_BAR_STYLE } from "@/utils/tabBarStyle";
 import { useSmartMapboxLocation } from "@/hooks/usePeriodicMapboxLocation";
-import { max } from "lodash";
 import { maxLengthSearch } from "@/utils/ui";
 
 const RatingStars = ({ value, size = 16 }: { value: number; size?: number }) => {

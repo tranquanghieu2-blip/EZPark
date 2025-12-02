@@ -5,7 +5,6 @@ import { InputRow } from '@/components/InputRow';
 import { icons } from '@/constants/icons';
 import usePost from '@/hooks/usePost';
 import { useAuth } from '@/app/context/AuthContext';
-import MessageModal from '@/modals/MessageModal';
 import { fetchMe, GGLogin, login } from '@/service/api';
 import { useNavigation } from '@react-navigation/native';
 import React, { useState, useEffect } from 'react';
@@ -26,8 +25,8 @@ import {
   maxLengthEmail,
   maxLengthPassword,
   isValidPassword,
+  isValidEmail,
 } from '@/utils/ui';
-import api from '@/service/apiClient';
 
 export default function Login() {
   const navigation = useNavigation<any>();
@@ -36,12 +35,11 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [showFailModal, setShowFailModal] = useState(false);
 
   const { loading, execute } = usePost(login);
 
   // Validate logic
-  const emailValid = /^\S+@\S+\.\S+$/.test(email);
+  const emailValid = isValidEmail(email);
   const passwordValid = isValidPassword(password);
 
   const isFormInvalid = !emailValid || !passwordValid;
@@ -232,15 +230,6 @@ export default function Login() {
           </Pressable>
         </View>
       </ScrollView>
-
-      {/* Modal thông báo lỗi */}
-      <MessageModal
-        visible={showFailModal}
-        onClose={() => setShowFailModal(false)}
-        title="Đăng nhập thất bại"
-        message="Sai tài khoản hoặc mật khẩu."
-        type="error"
-      />
     </KeyboardAvoidingView>
   );
 }

@@ -8,12 +8,10 @@ import {
   Platform,
   Image,
   ActivityIndicator,
-  Modal,
 } from "react-native";
 import GradientButton from "@/components/GradientButton";
 import { images } from "@/constants/images";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
-import usePost from "@/hooks/usePost";
 import { sendPasswordResetOtp, signUp, verifyOtp, verifyPasswordResetOtp } from "@/service/api";
 import ToastCustom from "@/utils/CustomToast";
 
@@ -34,7 +32,6 @@ export default function VerifyOTP() {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
   const [timer, setTimer] = useState(180);
-  const [showFailModal, setShowFailModal] = useState(false);
   const [isButtonEnabled, setIsButtonEnabled] = useState(false);
 
   const inputs = useRef<TextInput[]>([]);
@@ -248,31 +245,6 @@ export default function VerifyOTP() {
         </Pressable>
 
       </View>
-
-      {/* Modal lỗi */}
-      <Modal
-        visible={showFailModal}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowFailModal(false)}
-      >
-        <View className="flex-1 bg-black/50 justify-center items-center">
-          <View className="bg-white w-4/5 p-6 rounded-2xl items-center">
-            <Text className="text-lg font-semibold mb-3 text-red-600">
-              Xác thực thất bại
-            </Text>
-            <Text className="text-center mb-5">
-              Mã OTP không hợp lệ hoặc đã hết hạn. Vui lòng thử lại.
-            </Text>
-            <Pressable
-              onPress={() => setShowFailModal(false)}
-              className="bg-orange-500 px-6 py-2 rounded-lg"
-            >
-              <Text className="text-white font-semibold">Đóng</Text>
-            </Pressable>
-          </View>
-        </View>
-      </Modal>
     </KeyboardAvoidingView>
   );
 }

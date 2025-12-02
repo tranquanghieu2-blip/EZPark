@@ -6,20 +6,16 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Image,
-  Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
-import { IconFavorite, IconStar } from '@/components/Icons';
+import { IconFavorite } from '@/components/Icons';
 import Colors from '@/constants/colors';
 import { images } from '@/constants/images';
-import api from '@/service/apiClient';
-import { StackNavigationProp } from '@react-navigation/stack';
 import { getListFavoriteParkingSpots } from '@/service/api';
 import { mapEvents, EVENT_OPEN_SPOT } from '@/utils/eventEmitter';
 import { useAuth } from '../context/AuthContext';
 import NoUserLogin from '@/components/NoUserLogin';
-import { get } from 'lodash';
 
 const Favourite = () => {
   const navigation = useNavigation<any>();
