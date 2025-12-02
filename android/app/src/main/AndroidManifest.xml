@@ -48,7 +48,7 @@
  
         <meta-data
             android:name="com.mapbox.token"
-            android:value="pk.eyJ1IjoiaGlldWRldiIsImEiOiJjbWdpc3Q0eTIwZGtrMmpvcXFyNmx3eWYzIn0.IstlTiJSDcJR1KK288O4KA" />
+            android:value="" />
  
         <service
             android:name="io.invertase.firebase.messaging.ReactNativeFirebaseMessagingService"
