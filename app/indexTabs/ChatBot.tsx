@@ -4,8 +4,6 @@ import {
   Text,
   KeyboardAvoidingView,
   Platform,
-  TouchableWithoutFeedback,
-  Keyboard,
   FlatList,
   ListRenderItem,
   ActivityIndicator,
@@ -14,19 +12,17 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import ChatMessage from "@/components/ChatMessage";
-import ChatInput from "@/components/ChatInput1";
+import ChatInput from "@/components/ChatInput";
 import ChatSuggestions from "@/components/ChatSuggestions";
 import { DEFAULT_TAB_BAR_STYLE } from "@/utils/tabBarStyle";
 import { fetchHistoryChat, postChatMessage } from "@/service/api";
 import { useAuth } from "@/app/context/AuthContext";
-import NoUserLogin from "@/components/NoUserLogin";
 import BotTypingBubble from "@/components/BotTypingBubble";
 import { useSmartMapboxLocation } from "@/hooks/usePeriodicMapboxLocation";
-import { getAccessToken } from "@rnmapbox/maps";
 
 const ChatBot: React.FC = () => {
   const navigation = useNavigation<any>();
-  const { user, accessToken } = useAuth();
+  const { accessToken } = useAuth();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -36,9 +32,7 @@ const ChatBot: React.FC = () => {
   const insets = useSafeAreaInsets();
   const userLocation = useSmartMapboxLocation();
 
-
-
-//load session, lịch sử chat
+  //load session, lịch sử chat
   const loadSession = useCallback(async () => {
     try {
       const storedSession = await AsyncStorage.getItem("sessionID");
@@ -81,14 +75,14 @@ const ChatBot: React.FC = () => {
     () => [
       "Có bãi đỗ nào gần tuyến Nguyễn Văn Linh không?",
       "Vào lúc 17h00, tuyến Trần Phú có cấm không?",
-      "Có bãi đỗ nào gần quán cà phê ABC không?",
+      "Có bãi đỗ nào gần bệnh viện Hoàn Mỹ không?",
       "Các bãi đỗ còn trống gần khu vực trường Duy Tân",
       "Tình hình giao thông trên đường Lê Duẩn hiện tại thế nào?",
     ],
     []
   );
 
-//Gửi tin nhắn
+  //Gửi tin nhắn
   const handleSend = useCallback(
     async (text: string) => {
       if (!text.trim()) return;
@@ -108,7 +102,7 @@ const ChatBot: React.FC = () => {
       setSending(true);
 
       try {
-        const response = await postChatMessage(text, sessionID ?? undefined, userLocation ?? undefined, accessToken?? undefined);
+        const response = await postChatMessage(text, sessionID ?? undefined, userLocation ?? undefined, accessToken ?? undefined);
 
         // Lưu sessionID lần đầu
         if (!sessionID && response.session_id) {

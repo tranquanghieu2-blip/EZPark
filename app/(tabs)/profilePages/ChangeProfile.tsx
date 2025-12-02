@@ -1,8 +1,6 @@
 import GradientButton from "@/components/GradientButton";
 import { IconCamera, IconsPerson } from "@/components/Icons";
 import { InputRow } from "@/components/InputRow";
-import { useAuth } from "@/app/context/AuthContext";
-import MessageModal from "@/modals/MessageModal";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import React, { useState, useEffect, useCallback } from "react";
 import {
@@ -31,7 +29,6 @@ const ChangeProfile = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<RouteProp<RootStackParamList, "ChangeProfile">>();
   const { user } = route.params;
-  // const { updateUser } = useAuth();
 
   const showAlert = (title: string, message?: string) => {
     Alert.alert(title, message);
@@ -182,15 +179,6 @@ const ChangeProfile = () => {
 
         </View>
       </ScrollView>
-
-      {/* Modal lỗi */}
-      <MessageModal
-        visible={showFailModal}
-        onClose={() => setShowFailModal(false)}
-        title="Cập nhật thất bại"
-        message="Không thể lưu thay đổi, vui lòng thử lại."
-        type="error"
-      />
     </KeyboardAvoidingView>
   );
 };

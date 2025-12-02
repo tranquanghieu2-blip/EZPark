@@ -16,8 +16,6 @@ import { IconCrosshairs, IconQuestion, IconWarning } from '@/components/Icons';
 import SearchBar from '@/components/SearchBar';
 // Constants
 import Colors from '@/constants/colors';
-import { icons } from '@/constants/icons';
-import { DA_NANG_CENTER, DA_NANG_VIEWPORT } from '@/constants/danangMap';
 // Custom hooks
 import useFetch from '@/hooks/useFetch';
 import { useScheduleTimeTriggers } from '@/hooks/useScheduleTimeTriggers';

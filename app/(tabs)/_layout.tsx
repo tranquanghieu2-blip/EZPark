@@ -12,7 +12,7 @@ import Favourite from "./favourite";
 import ProfileStack from "./profilePages/profileStack";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const Stack = createStackNavigator();
+
 const Tab = createBottomTabNavigator();
 
 

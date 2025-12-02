@@ -1,8 +1,7 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
-  Pressable,
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
@@ -13,7 +12,6 @@ import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import ToastCustom from "@/utils/CustomToast";
 import { IconPassword } from "@/components/Icons";
 import { InputRow } from "@/components/InputRow";
-import MessageModal from "@/modals/MessageModal";
 import { resetPassword } from "@/service/api";
 import { DISABLED_OPACITY, isValidPassword, maxLengthPassword } from "@/utils/ui";
 
@@ -34,7 +32,6 @@ const ResetPassword = () => {
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [showFailModal, setShowFailModal] = useState(false);
   const [isChanged, setIsChanged] = useState(false);
   const [loading, setLoading] = useState<boolean>(false);
 
@@ -134,15 +131,6 @@ const ResetPassword = () => {
           
         </View>
       </ScrollView>
-
-      {/* Modal thông báo lỗi */}
-      <MessageModal
-        visible={showFailModal}
-        onClose={() => setShowFailModal(false)}
-        title="Cập nhật thất bại"
-        message="Không thể lưu mật khẩu, vui lòng thử lại."
-        type="error"
-      />
     </KeyboardAvoidingView>
   );
 }

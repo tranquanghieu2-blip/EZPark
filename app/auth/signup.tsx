@@ -1,12 +1,9 @@
 import GradientButton from "@/components/GradientButton";
 import GradientText from "@/components/GradientText";
-import GradientWrapper from "@/components/GradientWrapper";
 import { IconEmail, IconPassword, IconsPerson } from "@/components/Icons";
 import { icons } from "@/constants/icons";
 import usePost from "@/hooks/usePost";
-import MessageModal from "@/modals/MessageModal";
 import { signUp } from "@/service/api";
-import { Ionicons } from "@react-native-vector-icons/ionicons";
 import { useNavigation } from "@react-navigation/native";
 import React, { useState } from "react";
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
@@ -15,12 +12,11 @@ import {
   Image,
   Pressable,
   Text,
-  TextInput,
   View
 } from "react-native";
 import { InputRow } from "@/components/InputRow";
 import ToastCustom from "@/utils/CustomToast";
-import { isValidPassword, maxLengthEmail, maxLengthName, maxLengthPassword } from "@/utils/ui";
+import { isValidEmail, isValidName, isValidPassword, maxLengthEmail, maxLengthName, maxLengthPassword } from "@/utils/ui";
 
 export default function SignUp() {
   const navigation = useNavigation<any>();
@@ -28,16 +24,13 @@ export default function SignUp() {
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
-
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [showFailModal, setShowFailModal] = useState(false);
-
-  const { loading, execute, error } = usePost(signUp);
+  const { loading, execute } = usePost(signUp);
 
   // validate logic
-  const emailValid = /^\S+@\S+\.\S+$/.test(email);
-  const nameValid = /^[A-Za-zÀ-ỹ]+(?:\s[A-Za-zÀ-ỹ]+)*$/.test(name);
+  const emailValid = isValidEmail(email);
+  const nameValid = isValidName(name);
   const passwordValid = isValidPassword(password);
   const confirmValid = confirm === password && confirm.length > 0;
 
@@ -156,15 +149,6 @@ export default function SignUp() {
           <Text className="text-orange-500 font-semibold">Đăng nhập</Text>
         </Pressable>
       </View>
-
-      {/* Modal thông báo lỗi */}
-      <MessageModal
-        visible={showFailModal}
-        onClose={() => setShowFailModal(false)}
-        title="Đăng ký thất bại"
-        message={error ? error.message : "Vui lòng thử lại sau"}
-        type="error"
-      />
 
     </KeyboardAwareScrollView>
   );

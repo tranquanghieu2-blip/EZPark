@@ -10,7 +10,6 @@ import {
   Linking,
 } from 'react-native';
 import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
-import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import {
   IconStar,
   IconStarHalf,
@@ -19,18 +18,15 @@ import {
   IconParkingSpotType,
   IconFavorite,
   IconNoFavorite,
-  IconParking,
   IconCar,
 } from '@/components/Icons';
 import Colors from '@/constants/colors';
 import { images } from '@/constants/images';
-import CustomMenu from '@/components/CustomMenu';
 import { useAuth } from '@/app/context/AuthContext';
 import useFetch from '@/hooks/useFetch';
 import {
   addFavoriteParkingSpot,
   getFeedbackStatistic,
-  getListFeedback,
   getMyFeedback,
   removeFavoriteParkingSpot,
   checkFavoriteParkingSpot,
@@ -40,7 +36,6 @@ import { useGetListFeedback } from '@/hooks/useGetListFeedback';
 import { FlatList } from 'react-native-gesture-handler';
 import GradientButton from '@/components/GradientButton';
 import ToastCustom from '@/utils/CustomToast';
-import NoUserLogin from '@/components/NoUserLogin';
 import { DEFAULT_TAB_BAR_STYLE } from '@/utils/tabBarStyle';
 import { EVENT_FAVORITE_CHANGED, mapEvents } from '@/utils/eventEmitter';
 
