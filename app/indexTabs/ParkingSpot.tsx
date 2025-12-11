@@ -27,7 +27,12 @@ import {
 
 // Components
 import CircleButton from '@/components/CircleButton';
-import { IconCrosshairs, IconQuestion, IconWarning } from '@/components/Icons';
+import {
+  IconCrosshairs,
+  IconQuestion,
+  IconWarning,
+  IconClock,
+} from '@/components/Icons';
 import SearchBar from '@/components/SearchBar';
 // Constants
 import Colors from '@/constants/colors';
@@ -41,6 +46,7 @@ import { useScheduleTimeTriggers } from '@/hooks/useScheduleTimeTriggers';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import useFetch from '../../hooks/useFetch';
 import { useSmartMapboxLocation } from '@/hooks/usePeriodicMapboxLocation';
+import { useConfirmedParkingContext } from '@/app/context/ConfirmedParkingContext';
 
 // Services
 import {
@@ -71,8 +77,9 @@ const WalkthroughableCircleButton = walkthroughable(CircleButton);
 // Component
 const ParkingSpotContent = () => {
   const { user } = useAuth();
+  const { confirmed } = useConfirmedParkingContext();
 
-  const location = useSmartMapboxLocation(10);
+  const location = useSmartMapboxLocation();
   console.log('Render Parking Spot');
   const shapeSourceRef = useRef<MapboxGL.ShapeSource>(null);
   const cameraRef = useRef<MapboxGL.Camera>(null);
@@ -89,6 +96,8 @@ const ParkingSpotContent = () => {
   const [selectedRoute, setSelectedRoute] = useState<NoParkingRoute | null>(
     null,
   );
+  const [showRouteParking, setShowRouteParking] = useState(false);
+
   const [changedFavorites, setChangedFavorites] = useState<Set<number>>(
     new Set(),
   );
@@ -223,6 +232,36 @@ const ParkingSpotContent = () => {
   // Fetch no-parking routes
   const { data: noParkingRoutes } =
     useFetch<NoParkingRoute[]>(fetchNoParkingRoutes);
+
+
+  // khi component mount chúng ta re-hydrate selectedRoute để modal/ banner còn hiện
+  useEffect(() => {
+    if (!noParkingRoutes || noParkingRoutes.length === 0) return;
+    if (confirmed && confirmed.routeId) {
+      const existing = noParkingRoutes.find(
+        r => String(r.no_parking_route_id) === String(confirmed.routeId),
+      );
+      if (existing) {
+        // đặt selectedRoute nếu chưa có modal sẽ hiện và banner cũng hiển thị
+        setSelectedRoute(prev => prev ?? existing);
+        setShowRouteParking(true);
+      }
+    }
+  }, [noParkingRoutes, confirmed]);
+
+    // Effect riêng để đảm bảo showRouteParking được bật khi có confirmed
+  useEffect(() => {
+    if (confirmed && confirmed.routeId) {
+      console.log('Confirmed parking detected:', confirmed);
+      setShowRouteParking(true);
+    } else {
+      console.log('No confirmed parking');
+      setShowRouteParking(false);
+    }
+  }, [confirmed]);
+  console.log("ShowRouteParking:", showRouteParking);
+  console.log("Confirmed: ", confirmed);
+
 
   // Trigger time updates
   const [, forceUpdate] = useState(0);
@@ -411,6 +450,30 @@ const ParkingSpotContent = () => {
     return () => loop.stop();
   }, [showBadge, pulseAnim]);
 
+  // Hàm xác định bên cấm dựa vào ngày hôm nay cho "alternate days"
+  const getEffectiveRestrictedSide = (route: NoParkingRoute): string => {
+    const typeSide: Record<NoParkingRoute["side"], string> = {
+      "odd": "Bên lẻ",
+      "even": "Bên chẵn",
+      "both": "Cả hai bên",
+    };
+
+    if (route.type !== "alternate days") {
+      return typeSide[route.side];
+    }
+
+    // Lấy ngày hôm nay
+    const today = new Date();
+    const dayOfMonth = today.getDate(); // 1-31
+
+    // Kiểm tra ngày chẵn hay lẻ
+    const isEvenDay = dayOfMonth % 2 === 0;
+
+    // Nếu ngày chẵn → cấm bên chẵn; ngày lẻ → cấm bên lẻ
+    const restrictedSide = isEvenDay ? "even" : "odd";
+    return typeSide[restrictedSide as NoParkingRoute["side"]];
+  };
+
   return (
     <View style={styles.container}>
       {/* Banner tuyến cấm chung (hiện lên cả trên ParkingSpot) */}
@@ -437,6 +500,9 @@ const ParkingSpotContent = () => {
           </Text>
           <Text style={{ color: '#fff', fontSize: 20, fontWeight: '700' }}>
             Tuyến: {currentForbiddenRoute.street}
+          </Text>
+          <Text style={{ color: '#fff', fontSize: 20, fontWeight: '700' }}>
+            Bên cấm: {currentForbiddenRoute ? getEffectiveRestrictedSide(currentForbiddenRoute) : ""}
           </Text>
         </Animated.View>
       )}
@@ -578,7 +644,7 @@ const ParkingSpotContent = () => {
                     userLocation.longitude,
                     userLocation.latitude,
                   ],
-                  zoomLevel: 15,
+                  zoomLevel: 14,
                   animationDuration: 800,
                 });
               }
@@ -609,14 +675,78 @@ const ParkingSpotContent = () => {
           ref={cameraRef}
           defaultSettings={{
             bounds: {
-              ne: [108.35, 16.15], //DONG BAC
-              sw: [107.95, 15.85], // TAY NAM
+              ne: [108.35, 16.15],
+              sw: [107.95, 15.85],
             },
           }}
           zoomLevel={10}
         />
 
-        {/* custom user marker */}
+        {/* No Parking Routes - RENDER TRƯỚC để nằm dưới */}
+        {noParkingRoutes?.map(route => {
+          const now = new Date();
+         if (route.type !== "alternate days") {
+           if (isDayRestricted(now, route.days_restricted)) {
+             if (isWithinTimeRange(now, route.time_range)) return null;
+           }
+         }
+          const coords = route.route.coordinates.map(([lon, lat]) => [
+            lon,
+            lat,
+          ]);
+          
+
+          return (
+            <MapboxGL.ShapeSource
+              key={`npr-${route.no_parking_route_id}`}
+              id={`npr-${route.no_parking_route_id}`}
+              shape={{
+                type: 'Feature',
+                geometry: { type: 'LineString', coordinates: coords },
+                properties: {
+                  routeId: route.no_parking_route_id,
+                  ...route,
+                },
+              }}
+              onPress={e => {
+                const feature = e.features?.[0];
+                if (!feature || !feature.properties) return;
+                const routeId = feature.properties.routeId;
+                console.log('Clicked route ID:', routeId);
+
+                const selectedRoute = noParkingRoutes?.find(
+                  r => r.no_parking_route_id == routeId,
+                );
+
+                if (selectedRoute) {
+                  setSelectedRoute(selectedRoute);
+                  if (selectedRoute?.route?.coordinates?.length) {
+                    const coords = selectedRoute.route.coordinates;
+                    const midIndex = Math.floor(coords.length / 2);
+                    const [lon, lat] = coords[midIndex];
+
+                    cameraRef.current?.setCamera({
+                      centerCoordinate: [lon, lat],
+                      zoomLevel: 14,
+                      animationDuration: 700,
+                    });
+                  }
+                }
+              }}
+            >
+              <MapboxGL.LineLayer
+                id={`npr-layer-${route.no_parking_route_id}`}
+                style={{
+                  lineColor: 'green',
+                  lineWidth: 4,
+                  lineOpacity: 0.7,
+                }}
+              />
+            </MapboxGL.ShapeSource>
+          );
+        })}
+
+        {/* User marker - RENDER CUỐI để nằm trên cùng */}
         {userLocation && (
           <MapboxGL.PointAnnotation
             id="user-marker"
@@ -648,68 +778,6 @@ const ParkingSpotContent = () => {
             </View>
           </MapboxGL.PointAnnotation>
         )}
-
-        {/* No Parking Routes */}
-        {noParkingRoutes?.map(route => {
-          const now = new Date();
-          if (isDayRestricted(now, route.days_restricted)) {
-            if (isWithinTimeRange(now, route.time_range)) return null;
-          }
-          const coords = route.route.coordinates.map(([lon, lat]) => [
-            lon,
-            lat,
-          ]);
-
-          return (
-            <MapboxGL.ShapeSource
-              key={`npr-${route.no_parking_route_id}`}
-              id={`npr-${route.no_parking_route_id}`}
-              shape={{
-                type: 'Feature',
-                geometry: { type: 'LineString', coordinates: coords },
-                properties: {
-                  routeId: route.no_parking_route_id,
-                  ...route,
-                },
-              }}
-              onPress={e => {
-                const feature = e.features?.[0];
-                if (!feature || !feature.properties) return;
-                const routeId = feature.properties.routeId;
-                console.log('Clicked route ID:', routeId);
-
-                const selectedRoute = noParkingRoutes?.find(
-                  r => r.no_parking_route_id == routeId,
-                );
-
-                if (selectedRoute) {
-                  setSelectedRoute(selectedRoute);
-                  // Di chuyển camera đến vị trí bãi đỗ
-                  if (selectedRoute?.route?.coordinates?.length) {
-                    const coords = selectedRoute.route.coordinates;
-                    const midIndex = Math.floor(coords.length / 2);
-                    const [lon, lat] = coords[midIndex]; // Lấy điểm giữa tuyến
-
-                    cameraRef.current?.setCamera({
-                      centerCoordinate: [lon, lat],
-                      zoomLevel: 14,
-                      animationDuration: 700,
-                    });
-                  }
-                }
-              }}
-            >
-              <MapboxGL.LineLayer
-                id={`npr-layer-${route.no_parking_route_id}`}
-                style={{
-                  lineColor: 'green',
-                  lineWidth: 4,
-                  lineOpacity: 0.7,
-                }}
-              />
-            </MapboxGL.ShapeSource>
-          );
-        })}
 
         {/*Parking Spot Clustering*/}
         {parkingSpots && (
@@ -911,7 +979,68 @@ const ParkingSpotContent = () => {
           onClose={() => {
             setSelectedRoute(null);
           }}
+          showRouteParking={showRouteParking}
+          onSetShowRouteParking={setShowRouteParking}
         />
+      )}
+
+      {showRouteParking &&  confirmed?.street && (
+        <Animated.View
+          style={{
+            position: 'absolute',
+            left: 16,
+            right: 16,
+            top: 68,
+            backgroundColor: '#fff',
+            padding: 12,
+            borderRadius: 14,
+            flexDirection: 'row',
+            alignItems: 'center',
+            zIndex: 999,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.12,
+            shadowRadius: 8,
+            elevation: 8,
+            borderWidth: 1,
+            borderColor: '#f3f4f6',
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: '#eef6ff',
+              padding: 8,
+              borderRadius: 24,
+              marginRight: 12,
+            }}
+          >
+            <IconClock size={20} color={Colors.blue_button} />
+          </View>
+
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 12, color: '#6b7280', fontWeight: '500' }}>
+              Thông báo hoạt động
+            </Text>
+            <Text
+              style={{ fontSize: 14, color: '#111827', fontWeight: '700' }}
+              numberOfLines={2}
+            >
+              Đang xác nhận đỗ: {confirmed?.street}
+            </Text>
+          </View>
+
+          <Pressable
+            onPress={() => setShowRouteParking(false)}
+            style={{
+              padding: 8,
+              backgroundColor: '#f3f4f6',
+              borderRadius: 10,
+              marginLeft: 10,
+            }}
+          >
+            <Text style={{ color: '#374151', fontWeight: '600' }}>Đóng</Text>
+          </Pressable>
+        </Animated.View>
       )}
     </View>
   );
@@ -922,9 +1051,9 @@ const ParkingSpot = () => {
   return (
     <CopilotProvider
       overlay="svg"
-      androidStatusBarVisible={true}
+      // androidStatusBarVisible={true}
       animated={true}
-      // verticalOffset={42}
+      verticalOffset={42}
       tooltipStyle={{
         borderRadius: 20,
         backgroundColor: 'white',

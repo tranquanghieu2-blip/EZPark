@@ -4,7 +4,7 @@ import MapboxGL from '@rnmapbox/maps';
 import { AppState } from 'react-native';
 import DeviceInfo from 'react-native-device-info';
 
-export const useSmartMapboxLocation = (minDistance = 10) => {
+export const useSmartMapboxLocation = (minDistance = 15) => {
   const [location, setLocation] = useState<{
     latitude: number;
     longitude: number;

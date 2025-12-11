@@ -1,8 +1,8 @@
+import {MAPBOX_API_KEY} from "@env";
 export async function getRoutes(start: [number, number], end: [number, number]) {
   try {
     const baseUrl = "https://api.mapbox.com/directions/v5/mapbox/driving";
-    const mbToken ="pk.eyJ1IjoiaGlldWRldiIsImEiOiJjbWdpc3Q0eTIwZGtrMmpvcXFyNmx3eWYzIn0.IstlTiJSDcJR1KK288O4KA";
-
+    const mbToken = MAPBOX_API_KEY;
     const url = `${baseUrl}/${start[0]},${start[1]};${end[0]},${end[1]}?alternatives=false&geometries=geojson&overview=full&steps=false&language=vi&access_token=${mbToken}`;
 
     const res = await fetch(url);

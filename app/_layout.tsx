@@ -17,6 +17,7 @@ import { ToastCustomView } from '@/components/ToastCustomView';
 import { mapEvents, EVENT_USER_LOGIN } from '@/utils/eventEmitter';
 import { useNavigation } from '@react-navigation/native';
 import Colors from '@/constants/colors';
+import { ConfirmedParkingProvider } from '@/app/context/ConfirmedParkingContext';
 
 const Stack = createNativeStackNavigator();
 
@@ -30,11 +31,11 @@ function AppNavigator() {
   }, [updateAccessToken]);
 
   // Lắng nghe sự kiện đăng nhập để chuyển hướng
-    useEffect(() => {
+  useEffect(() => {
     const handler = () => {
       navigation.reset({
         index: 0,
-        routes: [{ name: "(tabs)" }],
+        routes: [{ name: '(tabs)' }],
       });
     };
 
@@ -44,8 +45,6 @@ function AppNavigator() {
       mapEvents.removeListener(EVENT_USER_LOGIN, handler);
     };
   }, [navigation]);
-
-
 
   if (loading) {
     return (
@@ -95,19 +94,25 @@ export default function RootLayout() {
   }, []);
   return (
     <AuthProvider>
-      <NavigationContainer>
+      {/* <NavigationContainer>
         <AppNavigator />
-      </NavigationContainer>
+      </NavigationContainer> */}
+
+      <ConfirmedParkingProvider>
+        <NavigationContainer>
+          <AppNavigator />
+        </NavigationContainer>
+      </ConfirmedParkingProvider>
 
       {/* ToastManager toàn cục */}
-      <ToastManager config={{
-        success: (props: any) => <ToastCustomView {...props} />,
-        error: (props: any) => <ToastCustomView {...props} />,
-        warning: (props: any) => <ToastCustomView {...props} />,
-        info: (props: any) => <ToastCustomView {...props} />,
-      }} />
-
-
+      <ToastManager
+        config={{
+          success: (props: any) => <ToastCustomView {...props} />,
+          error: (props: any) => <ToastCustomView {...props} />,
+          warning: (props: any) => <ToastCustomView {...props} />,
+          info: (props: any) => <ToastCustomView {...props} />,
+        }}
+      />
     </AuthProvider>
   );
 }

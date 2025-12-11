@@ -17,10 +17,29 @@ const NoParkingRouteModal: React.FC<Props> = ({ route, onClose }) => {
         "alternate days": "Cấm đỗ chẵn lẻ",
     };
 
+
     const typeSide: Record<NoParkingRoute["side"], string> = {
         "odd": "Bên lẻ",
         "even": "Bên chẵn",
         "both": "Cả hai bên",
+    };
+
+    // Hàm xác định bên cấm dựa vào ngày hôm nay cho "alternate days"
+    const getEffectiveRestrictedSide = (route: NoParkingRoute): string => {
+      if (route.type !== "alternate days") {
+        return typeSide[route.side];
+      }
+  
+      // Lấy ngày hôm nay
+      const today = new Date();
+      const dayOfMonth = today.getDate(); // 1-31
+  
+      // Kiểm tra ngày chẵn hay lẻ
+      const isEvenDay = dayOfMonth % 2 === 0;
+  
+      // Nếu ngày chẵn cấm bên chẵn; ngày lẻ cấm bên lẻ
+      const restrictedSide = isEvenDay ? "even" : "odd";
+      return typeSide[restrictedSide as NoParkingRoute["side"]];
     };
 
     const formatDaysRestricted = (days: string[]): string => {
@@ -119,7 +138,7 @@ const NoParkingRouteModal: React.FC<Props> = ({ route, onClose }) => {
                                 <View className="flex items-center">
                                     <Text className="font-semibold text-xl text-center">{route.street}</Text>
                                     <Text className="text-lg text-gray-500">
-                                        Loại: {route ? typeLabel[route.type] : ""}
+                                        Loại: {typeLabel[route.type] || ""}
                                     </Text>
                                 </View>
                             </View>
@@ -131,7 +150,7 @@ const NoParkingRouteModal: React.FC<Props> = ({ route, onClose }) => {
                                     <View className="w-[30px] items-center">
                                         <IconSideParking size={24} color={Colors.blue_button} />
                                     </View>
-                                    <Text className="flex-1">Bên cấm: {route ? typeSide[route.side] : ""}</Text>
+                                    <Text className="flex-1">Bên cấm: {route ? getEffectiveRestrictedSide(route) : ""}</Text>
                                 </View>
 
                                 {/* Thời gian cấm */}

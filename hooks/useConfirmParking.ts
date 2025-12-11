@@ -54,19 +54,22 @@ export const useConfirmedParking = () => {
         await clearConfirmed();
       }
 
-      // Đăng ký cho tuyến mới
+     // SET STATE NGAY (synchronous trong render)
+     const newConfirmedState: ConfirmedState = {
+       routeId: params.routeId,
+       street: params.street,
+       confirmedAt: new Date(),
+       confirmedLat: params.confirmedLat,
+       confirmedLon: params.confirmedLon,
+       endTime: params.endTime ?? null,
+       route: params.route,
+     };
+     setConfirmed(newConfirmedState);
+     console.log(' State set ngay:', newConfirmedState);
+
+      // Sau đó mới gọi async operations
       await subscribeToRoute(params.routeId);
       await notifee.requestPermission();
-
-      setConfirmed({
-        routeId: params.routeId,
-        street: params.street,
-        confirmedAt: new Date(),
-        confirmedLat: params.confirmedLat,
-        confirmedLon: params.confirmedLon,
-        endTime: params.endTime ?? null,
-        route: params.route,
-      });
 
       console.log('Đã xác nhận đỗ:', params.routeId);
     } catch (err) {
