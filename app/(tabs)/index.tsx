@@ -5,7 +5,7 @@ import { createMaterialTopTabNavigator } from "@react-navigation/material-top-ta
 import colors from "@/constants/colors";
 import ChatHeader from "@/components/ChatHeader";
 import ParkingSpot from "../indexTabs/ParkingSpot";
-import NoParkingRoute from "../indexTabs/NoParkingRoute";
+import NoParkingRoute from "../indexTabs/noParkingRoute";
 import SearchParkingSpot from "../indexTabs/SearchParkingSpot";
 import ParkingSpotDetail from "../indexTabs/ParkingSpotDetail";
 import Rating from "../indexTabs/Rating";
