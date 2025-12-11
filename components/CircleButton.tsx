@@ -13,7 +13,7 @@ interface Props {
 const CircleButton = forwardRef<React.ComponentRef<typeof TouchableOpacity>, Props>(
   ({ icon, bgColor = '#ab8bff', onPress, size = 50, style }, ref) => {
     return (
-      <TouchableOpacity
+      <TouchableOpacity 
         ref={ref}
         onPress={onPress}
         activeOpacity={0.7}

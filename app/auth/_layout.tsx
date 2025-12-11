@@ -2,8 +2,8 @@ import React from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
 // Các màn hình auth
-import LoginScreen from "@/app/auth/Login";
-import SignupScreen from "@/app/auth/Signup";
+import LoginScreen from "@/app/auth/login";
+import SignupScreen from "@/app/auth/signup";
 import VerifyOtpScreen from "@/app/auth/VerifyOTP";
 import ForgotPasswordScreen from "@/app/auth/ForgotPassword";
 import ResetPasswordScreen from "@/app/auth/ResetPassword";

@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Modal, Pressable, Text, View, ActivityIndicator } from 'react-native';
 import { IconClock } from '@/components/Icons';
 import Colors from '@/constants/colors';
-import { useConfirmedParking } from '@/hooks/useConfirmParking';
+import { useConfirmedParkingContext } from '@/app/context/ConfirmedParkingContext';
 import { getAllowedTimeRanges } from '@/utils/time';
 import { useSmartMapboxLocation } from '@/hooks/usePeriodicMapboxLocation';
 import ToastCustom from '@/utils/CustomToast';
@@ -11,6 +11,8 @@ import haversine from 'haversine-distance';
 interface Props {
   onClose: () => void;
   route: NoParkingRoute | null;
+  showRouteParking: boolean;
+  onSetShowRouteParking: (show: boolean) => void;
 }
 
 function distanceToSegment(
@@ -68,12 +70,28 @@ function isUserOnRoute(
   return dist <= toleranceMeters;
 }
 
-const ConfirmParkingRoutesModal: React.FC<Props> = ({ route, onClose }) => {
+const ConfirmParkingRoutesModal: React.FC<Props> = ({ route, onClose, showRouteParking, onSetShowRouteParking }) => {
   const location = useSmartMapboxLocation();
-  const { confirmed, confirmRoute, clearConfirmed } = useConfirmedParking();
+  const { confirmed, confirmRoute, clearConfirmed } = useConfirmedParkingContext();
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   const [processingAction, setProcessingAction] = useState<'confirm' | 'cancel' | null>(null);
+
+
+
+
+  // Hàm lấy loại chẵn lẻ
+  const getAlternateDaysNote = (route: NoParkingRoute): string => {
+    if (route.type !== "alternate days") return "";
+
+    const today = new Date();
+    const dayOfMonth = today.getDate();
+    const isEvenDay = dayOfMonth % 2 === 0;
+
+    // Nếu ngày chẵn cấm bên chẵn chỉ đỗ bên lẻ; ngày lẻ ngược lại
+    const allowedSide = isEvenDay ? "Bên lẻ" : "Bên chẵn";
+    return allowedSide;
+  };
 
   const canConfirmOnRoute =
     route &&
@@ -126,6 +144,9 @@ const ConfirmParkingRoutesModal: React.FC<Props> = ({ route, onClose }) => {
         route: route.route?.coordinates || [],
       });
 
+      onSetShowRouteParking(true);
+      showRouteParking = true;
+
       ToastCustom.success('Xác nhận đỗ thành công!', `Tuyến: ${route.street}`);
       // Đợi ngắn để cập nhật state rồi đóng modal
       setTimeout(onClose, 50);
@@ -142,6 +163,8 @@ const ConfirmParkingRoutesModal: React.FC<Props> = ({ route, onClose }) => {
     setProcessingAction('cancel');
     try {
       await clearConfirmed();
+      onSetShowRouteParking(false);
+      showRouteParking = false;
       ToastCustom.success('Đã hủy thông báo', 'Bạn sẽ không nhận thông báo nữa.');
       setTimeout(onClose, 50);
     } catch (err) {
@@ -158,14 +181,17 @@ const ConfirmParkingRoutesModal: React.FC<Props> = ({ route, onClose }) => {
     route?.no_parking_route_id !== undefined &&
     String(confirmed.routeId) === String(route.no_parking_route_id);
 
-  // Khi hết hạn và confirmed bị clear, UI sẽ cập nhật lại
+
+  // tự động đóng modal và reset showRouteParking nếu user không mở modal
   useEffect(() => {
-    if (isConfirmed === false && route) {
-      console.log('UI cập nhật: đã hết hạn, hiển thị lại nút xác nhận');
+    if (!route && !isConfirmed && showRouteParking) {
+      // Tự động ẩn banner/showRouteParking
+      onSetShowRouteParking(false);
     }
-  }, [isConfirmed]);
+  }, [confirmed, route, showRouteParking, onSetShowRouteParking]);
 
   return (
+    <>
     <Modal
       transparent
       visible={!!route}
@@ -188,64 +214,105 @@ const ConfirmParkingRoutesModal: React.FC<Props> = ({ route, onClose }) => {
           className="bg-white rounded-2xl p-6 w-4/5"
         >
           <Text className="font-semibold text-xl text-center mb-1">
-            Xác Nhận Đỗ Xe
+          {route?.type === "alternate days"
+          ? 'Thông tin Tuyến Chẵn Lẻ'
+          : isConfirmed ? 'Đã Xác Nhận Đỗ Xe' : 'Xác Nhận Đỗ Xe'}
+
+            
           </Text>
-          <Text className="font-regular text-base text-center mb-3">
-            Hãy xác nhận đỗ xe để nhận thông báo tự động
+          <Text className="font-medium text-lg text-center mb-3">
+            {route?.type === "alternate days" 
+              ? 'Lưu ý: Hôm nay chỉ được đỗ bên ' + getAlternateDaysNote(route)
+              : isConfirmed
+                ? 'Hủy thông báo đỗ xe trên tuyến này nếu bạn đã rời đi.'
+                : 'Vui lòng xác nhận bạn đang đỗ xe trên tuyến này.'}
           </Text>
 
           {route && (
             <View className="items-center">
-              <Text className="font-regular text-lg mb-2">
-                Tuyến {route.street}
-              </Text>
+              <Text className="font-semibold text-xl text-center">{route.street}</Text>
               <View className="flex-row items-center gap-2 mb-3">
                 <IconClock size={24} color={Colors.blue_button} />
                 <View>
-                  {getAllowedTimeRanges(route.time_range).map((r, i) => (
-                    <Text key={i}>
-                      {r.start.slice(0, 5)} - {r.end.slice(0, 5)}
-                    </Text>
-                  ))}
+                  {route.type === "alternate days" ? (
+                    route.time_range && route.time_range.length > 0 ? (
+                      route.time_range.map((r, i) => (
+                        <Text key={i}>
+                          {r.start.slice(0, 5)} - {r.end.slice(0, 5)}
+                        </Text>
+                      ))
+                    ) : (
+                      <Text className="text-lg text-gray-700">Không giới hạn</Text>
+                    )
+                  ) : (
+                    getAllowedTimeRanges(route.time_range).map((r, i) => (
+                      <Text key={i}>
+                        {r.start.slice(0, 5)} - {r.end.slice(0, 5)}
+                      </Text>
+                    ))
+                  )}
                 </View>
               </View>
 
-              <View className="flex-row w-full gap-2 mt-2">
-                <Pressable
-                  onPress={onClose}
-                  disabled={processingAction !== null}
-                  className="bg-gray-300 flex-1 h-[40px] rounded-xl justify-center items-center"
-                  style={{ opacity: processingAction ? 0.6 : 1 }}
-                >
-                  <Text className="text-black font-semibold">Đóng</Text>
-                </Pressable>
 
-                <Pressable
-                  onPress={isConfirmed ? handleCancelConfirm : handleConfirm}
-                  disabled={processingAction !== null}
-                  className={`flex-1 h-[40px] rounded-xl justify-center items-center ${
-                    isConfirmed
-                      ? 'bg-red-600 active:bg-red-400'
-                      : 'bg-blue-600 active:bg-blue-400'
-                  }`}
-                  style={{ opacity: processingAction ? 0.8 : 1 }}
-                >
-                  {processingAction === 'confirm' && !isConfirmed ? (
-                    <ActivityIndicator color="white" />
-                  ) : processingAction === 'cancel' && isConfirmed ? (
-                    <ActivityIndicator color="white" />
-                  ) : (
-                    <Text className="text-white font-semibold">
-                      {isConfirmed ? 'Hủy Thông Báo' : 'Xác Nhận Đỗ'}
-                    </Text>
-                  )}
-                </Pressable>
+              <View className="flex-row w-full gap-2 mt-2">
+                {route?.type === "alternate days" ? (
+                  // Chỉ hiển thị nút Đóng cho tuyến chẵn lẻ
+                  <Pressable
+                    onPress={onClose}
+                    disabled={processingAction !== null}
+                    className="bg-gray-300 flex-1 h-[40px] rounded-xl justify-center items-center"
+                    style={{ opacity: processingAction ? 0.6 : 1 }}
+                  >
+                    <Text className="text-black font-semibold">Đóng</Text>
+                  </Pressable>
+                ) : (
+                  // Hiển thị cả 2 nút cho tuyến khác
+                  <>
+                    <Pressable
+                      onPress={onClose}
+                      disabled={processingAction !== null}
+                      className="bg-gray-300 flex-1 h-[40px] rounded-xl justify-center items-center"
+                      style={{ opacity: processingAction ? 0.6 : 1 }}
+                    >
+                      <Text className="text-black font-semibold">Đóng</Text>
+                    </Pressable>
+
+                    <Pressable
+                      onPress={() => {
+                        if (isConfirmed) {
+                          handleCancelConfirm();
+                        } else {
+                          handleConfirm();
+                        }
+                      }}
+                      disabled={processingAction !== null}
+                      className={`flex-1 h-[40px] rounded-xl justify-center items-center ${
+                        isConfirmed
+                          ? 'bg-red-600 active:bg-red-400'
+                          : 'bg-blue-600 active:bg-blue-400'
+                      }`}
+                      style={{ opacity: processingAction ? 0.8 : 1 }}
+                    >
+                      {processingAction === 'confirm' && !isConfirmed ? (
+                        <ActivityIndicator color="white" />
+                      ) : processingAction === 'cancel' && isConfirmed ? (
+                        <ActivityIndicator color="white" />
+                      ) : (
+                        <Text className="text-white font-semibold">
+                          {isConfirmed ? 'Hủy Thông Báo' : 'Xác Nhận Đỗ'}
+                        </Text>
+                      )}
+                    </Pressable>
+                  </>
+                )}
               </View>
             </View>
           )}
         </Animated.View>
       </View>
     </Modal>
+    </>
   );
 };
 
