@@ -1,5 +1,5 @@
 import { View, Text, ImageBackground, Pressable } from 'react-native'
-import React, { forwardRef } from 'react' // 1. Thêm forwardRef
+import React, { forwardRef } from 'react'
 import { IconSearch } from './Icons'
 import { images } from '@/constants/images'
 
@@ -9,8 +9,7 @@ interface Props {
   value?: string
 }
 
-// 2. Bọc component bằng forwardRef
-// Tham số thứ 2 là ref
+//Bọc component bằng forwardRef
 const SearchBar = forwardRef<React.ComponentRef<typeof Pressable>, Props>(
   ({ placeholder, onPress, value }, ref) => {
     return (

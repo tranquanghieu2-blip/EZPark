@@ -22,7 +22,6 @@ import { useScheduleTimeTriggers } from '@/hooks/useScheduleTimeTriggers';
 // Services
 import {
   fetchNoParkingRoutes,
-  updateNoParkingRouteGeometry,
 } from '@/service/api';
 import { getRoutes } from '@/service/routingService';
 // Utils
@@ -41,6 +40,12 @@ import {
   EVENT_FORBIDDEN_ROUTE_ENTER,
   EVENT_FORBIDDEN_ROUTE_EXIT,
 } from '@/utils/eventEmitter';
+
+    const typeSide: Record<NoParkingRoute["side"], string> = {
+        "odd": "Bên lẻ",
+        "even": "Bên chẵn",
+        "both": "Cả hai bên",
+    };
 
 const NoParkingRoute = () => {
   const location = useSmartMapboxLocation();
@@ -92,6 +97,7 @@ const NoParkingRoute = () => {
       });
     }
 
+    
     // Clear param để không trigger lại khi re-render
     navigation.setParams({ selectedNoParkingRouteId: undefined });
   }, [routeNav?.params?.selectedNoParkingRouteId, routesWithGeometry]);
@@ -113,10 +119,10 @@ const NoParkingRoute = () => {
 
               if (routeData[0]?.geometry) {
                 const geometry = routeData[0].geometry;
-                await updateNoParkingRouteGeometry(
-                  route.no_parking_route_id,
-                  geometry,
-                );
+                // await updateNoParkingRouteGeometry(
+                //   route.no_parking_route_id,
+                //   geometry,
+                // );
                 return { ...route, geometry };
               } else {
                 console.warn(
@@ -436,7 +442,11 @@ const NoParkingRoute = () => {
             <Text style={{ color: '#fff', fontSize: 20, fontWeight: '700' }}>
               Tuyến: {currentForbiddenRoute?.street}
             </Text>
+            <Text style={{ color: '#fff', fontSize: 20, fontWeight: '700' }}>
+              Bên cấm: {typeSide[currentForbiddenRoute?.side || "both"]}
+            </Text>
           </View>
+          
         </Animated.View>
       )}
 

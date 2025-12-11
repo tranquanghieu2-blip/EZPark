@@ -191,7 +191,7 @@ export function useForbiddenRouteWatcher({
         // Luôn fetch API trước
         const fresh = await fetchNoParkingRoutes();
 
-        console.log('Fetched fresh:', fresh);
+        // console.log('Fetched fresh:', fresh);
 
         //Update state = data mới
         // setRoutes(fresh);
@@ -293,6 +293,7 @@ export function useForbiddenRouteWatcher({
 
       console.log(' Polyline distance:', polylineDistance);
 
+      //40m
       if (polylineDistance <= LOCATION_CHECK.FORBIDDEN_ZONE_RADIUS_M) {
         inZone = true;
         matchedZone = route;
@@ -304,8 +305,7 @@ export function useForbiddenRouteWatcher({
     //Cho phép vào tuyến mới ngay cả khi đã ở trong tuyến cũ
     if (
       inZone &&
-      (!currentZone ||
-        currentZone.no_parking_route_id !== matchedZone?.no_parking_route_id)
+      (!currentZone || currentZone.no_parking_route_id !== matchedZone?.no_parking_route_id)
     ) {
       // Nếu đang ở tuyến cũ gọi onExitZone trước
       if (currentZone) {

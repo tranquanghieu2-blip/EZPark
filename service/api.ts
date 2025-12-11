@@ -21,7 +21,7 @@ export const fetchNoParkingRoutes = async (): Promise<NoParkingRoute[]> => {
       throw new Error(`Error fetching routes: ${response.statusText}`);
     }
     const data = await response.json();
-    console.log("Data", data)
+    // console.log("Data", data)
     // Trả về mảng NoParkingRoute
     return data;
   } catch (error) {
@@ -75,34 +75,6 @@ export const fetchParkingSpotDetail = async (
     throw error;
   }
 };
-
-export async function updateNoParkingRouteGeometry(
-  no_parking_route_id: number,
-  geometry: any,
-) {
-  const res = await fetch(
-    `${API_CONFIG.BASE_URL}/no-parking-routes/add-route-data`,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ no_parking_route_id, route: geometry }),
-    },
-  );
-
-  const json = await res.json();
-
-  if (!res.ok) {
-    console.error('❌ Lỗi cập nhật route:', json);
-    throw new Error(json?.msg || 'Failed to update route geometry');
-  }
-
-  // In rõ ràng ra console
-  console.log('✅ Kết quả API add-route-data:', json.data.route);
-
-  return json;
-}
 
 export const searchParkingSpot = async ({
   nameParking,
