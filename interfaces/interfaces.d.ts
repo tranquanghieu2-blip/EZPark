@@ -144,6 +144,7 @@ interface ChatMessage {
   created_at: string;
   intent?: string;
   search_method?: string;
+  parking_spots?: ParkingSpotDetail[];
 };
 
 interface SessionInfo {
@@ -165,7 +166,7 @@ interface ResponseFromChatbot {
   session_status: string;
   query: string;
   response: string;
-  parking_spots: ParkingSpot[];
+  parking_spots: ParkingSpotDetail[];
   no_parking_routes: NoParkingRoute[];
   timestamp: string;
 }

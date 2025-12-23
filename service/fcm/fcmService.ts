@@ -2,14 +2,7 @@ import messaging from '@react-native-firebase/messaging';
 import DeviceInfo from 'react-native-device-info';
 import axios from 'axios';
 import { getFcmToken } from '../firebasesetup';
-
-export const API_CONFIG = {
-  BASE_URL: "https://ezpark-9gnn.onrender.com/api",
-  headers: {
-    Accept: "application/json",
-    "Content-Type": "application/json",
-  },
-};
+import { API_CONFIG } from '@/config/apiConfig';
 
 export const registerDevice = async () => {
   try {
@@ -29,12 +22,9 @@ export const registerDevice = async () => {
 
     console.log('registerDevice payload:', { device_id: deviceId, typeof: typeof deviceId, token: fcmToken });
 
-    const res = await fetch(`${API_CONFIG.BASE_URL}/devices/register`, {
+    const res = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.endpoints.DEVICES_REGISTER}`, {
       method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      }, 
+      headers: API_CONFIG.headers, 
       body: JSON.stringify({
         device_id: deviceId,
         token: fcmToken,

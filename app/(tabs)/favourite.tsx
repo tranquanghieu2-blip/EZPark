@@ -87,8 +87,14 @@ const Favourite = () => {
               className="py-4 border-b border-gray-200"
               onPress={() => {
                 const spotId = item.parking_spot_id ?? item.id ?? item.spot_id;
-                mapEvents.emit(EVENT_OPEN_SPOT, spotId);             
-                navigation.navigate('index');
+                // Navigate đến index tab và truyền params cho nested screen
+                navigation.navigate('index', {
+                  screen: 'Tabs',
+                  params: {
+                    screen: 'ParkingSpot',
+                    params: { openSpotId: spotId },
+                  },
+                });
               }}
             >
               <View>
