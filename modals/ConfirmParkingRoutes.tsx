@@ -143,13 +143,14 @@ const ConfirmParkingRoutesModal: React.FC<Props> = ({ route, onClose, showRouteP
         endTime: nearestEnd,
         route: route.route?.coordinates || [],
       });
+      
 
       onSetShowRouteParking(true);
-      showRouteParking = true;
+      // showRouteParking = true;
 
       ToastCustom.success('Xác nhận đỗ thành công!', `Tuyến: ${route.street}`);
       // Đợi ngắn để cập nhật state rồi đóng modal
-      setTimeout(onClose, 50);
+      setTimeout(onClose, 300);
     } catch (err) {
       console.error('handleConfirm error:', err);
       ToastCustom.error('Lỗi', 'Không thể xác nhận đỗ hiện tại.');
@@ -166,7 +167,7 @@ const ConfirmParkingRoutesModal: React.FC<Props> = ({ route, onClose, showRouteP
       onSetShowRouteParking(false);
       showRouteParking = false;
       ToastCustom.success('Đã hủy thông báo', 'Bạn sẽ không nhận thông báo nữa.');
-      setTimeout(onClose, 50);
+      setTimeout(onClose, 300);
     } catch (err) {
       console.error('handleCancelConfirm error:', err);
       ToastCustom.error('Lỗi', 'Không thể hủy thông báo.');
@@ -222,7 +223,7 @@ const ConfirmParkingRoutesModal: React.FC<Props> = ({ route, onClose, showRouteP
           </Text>
           <Text className="font-medium text-lg text-center mb-3">
             {route?.type === "alternate days" 
-              ? 'Lưu ý: Hôm nay chỉ được đỗ bên ' + getAlternateDaysNote(route)
+              ? 'Lưu ý: Hôm nay chỉ được đỗ ' + getAlternateDaysNote(route)
               : isConfirmed
                 ? 'Hủy thông báo đỗ xe trên tuyến này nếu bạn đã rời đi.'
                 : 'Vui lòng xác nhận bạn đang đỗ xe trên tuyến này.'}
@@ -294,9 +295,9 @@ const ConfirmParkingRoutesModal: React.FC<Props> = ({ route, onClose, showRouteP
                       }`}
                       style={{ opacity: processingAction ? 0.8 : 1 }}
                     >
-                      {processingAction === 'confirm' && !isConfirmed ? (
+                      {processingAction === 'confirm' ? (
                         <ActivityIndicator color="white" />
-                      ) : processingAction === 'cancel' && isConfirmed ? (
+                      ) : processingAction === 'cancel' ? (
                         <ActivityIndicator color="white" />
                       ) : (
                         <Text className="text-white font-semibold">

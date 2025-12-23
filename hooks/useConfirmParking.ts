@@ -65,8 +65,7 @@ export const useConfirmedParking = () => {
        route: params.route,
      };
      setConfirmed(newConfirmedState);
-     console.log(' State set ngay:', newConfirmedState);
-
+     
       // Sau đó mới gọi async operations
       await subscribeToRoute(params.routeId);
       await notifee.requestPermission();

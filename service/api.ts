@@ -4,12 +4,15 @@ import { normalizeFilePath } from '@/utils/normalizeFilePath';
 
 import { Linking } from 'react-native';
 export const API_CONFIG = {
-  BASE_URL: 'https://ezpark-9gnn.onrender.com/api',
+  BASE_URL: 'https://ezpark.dev/api',
   headers: {
     Accept: 'application/json',
     'Content-Type': 'application/json',
   },
 };
+//https://ezpark.dev/api
+
+//https://ezpark-9gnn.onrender.com/api
 
 export const fetchNoParkingRoutes = async (): Promise<NoParkingRoute[]> => {
   try {
