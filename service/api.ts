@@ -1,15 +1,7 @@
 import api from '@/service/apiClient';
 import { normalizeFilePath } from '@/utils/normalizeFilePath';
-
-
+import { API_CONFIG } from '@/config/apiConfig';
 import { Linking } from 'react-native';
-export const API_CONFIG = {
-  BASE_URL: 'https://ezpark-9gnn.onrender.com/api',
-  headers: {
-    Accept: 'application/json',
-    'Content-Type': 'application/json',
-  },
-};
 
 export const fetchNoParkingRoutes = async (): Promise<NoParkingRoute[]> => {
   try {

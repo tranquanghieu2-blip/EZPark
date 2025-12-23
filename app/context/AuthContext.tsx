@@ -71,8 +71,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       ["accessToken", token],
       ["refreshToken", refresh],
     ]);
+
+    await AsyncStorage.removeItem("sessionID");
     setAccessToken(token);
     setRefreshToken(refresh);
+    setSessionID(null);
     mapEvents.emit(EVENT_USER_LOGIN);
   } catch (e) {
     console.error("Error saving user:", e);

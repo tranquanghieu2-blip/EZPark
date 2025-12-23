@@ -2,6 +2,7 @@
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Alert } from "react-native";
+import { API_CONFIG } from "@/config/apiConfig";
 
 let updateAccessTokenCallback: ((token: string) => void) | null = null;
 
@@ -10,8 +11,8 @@ export const setAccessTokenUpdater = (callback: (token: string) => void) => {
 };
 
 const api = axios.create({
-  baseURL: "https://ezpark-9gnn.onrender.com/api",
-  headers: { "Content-Type": "application/json" },
+  baseURL: API_CONFIG.BASE_URL,
+  headers: API_CONFIG.headers,
 });
 
 // Add accessToken vào mỗi request
@@ -60,7 +61,7 @@ api.interceptors.response.use(
         if (!refreshToken) throw new Error("No refresh token");
 
         const res = await axios.post(
-          "https://ezpark-9gnn.onrender.com/api/auth/refresh-token",
+          `${API_CONFIG.BASE_URL}${API_CONFIG.endpoints.REFRESH_TOKEN}`,
           { refreshToken }
         );
 

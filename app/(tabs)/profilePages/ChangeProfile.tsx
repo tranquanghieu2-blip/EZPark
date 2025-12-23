@@ -17,7 +17,7 @@ import {
 import { launchImageLibrary, Asset } from "react-native-image-picker";
 import { updateUserProfile } from "@/service/api";
 import ToastCustom from "@/utils/CustomToast";
-import { DISABLED_OPACITY } from "@/utils/ui";
+import { DISABLED_OPACITY, maxLengthName } from "@/utils/ui";
 import { DEFAULT_TAB_BAR_STYLE } from "@/utils/tabBarStyle";
 
 type RootStackParamList = {
@@ -157,7 +157,7 @@ const ChangeProfile = () => {
           onChangeText={setName}
           valid={nameValid}
           errorMsg="Tên không được chứa ký tự đặc biệt"
-          maxLength={50}
+          maxLength={maxLengthName}
         />
 
         {/* Button */}
