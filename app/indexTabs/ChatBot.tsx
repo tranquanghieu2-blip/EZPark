@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { use, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -31,7 +31,7 @@ const ChatBot: React.FC = () => {
   const flatRef = useRef<FlatList<ChatMessage>>(null);
   const insets = useSafeAreaInsets();
   const userLocation = useSmartMapboxLocation();
-
+  console.log("Chatbot location:", userLocation)
   //load session, lịch sử chat
   const loadSession = useCallback(async () => {
     try {
@@ -103,7 +103,7 @@ const ChatBot: React.FC = () => {
 
       try {
         const response = await postChatMessage(text, sessionID ?? undefined, userLocation ?? undefined, accessToken ?? undefined);
-
+        console.log("userLocation: ", userLocation)
         // Lưu sessionID lần đầu
         if (!sessionID && response.session_id) {
           await AsyncStorage.setItem("sessionID", String(response.session_id));
@@ -127,7 +127,7 @@ const ChatBot: React.FC = () => {
         setTimeout(() => flatRef.current?.scrollToOffset({ offset: 0, animated: true }), 80);
       }
     },
-    [sessionID]
+    [sessionID, userLocation, accessToken]
   );
 
   // FlatList data
