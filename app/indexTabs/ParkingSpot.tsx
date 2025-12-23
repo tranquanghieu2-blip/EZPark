@@ -43,7 +43,7 @@ import ParkingSpotDetailModal from '../../modals/ParkingSpotModal';
 import ConfirmParkingRoutesModal from '../../modals/ConfirmParkingRoutes';
 // Custom hooks
 import { useScheduleTimeTriggers } from '@/hooks/useScheduleTimeTriggers';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import useFetch from '../../hooks/useFetch';
 import { useSmartMapboxLocation } from '@/hooks/usePeriodicMapboxLocation';
 import { useConfirmedParkingContext } from '@/app/context/ConfirmedParkingContext';
@@ -71,6 +71,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useParkingSpotDetail } from '@/hooks/useParkingSpotDetail';
 import { images } from '@/constants/images';
+// import socket from '@/service/socket';
 
 const WalkthroughableSearchBar = walkthroughable(SearchBar);
 const WalkthroughableCircleButton = walkthroughable(CircleButton);
@@ -105,6 +106,9 @@ const ParkingSpotContent = () => {
   const [favoriteSpots, setFavoriteSpots] = useState<Set<number>>(new Set());
 
   const { start } = useCopilot();
+
+  const route = useRoute<any>();
+  const openSpotId = route.params?.openSpotId;
 
   useEffect(() => {
     const checkTutorial = async () => {
@@ -150,19 +154,6 @@ const ParkingSpotContent = () => {
   }, [navigation]);
 
   useEffect(() => {
-    const handleOpenSpot = (spotId: number) => {
-      setSelectedId(spotId);
-      setShowParkingDetail(true);
-    };
-
-    mapEvents.on(EVENT_OPEN_SPOT, handleOpenSpot);
-
-    return () => {
-      mapEvents.off(EVENT_OPEN_SPOT, handleOpenSpot);
-    };
-  }, []);
-
-  useEffect(() => {
     if (!location) {
       // GPS tắt
       setUserLocation(null);
@@ -204,6 +195,7 @@ const ParkingSpotContent = () => {
     data: parkingSpots,
     loading: parkingSpotsLoad,
     error: parkingSpotsError,
+    refetch: refetchParkingSpots,
   } = useFetch<ParkingSpot[]>(fetchParkingSpots);
 
   //Fetch parking spot detail
@@ -222,12 +214,185 @@ const ParkingSpotContent = () => {
     );
   }, [selectedId, userLocation]);
 
+  // Socket connection và real-time updates
+  // useEffect(() => {
+  //   // Connect socket khi component mount
+  //   socket.connect();
+  //   console.log('Socket connecting...');
+
+  //   // Debounce timer ref để tránh fetch nhiều lần
+  //   let debounceTimer: NodeJS.Timeout | null = null;
+
+  //   // Hàm fetch lại parking spots với debounce
+  //   const handleRefetch = async (eventName: string, data?: any) => {
+  //     console.log(`Received ${eventName}:`, data);
+
+  //     // Clear timer cũ nếu có
+  //     if (debounceTimer) {
+  //       clearTimeout(debounceTimer);
+  //     }
+
+  //     // Set timer mới, chỉ fetch sau 1 giây không có event mới
+  //     debounceTimer = setTimeout(async () => {
+  //       try {
+  //         const eventType = data?.action;
+  //         const spotId = data?.id;
+
+  //         console.log(`Processing event type: ${eventType}, spotId: ${spotId}`);
+
+  //         switch (eventType) {
+  //           case 'create-parking-spot':
+  //             // Create: Load lại toàn bộ danh sách
+  //             console.log('Creating new parking spot - refetching all...');
+  //             await refetchParkingSpots();
+  //             break;
+
+  //           case 'update-parking-spot':
+  //             // Update: Chỉ fetch và update parking spot cụ thể
+  //             if (spotId) {
+  //               console.log(`Updating parking spot ${spotId}...`);
+
+  //               // Fetch detail của spot được update
+  //               const updatedSpots = await fetchParkingSpots();
+  //               const updatedSpot = updatedSpots.find(
+  //                 spot => spot.parking_spot_id === spotId
+  //               );
+
+  //               if (updatedSpot) {
+  //                 // Update state với spot mới (trigger re-render)
+  //                 await refetchParkingSpots();
+
+  //                 // Nếu đang xem detail của spot này, refresh detail
+  //                 if (selectedId === spotId && userLocation) {
+  //                   await fetchParkingSpotDetailWithStats(spotId, userLocation);
+  //                 }
+
+  //                 console.log(`Parking spot ${spotId} updated successfully`);
+  //               } else {
+  //                 console.warn(`Updated spot ${spotId} not found in list`);
+  //               }
+  //             }
+  //             break;
+
+  //           case 'delete-parking-spot':
+  //             // Delete: Xóa khỏi state
+  //             if (spotId) {
+  //               console.log(`Deleting parking spot ${spotId}...`);
+
+  //               // Refetch để lấy danh sách mới (không có spot đã xóa)
+  //               await refetchParkingSpots();
+
+  //               // Nếu đang xem detail của spot bị xóa, đóng modal
+  //               if (selectedId === spotId) {
+  //                 console.log(`Currently viewing deleted spot ${spotId}, closing modal`);
+  //                 setSelectedId(null);
+  //                 setShowParkingDetail(false);
+  //               }
+
+  //               console.log(`Parking spot ${spotId} deleted successfully`);
+  //             }
+  //             break;
+
+  //           default:
+  //             // Event không xác định, load lại toàn bộ để đảm bảo
+  //             console.warn(`Unknown event type: ${eventType}, refetching all...`);
+  //             await refetchParkingSpots();
+  //             break;
+  //         }
+
+  //         console.log('Event processing completed');
+  //       } catch (err) {
+  //         console.error('Lỗi khi xử lý event:', err);
+  //       }
+  //     }, 1000);
+  //   };
+
+  //   // Handlers
+  //   const handleParkingSpotUpdate = (data: any) => handleRefetch('parkingSpotChanged', data);
+
+  //   // Subscribe to events
+  //   socket.on('parkingSpotChanged', handleParkingSpotUpdate);
+
+  //   // Cleanup khi component unmount
+  //   return () => {
+  //     if (debounceTimer) {
+  //       clearTimeout(debounceTimer);
+  //     }
+  //     socket.off('parkingSpotChanged', handleParkingSpotUpdate);
+  //     socket.disconnect();
+  //     console.log('Socket disconnected');
+  //   };
+  // }, [refetchParkingSpots, selectedId, userLocation, fetchParkingSpotDetailWithStats]);
+
   // Tự động gọi khi selectedId thay đổi
   useEffect(() => {
     if (selectedId != null) {
       fetchDetail();
     }
   }, [selectedId]);
+
+  // Handle EVENT_OPEN_SPOT to zoom to parking spot
+  // useEffect(() => {
+  //   const handleOpenSpot = async (spotId: number) => {
+  //     setSelectedId(spotId);
+  //     setShowParkingDetail(true);
+  //     console.log('Opening parking spot from event:', spotId);
+
+  //     // Refetch để đảm bảo có data mới nhất
+  //     await refetchParkingSpots();
+
+  //     // Zoom vào parking spot sau khi đã có data
+  //     if (parkingSpots && cameraRef.current) {
+  //       const spot = parkingSpots.find(s => s.parking_spot_id === spotId);
+  //       console.log('Zooming to spot:', spot);
+  //       if (spot) {
+  //         cameraRef.current.setCamera({
+  //           centerCoordinate: [spot.longitude, spot.latitude],
+  //           zoomLevel: 16,
+  //           animationDuration: 800,
+  //         });
+  //       }
+  //     } else {
+  //       console.log('Parking spots data not available yet');
+  //     }
+  //   };
+
+  //   mapEvents.on(EVENT_OPEN_SPOT, handleOpenSpot);
+
+  //   return () => {
+  //     mapEvents.off(EVENT_OPEN_SPOT, handleOpenSpot);
+  //   };
+  // }, [parkingSpots]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!openSpotId || !userLocation) return;
+
+      setSelectedId(openSpotId);
+      setShowParkingDetail(true);
+
+      fetchParkingSpotDetailWithStats(
+        openSpotId,
+        userLocation ?? undefined,
+      );
+
+      navigation.setParams({ openSpotId: undefined });
+    }, [openSpotId, userLocation]),
+  );
+
+  useEffect(() => {
+    if (!parkingSpotDetail || !cameraRef.current) return;
+
+    cameraRef.current.setCamera({
+      centerCoordinate: [
+        parkingSpotDetail.longitude,
+        parkingSpotDetail.latitude,
+      ],
+      zoomLevel: 16,
+      animationDuration: 800,
+    });
+  }, [parkingSpotDetail]);
+
 
   // Fetch no-parking routes
   const { data: noParkingRoutes } =
@@ -249,7 +414,7 @@ const ParkingSpotContent = () => {
     }
   }, [noParkingRoutes, confirmed]);
 
-    // Effect riêng để đảm bảo showRouteParking được bật khi có confirmed
+  // Effect riêng để đảm bảo showRouteParking được bật khi có confirmed
   useEffect(() => {
     if (confirmed && confirmed.routeId) {
       console.log('Confirmed parking detected:', confirmed);
@@ -685,16 +850,16 @@ const ParkingSpotContent = () => {
         {/* No Parking Routes - RENDER TRƯỚC để nằm dưới */}
         {noParkingRoutes?.map(route => {
           const now = new Date();
-         if (route.type !== "alternate days") {
-           if (isDayRestricted(now, route.days_restricted)) {
-             if (isWithinTimeRange(now, route.time_range)) return null;
-           }
-         }
+          if (route.type !== "alternate days") {
+            if (isDayRestricted(now, route.days_restricted)) {
+              if (isWithinTimeRange(now, route.time_range)) return null;
+            }
+          }
           const coords = route.route.coordinates.map(([lon, lat]) => [
             lon,
             lat,
           ]);
-          
+
 
           return (
             <MapboxGL.ShapeSource
@@ -863,8 +1028,8 @@ const ParkingSpotContent = () => {
                 ) {
                   cameraRef.current.setCamera({
                     centerCoordinate: [spotData.longitude, spotData.latitude],
-                    zoomLevel: 14,
-                    animationDuration: 700,
+                    zoomLevel: 16,
+                    animationDuration: 800,
                   });
                 }
               }
@@ -984,7 +1149,7 @@ const ParkingSpotContent = () => {
         />
       )}
 
-      {showRouteParking &&  confirmed?.street && (
+      {showRouteParking && confirmed?.street && (
         <Animated.View
           style={{
             position: 'absolute',

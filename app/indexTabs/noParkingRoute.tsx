@@ -41,11 +41,13 @@ import {
   EVENT_FORBIDDEN_ROUTE_EXIT,
 } from '@/utils/eventEmitter';
 
-    const typeSide: Record<NoParkingRoute["side"], string> = {
-        "odd": "Bên lẻ",
-        "even": "Bên chẵn",
-        "both": "Cả hai bên",
-    };
+// import socket from '@/service/socket';
+
+const typeSide: Record<NoParkingRoute["side"], string> = {
+  "odd": "Bên lẻ",
+  "even": "Bên chẵn",
+  "both": "Cả hai bên",
+};
 
 const NoParkingRoute = () => {
   const location = useSmartMapboxLocation();
@@ -76,6 +78,56 @@ const NoParkingRoute = () => {
     error: noParkingRoutesError,
   } = useFetch<NoParkingRoute[]>(fetchNoParkingRoutes);
 
+  // Socket connection và real-time updates
+  // useEffect(() => {
+  //   // Connect socket khi component mount
+  //   socket.connect();
+  //   console.log('Socket connecting...');
+
+  //   // Debounce timer ref để tránh fetch nhiều lần
+  //   let debounceTimer: NodeJS.Timeout | null = null;
+
+  //   // Hàm fetch lại routes với debounce
+  //   const refetchRoutes = async (eventName: string, data?: any) => {
+  //     console.log(`Received ${eventName}:`, data);
+      
+  //     // Clear timer cũ nếu có
+  //     if (debounceTimer) {
+  //       clearTimeout(debounceTimer);
+  //     }
+
+  //     // Set timer mới, chỉ fetch sau 1 giây không có event mới
+  //     debounceTimer = setTimeout(async () => {
+  //       try {
+  //         const eventType = data?.action;
+  //         const noParkingRouteId = data?.id;
+  //         console.log('🔄 Fetching updated routes...');
+  //         const updatedRoutes = await fetchNoParkingRoutes();
+  //         setRoutesWithGeometry(updatedRoutes);
+  //         console.log('✅ Routes updated successfully');
+  //       } catch (err) {
+  //         console.error('❌ Lỗi khi fetch lại no parking routes:', err);
+  //       }
+  //     }, 1000);
+  //   };
+
+  //   // Handlers
+  //   const handleRouteUpdate = (data: any) => refetchRoutes('noParkingRouteChanged', data);
+
+  //   // Subscribe to events
+  //   socket.on('route_update', handleRouteUpdate);
+
+  //   // Cleanup khi component unmount
+  //   return () => {
+  //     if (debounceTimer) {
+  //       clearTimeout(debounceTimer);
+  //     }
+  //     socket.off('route_update', handleRouteUpdate);
+  //     socket.disconnect();
+  //     console.log('🔌 Socket disconnected');
+  //   };
+  // }, []);
+
   useEffect(() => {
     const id = routeNav?.params?.selectedNoParkingRouteId;
     if (!id || !routesWithGeometry) return;
@@ -97,7 +149,7 @@ const NoParkingRoute = () => {
       });
     }
 
-    
+
     // Clear param để không trigger lại khi re-render
     navigation.setParams({ selectedNoParkingRouteId: undefined });
   }, [routeNav?.params?.selectedNoParkingRouteId, routesWithGeometry]);
@@ -191,7 +243,7 @@ const NoParkingRoute = () => {
   console.log('Check forbidden route:', check);
   // Khi vừa vào tuyến cấm  hiển thị banner
   useEffect(() => {
-    console.log('Tuyến cấm hiện tại: ',currentForbiddenRoute?.street || 'Không có',);
+    console.log('Tuyến cấm hiện tại: ', currentForbiddenRoute?.street || 'Không có',);
     if (!currentForbiddenRoute) {
       setShowBanner(false);
       setShowBadge(false);
@@ -377,7 +429,7 @@ const NoParkingRoute = () => {
 
                   cameraRef.current?.setCamera({
                     centerCoordinate: [lon, lat],
-                    zoomLevel: 14, 
+                    zoomLevel: 14,
                     animationDuration: 700,
                   });
                 }
@@ -388,7 +440,7 @@ const NoParkingRoute = () => {
                 style={{
                   lineColor: style.strokeColor,
                   lineCap: 'round',
-                  lineWidth: isSelected ? 6 : 4, 
+                  lineWidth: isSelected ? 6 : 4,
                   lineOpacity: isSelected ? 0.9 : 0.8,
                 }}
               />
@@ -437,7 +489,7 @@ const NoParkingRoute = () => {
         >
           <View style={{ flex: 1 }}>
             <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 18 }}>
-             <IconWarning color="red" size={22} />Bạn đang đi vào tuyến đường cấm đỗ xe!
+              <IconWarning color="red" size={22} />Bạn đang đi vào tuyến đường cấm đỗ xe!
             </Text>
             <Text style={{ color: '#fff', fontSize: 20, fontWeight: '700' }}>
               Tuyến: {currentForbiddenRoute?.street}
@@ -446,7 +498,7 @@ const NoParkingRoute = () => {
               Bên cấm: {typeSide[currentForbiddenRoute?.side || "both"]}
             </Text>
           </View>
-          
+
         </Animated.View>
       )}
 
@@ -499,7 +551,7 @@ const NoParkingRoute = () => {
                 color: Colors.warning,
               }}
             >
-               Bạn đang di chuyển trên tuyến cấm đỗ
+              Bạn đang di chuyển trên tuyến cấm đỗ
             </Text>
             <Text
               style={{

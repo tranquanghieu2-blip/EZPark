@@ -116,6 +116,7 @@ const ChatBot: React.FC = () => {
           user_query: "",
           llm_response: response.response,
           created_at: new Date(response.timestamp).toISOString(),
+          parking_spots: response.parking_spots || [],
         };
         setMessages((prev) => [...prev, botMsg]);
       } catch (err) {
